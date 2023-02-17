@@ -17,22 +17,45 @@ package com.liferay.headless.commerce.admin.order.resource.v1_0.test;
 import com.liferay.account.model.AccountEntry;
 import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.commerce.account.model.CommerceAccount;
+import com.liferay.commerce.account.service.CommerceAccountLocalService;
+import com.liferay.commerce.constants.CommerceOrderConstants;
 import com.liferay.commerce.currency.model.CommerceCurrency;
 import com.liferay.commerce.currency.service.CommerceCurrencyLocalService;
+import com.liferay.commerce.media.constants.CommerceMediaConstants;
 import com.liferay.commerce.model.CommerceOrder;
+import com.liferay.commerce.model.CommerceOrderItem;
 import com.liferay.commerce.product.constants.CommerceChannelConstants;
+import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.commerce.product.model.CPInstance;
+import com.liferay.commerce.product.model.CommerceCatalog;
 import com.liferay.commerce.product.model.CommerceChannel;
 import com.liferay.commerce.product.service.CommerceChannelLocalService;
 import com.liferay.commerce.product.test.util.CPTestUtil;
+import com.liferay.commerce.product.type.virtual.constants.VirtualCPTypeConstants;
+import com.liferay.commerce.product.type.virtual.model.CPDefinitionVirtualSetting;
+import com.liferay.commerce.product.type.virtual.order.model.CommerceVirtualOrderItem;
+import com.liferay.commerce.product.type.virtual.order.service.CommerceVirtualOrderItemLocalService;
+import com.liferay.commerce.product.type.virtual.order.util.CommerceVirtualOrderItemChecker;
+import com.liferay.commerce.product.type.virtual.service.CPDefinitionVirtualSettingLocalService;
+import com.liferay.commerce.service.CommerceOrderItemLocalService;
 import com.liferay.commerce.test.util.CommerceTestUtil;
+import com.liferay.commerce.test.util.context.TestCommerceContext;
+import com.liferay.document.library.kernel.model.DLFolderConstants;
+import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.headless.commerce.admin.order.client.dto.v1_0.OrderItem;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.ContentTypes;
+import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.Inject;
 
@@ -41,6 +64,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -59,16 +83,15 @@ public class OrderItemResourceTest extends BaseOrderItemResourceTestCase {
 
 		_user = UserTestUtil.addUser(testCompany);
 
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				testCompany.getCompanyId(), testGroup.getGroupId(),
-				_user.getUserId());
+		_serviceContext = ServiceContextTestUtil.getServiceContext(
+			testCompany.getCompanyId(), testGroup.getGroupId(),
+			_user.getUserId());
 
 		_accountEntry = _accountEntryLocalService.addAccountEntry(
 			_user.getUserId(), 0, RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), null,
 			RandomTestUtil.randomString() + "@liferay.com", null, null,
-			"business", 1, serviceContext);
+			"business", 1, _serviceContext);
 
 		_commerceCurrency = _commerceCurrencyLocalService.addCommerceCurrency(
 			_user.getUserId(), RandomTestUtil.randomString(),
@@ -77,11 +100,15 @@ public class OrderItemResourceTest extends BaseOrderItemResourceTestCase {
 			RandomTestUtil.randomLocaleStringMap(), 2, 2, "HALF_EVEN", false,
 			RandomTestUtil.nextDouble(), true);
 
+		_commerceCatalog = CommerceTestUtil.addCommerceCatalog(
+			testCompany.getCompanyId(), testGroup.getGroupId(),
+			_user.getUserId(), _commerceCurrency.getCode());
+
 		_commerceChannel = _commerceChannelLocalService.addCommerceChannel(
 			RandomTestUtil.randomString(), testGroup.getGroupId(),
 			RandomTestUtil.randomString(),
 			CommerceChannelConstants.CHANNEL_TYPE_SITE, null,
-			_commerceCurrency.getCode(), serviceContext);
+			_commerceCurrency.getCode(), _serviceContext);
 
 		_commerceOrder = CommerceTestUtil.addB2BCommerceOrder(
 			testGroup.getGroupId(), _user.getUserId(),
@@ -101,6 +128,54 @@ public class OrderItemResourceTest extends BaseOrderItemResourceTestCase {
 	@Test
 	public void testDeleteOrderItemByExternalReferenceCode() throws Exception {
 		super.testDeleteOrderItemByExternalReferenceCode();
+	}
+
+	@Test
+	public void testGetdOrderItemWithURL() throws Exception {
+		String url = "http://www.example.com/myfiles/download";
+
+		OrderItem postOrderItem = _addCommerceOrderItem(_getOrderItem(0, url));
+
+		OrderItem getOrderItem = orderItemResource.getOrderItem(
+			postOrderItem.getId());
+
+		String[] virtualItemURLs = {url};
+
+		Assert.assertEquals(virtualItemURLs, getOrderItem.getVirtualItemURLs());
+	}
+
+	@Test
+	public void testGetOrderItemWithFileEntry() throws Exception {
+		FileEntry fileEntry = _dlAppLocalService.addFileEntry(
+			null, _user.getUserId(), testGroup.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			RandomTestUtil.randomString() + ".jpg", ContentTypes.IMAGE_JPEG,
+			FileUtil.getBytes(
+				OrderItemResourceTest.class, "dependencies/image.jpg"),
+			null, null, _serviceContext);
+
+		OrderItem postOrderItem = _addCommerceOrderItem(
+			_getOrderItem(fileEntry.getFileEntryId(), null));
+
+		OrderItem getOrderItem = orderItemResource.getOrderItem(
+			postOrderItem.getId());
+
+		CommerceVirtualOrderItem commerceVirtualOrderItem =
+			_commerceVirtualOrderItemLocalService.
+				fetchCommerceVirtualOrderItemByCommerceOrderItemId(
+					getOrderItem.getId());
+
+		String[] virtualItemURLs = {
+			StringBundler.concat(
+				_portal.getPathModule(), StringPool.SLASH,
+				CommerceMediaConstants.SERVLET_PATH, StringPool.SLASH,
+				CommerceMediaConstants.VIRTUAL_ORDER_ITEM, StringPool.SLASH,
+				commerceVirtualOrderItem.getCommerceVirtualOrderItemId(),
+				StringPool.SLASH, CommerceMediaConstants.FILE, StringPool.SLASH,
+				fileEntry.getFileEntryId())
+		};
+
+		Assert.assertEquals(virtualItemURLs, getOrderItem.getVirtualItemURLs());
 	}
 
 	@Ignore
@@ -168,38 +243,7 @@ public class OrderItemResourceTest extends BaseOrderItemResourceTestCase {
 
 	@Override
 	protected OrderItem randomOrderItem() throws Exception {
-		CPInstance commerceCPInstance = CPTestUtil.addCPInstanceWithRandomSku(
-			testGroup.getGroupId(), BigDecimal.TEN);
-
-		_commerceCPInstances.add(commerceCPInstance);
-
-		return new OrderItem() {
-			{
-				bookedQuantityId = RandomTestUtil.randomLong();
-				deliveryGroup = StringUtil.toLowerCase(
-					RandomTestUtil.randomString());
-				discountManuallyAdjusted = RandomTestUtil.randomBoolean();
-				externalReferenceCode = RandomTestUtil.randomString();
-				id = RandomTestUtil.randomLong();
-				orderExternalReferenceCode =
-					_commerceOrder.getExternalReferenceCode();
-				orderId = _commerceOrder.getCommerceOrderId();
-				priceManuallyAdjusted = RandomTestUtil.randomBoolean();
-				printedNote = StringUtil.toLowerCase(
-					RandomTestUtil.randomString());
-				quantity = RandomTestUtil.randomInt(1, 100);
-				requestedDeliveryDate = RandomTestUtil.nextDate();
-				shippedQuantity = RandomTestUtil.randomInt();
-				shippingAddressId = RandomTestUtil.randomLong();
-				sku = commerceCPInstance.getSku();
-				skuExternalReferenceCode =
-					commerceCPInstance.getExternalReferenceCode();
-				skuId = commerceCPInstance.getCPInstanceId();
-				subscription = RandomTestUtil.randomBoolean();
-				unitOfMeasure = StringUtil.toLowerCase(
-					RandomTestUtil.randomString());
-			}
-		};
+		return _getOrderItem(0, RandomTestUtil.randomString());
 	}
 
 	@Override
@@ -309,6 +353,125 @@ public class OrderItemResourceTest extends BaseOrderItemResourceTestCase {
 			_commerceOrder.getExternalReferenceCode(), randomOrderItem());
 	}
 
+	private OrderItem _addCommerceOrderItem(OrderItem orderItem)
+		throws Exception {
+
+		CommerceAccount commerceAccount =
+			_commerceAccountLocalService.getCommerceAccount(
+				_accountEntry.getAccountEntryId());
+
+		CommerceOrderItem commerceOrderItem =
+			_commerceOrderItemLocalService.addCommerceOrderItem(
+				_commerceOrder.getCommerceOrderId(), orderItem.getSkuId(), null,
+				orderItem.getQuantity(), orderItem.getQuantity(),
+				new TestCommerceContext(
+					_commerceCurrency, _commerceChannel, _user, testGroup,
+					commerceAccount, _commerceOrder),
+				_serviceContext);
+
+		_commerceOrderItems.add(commerceOrderItem);
+
+		_commerceVirtualOrderItemChecker.checkCommerceVirtualOrderItems(
+			_commerceOrder.getCommerceOrderId());
+
+		return new OrderItem() {
+			{
+				bookedQuantityId = commerceOrderItem.getBookedQuantityId();
+				deliveryGroup = commerceOrderItem.getDeliveryGroup();
+				discountManuallyAdjusted =
+					commerceOrderItem.getDiscountManuallyAdjusted();
+				externalReferenceCode =
+					commerceOrderItem.getExternalReferenceCode();
+				id = commerceOrderItem.getCommerceOrderItemId();
+				orderExternalReferenceCode =
+					_commerceOrder.getExternalReferenceCode();
+				orderId = _commerceOrder.getCommerceOrderId();
+				priceManuallyAdjusted =
+					commerceOrderItem.getPriceManuallyAdjusted();
+				printedNote = commerceOrderItem.getPrintedNote();
+				quantity = commerceOrderItem.getQuantity();
+				requestedDeliveryDate =
+					commerceOrderItem.getRequestedDeliveryDate();
+				shippedQuantity = commerceOrderItem.getShippedQuantity();
+				shippingAddressId = commerceOrderItem.getShippingAddressId();
+				sku = commerceOrderItem.getSku();
+				skuExternalReferenceCode =
+					commerceOrderItem.getExternalReferenceCode();
+				skuId = commerceOrderItem.getCPInstanceId();
+				subscription = commerceOrderItem.getSubscription();
+
+				setVirtualItemURLs(
+					() -> {
+						CommerceVirtualOrderItem commerceVirtualOrderItem =
+							_commerceVirtualOrderItemLocalService.
+								fetchCommerceVirtualOrderItemByCommerceOrderItemId(
+									commerceOrderItem.getCommerceOrderItemId());
+
+						if (commerceVirtualOrderItem == null) {
+							return null;
+						}
+
+						return new String[] {commerceVirtualOrderItem.getUrl()};
+					});
+			}
+		};
+	}
+
+	private OrderItem _getOrderItem(long fileEntryId, String url)
+		throws Exception {
+
+		CPDefinition cpDefinition = CPTestUtil.addCPDefinitionFromCatalog(
+			_commerceCatalog.getGroupId(), VirtualCPTypeConstants.NAME, true,
+			true);
+
+		_commerceCPDefinitions.add(cpDefinition);
+
+		List<CPInstance> cpInstances = cpDefinition.getCPInstances();
+
+		CPInstance cpInstance = cpInstances.get(0);
+
+		_commerceCPInstances.addAll(cpInstances);
+
+		_cpDefinitionVirtualSetting =
+			_cpDefinitionVirtualSettingLocalService.
+				addCPDefinitionVirtualSetting(
+					cpDefinition.getModelClassName(),
+					cpDefinition.getCPDefinitionId(), fileEntryId, url,
+					CommerceOrderConstants.ORDER_STATUS_PENDING, 0,
+					RandomTestUtil.randomInt(), true, 0, "sampleUrl", false,
+					null, 0, _serviceContext);
+
+		CommerceTestUtil.updateBackOrderCPDefinitionInventory(cpDefinition);
+
+		return new OrderItem() {
+			{
+				bookedQuantityId = RandomTestUtil.randomLong();
+				deliveryGroup = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				discountManuallyAdjusted = RandomTestUtil.randomBoolean();
+				externalReferenceCode = RandomTestUtil.randomString();
+				id = RandomTestUtil.randomLong();
+				orderExternalReferenceCode =
+					_commerceOrder.getExternalReferenceCode();
+				orderId = _commerceOrder.getCommerceOrderId();
+				priceManuallyAdjusted = RandomTestUtil.randomBoolean();
+				printedNote = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				quantity = RandomTestUtil.randomInt(1, 100);
+				requestedDeliveryDate = RandomTestUtil.nextDate();
+				shippedQuantity = RandomTestUtil.randomInt();
+				shippingAddressId = RandomTestUtil.randomLong();
+				sku = cpInstance.getSku();
+				skuExternalReferenceCode =
+					cpInstance.getExternalReferenceCode();
+				skuId = cpInstance.getCPInstanceId();
+				subscription = RandomTestUtil.randomBoolean();
+				unitOfMeasure = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+			}
+		};
+	}
+
 	@Inject
 	private static AccountEntryLocalService _accountEntryLocalService;
 
@@ -321,8 +484,16 @@ public class OrderItemResourceTest extends BaseOrderItemResourceTestCase {
 	@DeleteAfterTestRun
 	private AccountEntry _accountEntry;
 
+	@Inject
+	private CommerceAccountLocalService _commerceAccountLocalService;
+
+	private CommerceCatalog _commerceCatalog;
+
 	@DeleteAfterTestRun
 	private CommerceChannel _commerceChannel;
+
+	@DeleteAfterTestRun
+	private final List<CPDefinition> _commerceCPDefinitions = new ArrayList<>();
 
 	@DeleteAfterTestRun
 	private final List<CPInstance> _commerceCPInstances = new ArrayList<>();
@@ -332,6 +503,35 @@ public class OrderItemResourceTest extends BaseOrderItemResourceTestCase {
 
 	@DeleteAfterTestRun
 	private CommerceOrder _commerceOrder;
+
+	@Inject
+	private CommerceOrderItemLocalService _commerceOrderItemLocalService;
+
+	@DeleteAfterTestRun
+	private final List<CommerceOrderItem> _commerceOrderItems =
+		new ArrayList<>();
+
+	@Inject
+	private CommerceVirtualOrderItemChecker _commerceVirtualOrderItemChecker;
+
+	@Inject
+	private CommerceVirtualOrderItemLocalService
+		_commerceVirtualOrderItemLocalService;
+
+	@DeleteAfterTestRun
+	private CPDefinitionVirtualSetting _cpDefinitionVirtualSetting;
+
+	@Inject
+	private CPDefinitionVirtualSettingLocalService
+		_cpDefinitionVirtualSettingLocalService;
+
+	@Inject
+	private DLAppLocalService _dlAppLocalService;
+
+	@Inject
+	private Portal _portal;
+
+	private ServiceContext _serviceContext;
 
 	@DeleteAfterTestRun
 	private User _user;
