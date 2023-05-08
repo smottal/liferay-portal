@@ -1289,7 +1289,7 @@ public class CommerceOrderItemLocalServiceImpl
 		if (!ExportImportThreadLocal.isImportInProcess()) {
 			CommerceProductPrice commerceProductPrice =
 				_getCommerceProductPrice(
-					cpInstance.getCPDefinitionId(),
+					commerceOrderItem, cpInstance.getCPDefinitionId(),
 					cpInstance.getCPInstanceId(), json, quantity,
 					commerceContext);
 
@@ -1406,20 +1406,22 @@ public class CommerceOrderItemLocalServiceImpl
 	}
 
 	private CommerceProductPrice _getCommerceProductPrice(
-			long cpDefinitionId, long cpInstanceId, String json, int quantity,
+			CommerceOrderItem commerceOrderItem, long cpDefinitionId,
+			long cpInstanceId, String json, int quantity,
 			CommerceContext commerceContext)
 		throws PortalException {
 
 		CommerceProductPriceRequest commerceProductPriceRequest =
 			new CommerceProductPriceRequest();
 
-		commerceProductPriceRequest.setCpInstanceId(cpInstanceId);
-		commerceProductPriceRequest.setQuantity(quantity);
-		commerceProductPriceRequest.setSecure(false);
+		commerceProductPriceRequest.setCalculateTax(true);
 		commerceProductPriceRequest.setCommerceContext(commerceContext);
 		commerceProductPriceRequest.setCommerceOptionValues(
 			_getStaticOptionValuesNotLinkedToSku(cpDefinitionId, json));
-		commerceProductPriceRequest.setCalculateTax(true);
+		commerceProductPriceRequest.setCommerceOrderItem(commerceOrderItem);
+		commerceProductPriceRequest.setCpInstanceId(cpInstanceId);
+		commerceProductPriceRequest.setQuantity(quantity);
+		commerceProductPriceRequest.setSecure(false);
 
 		return _commerceProductPriceCalculation.getCommerceProductPrice(
 			commerceProductPriceRequest);
@@ -1954,7 +1956,7 @@ public class CommerceOrderItemLocalServiceImpl
 
 		if (commerceProductPrice == null) {
 			commerceProductPrice = _getCommerceProductPrice(
-				commerceOrderItem.getCPDefinitionId(),
+				commerceOrderItem, commerceOrderItem.getCPDefinitionId(),
 				commerceOrderItem.getCPInstanceId(),
 				commerceOrderItem.getJson(), commerceOrderItem.getQuantity(),
 				commerceContext);
@@ -2119,7 +2121,7 @@ public class CommerceOrderItemLocalServiceImpl
 		if (!ExportImportThreadLocal.isImportInProcess()) {
 			CommerceProductPrice commerceProductPrice =
 				_getCommerceProductPrice(
-					cpInstance.getCPDefinitionId(),
+					commerceOrderItem, cpInstance.getCPDefinitionId(),
 					cpInstance.getCPInstanceId(), commerceOrderItem.getJson(),
 					quantity, null);
 
@@ -2180,10 +2182,15 @@ public class CommerceOrderItemLocalServiceImpl
 		commerceOrderItem.setJson(json);
 		commerceOrderItem.setQuantity(quantity);
 
+		commerceOrderItem.setExpandoBridgeAttributes(serviceContext);
+
+		commerceOrderItem = commerceOrderItemPersistence.update(
+			commerceOrderItem);
+
 		if (commerceOrder.isOpen()) {
 			if (commerceProductPrice == null) {
 				commerceProductPrice = _getCommerceProductPrice(
-					commerceOrderItem.getCPDefinitionId(),
+					commerceOrderItem, commerceOrderItem.getCPDefinitionId(),
 					commerceOrderItem.getCPInstanceId(),
 					commerceOrderItem.getJson(), quantity, commerceContext);
 			}
@@ -2197,14 +2204,10 @@ public class CommerceOrderItemLocalServiceImpl
 			_setCommerceOrderItemDiscountValue(
 				commerceOrderItem,
 				commerceProductPrice.getDiscountValueWithTaxAmount(), true);
-		}
 
-		commerceOrderItem.setExpandoBridgeAttributes(serviceContext);
+			commerceOrderItem = commerceOrderItemPersistence.update(
+				commerceOrderItem);
 
-		commerceOrderItem = commerceOrderItemPersistence.update(
-			commerceOrderItem);
-
-		if (commerceOrder.isOpen()) {
 			_commerceOrderLocalService.recalculatePrice(
 				commerceOrderItem.getCommerceOrderId(), commerceContext);
 		}

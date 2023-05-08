@@ -24,14 +24,17 @@ import com.liferay.commerce.discount.application.strategy.CommerceDiscountApplic
 import com.liferay.commerce.discount.application.strategy.CommerceDiscountApplicationStrategyRegistry;
 import com.liferay.commerce.discount.constants.CommerceDiscountConstants;
 import com.liferay.commerce.discount.model.CommerceDiscount;
+import com.liferay.commerce.discount.model.CommerceDiscountModel;
 import com.liferay.commerce.discount.service.CommerceDiscountUsageEntryLocalService;
 import com.liferay.commerce.discount.validator.helper.CommerceDiscountValidatorHelper;
 import com.liferay.commerce.model.CommerceOrder;
+import com.liferay.commerce.model.CommerceOrderItem;
 import com.liferay.commerce.price.list.model.CommercePriceListDiscountRel;
 import com.liferay.commerce.price.list.service.CommercePriceListDiscountRelLocalService;
 import com.liferay.commerce.pricing.configuration.CommercePricingConfiguration;
 import com.liferay.commerce.product.model.CPInstance;
 import com.liferay.commerce.product.service.CPInstanceLocalService;
+import com.liferay.commerce.service.CommerceOrderItemLocalServiceUtil;
 import com.liferay.commerce.util.CommerceBigDecimalUtil;
 import com.liferay.commerce.util.CommerceUtil;
 import com.liferay.petra.function.transform.TransformUtil;
@@ -47,6 +50,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -110,18 +114,21 @@ public class CommerceDiscountCalculationV2Impl
 
 	@Override
 	public CommerceDiscountValue getProductCommerceDiscountValue(
-			long cpInstanceId, int quantity, BigDecimal productUnitPrice,
+			CommerceOrderItem commerceOrderItem, long cpInstanceId,
+			int quantity, BigDecimal productUnitPrice,
 			CommerceContext commerceContext)
 		throws PortalException {
 
 		return getProductCommerceDiscountValue(
-			cpInstanceId, 0, quantity, productUnitPrice, commerceContext);
+			commerceOrderItem, cpInstanceId, 0, quantity, productUnitPrice,
+			commerceContext);
 	}
 
 	@Override
 	public CommerceDiscountValue getProductCommerceDiscountValue(
-			long cpInstanceId, long commercePriceListId, int quantity,
-			BigDecimal productUnitPrice, CommerceContext commerceContext)
+			CommerceOrderItem commerceOrderItem, long cpInstanceId,
+			long commercePriceListId, int quantity, BigDecimal productUnitPrice,
+			CommerceContext commerceContext)
 		throws PortalException {
 
 		CPInstance cpInstance = _cpInstanceLocalService.getCPInstance(
@@ -146,7 +153,8 @@ public class CommerceDiscountCalculationV2Impl
 			}
 
 			return _getCommerceDiscountValues(
-				productUnitPrice, quantity, commerceContext, commerceDiscounts);
+				productUnitPrice, quantity, commerceContext, commerceDiscounts,
+				commerceOrderItem);
 		}
 
 		long commerceOrderTypeId = 0;
@@ -167,7 +175,8 @@ public class CommerceDiscountCalculationV2Impl
 		}
 
 		return _getCommerceDiscountValues(
-			productUnitPrice, quantity, commerceContext, commerceDiscounts);
+			productUnitPrice, quantity, commerceContext, commerceDiscounts,
+			commerceOrderItem);
 	}
 
 	private CommerceDiscountApplicationStrategy
@@ -261,7 +270,8 @@ public class CommerceDiscountCalculationV2Impl
 	private BigDecimal[] _getCommerceDiscountLevels(
 			String couponCode, BigDecimal commercePrice,
 			CommerceContext commerceContext,
-			List<CommerceDiscount> commerceDiscounts)
+			List<CommerceDiscount> commerceDiscounts,
+			CommerceOrderItem commerceOrderItem)
 		throws PortalException {
 
 		if (couponCode.isEmpty()) {
@@ -300,6 +310,11 @@ public class CommerceDiscountCalculationV2Impl
 						commerceDiscount.getCommerceDiscountId(),
 						commerceDiscount.getLevel1(),
 						commerceDiscount.isUsePercentage());
+
+					if (commerceOrderItem != null) {
+						commerceOrderItem.setDiscountPercentageLevel1(
+							levels[0]);
+					}
 				}
 
 				if (commerceDiscount.isUsePercentage()) {
@@ -312,6 +327,11 @@ public class CommerceDiscountCalculationV2Impl
 							commerceDiscount.getCommerceDiscountId(),
 							commerceDiscount.getLevel2(),
 							commerceDiscount.isUsePercentage());
+
+						if (commerceOrderItem != null) {
+							commerceOrderItem.setDiscountPercentageLevel2(
+								levels[1]);
+						}
 					}
 
 					if (discountLevel.isEmpty() ||
@@ -323,6 +343,11 @@ public class CommerceDiscountCalculationV2Impl
 							commerceDiscount.getCommerceDiscountId(),
 							commerceDiscount.getLevel3(),
 							commerceDiscount.isUsePercentage());
+
+						if (commerceOrderItem != null) {
+							commerceOrderItem.setDiscountPercentageLevel3(
+								levels[2]);
+						}
 					}
 
 					if (discountLevel.isEmpty() ||
@@ -334,7 +359,17 @@ public class CommerceDiscountCalculationV2Impl
 							commerceDiscount.getCommerceDiscountId(),
 							commerceDiscount.getLevel4(),
 							commerceDiscount.isUsePercentage());
+
+						if (commerceOrderItem != null) {
+							commerceOrderItem.setDiscountPercentageLevel4(
+								levels[3]);
+						}
 					}
+				}
+
+				if (commerceOrderItem != null) {
+					CommerceOrderItemLocalServiceUtil.updateCommerceOrderItem(
+						commerceOrderItem);
 				}
 			}
 		}
@@ -364,7 +399,7 @@ public class CommerceDiscountCalculationV2Impl
 
 		BigDecimal[] commerceDiscountLevels = _getCommerceDiscountLevels(
 			commerceOrder.getCouponCode(), amount, commerceContext,
-			commerceDiscounts);
+			commerceDiscounts, null);
 
 		CommerceDiscountApplicationStrategy
 			commerceDiscountApplicationStrategy =
@@ -398,12 +433,16 @@ public class CommerceDiscountCalculationV2Impl
 	private CommerceDiscountValue _getCommerceDiscountValues(
 			BigDecimal commercePrice, int quantity,
 			CommerceContext commerceContext,
-			List<CommerceDiscount> commerceDiscounts)
+			List<CommerceDiscount> commerceDiscounts,
+			CommerceOrderItem commerceOrderItem)
 		throws PortalException {
 
+		commerceDiscounts.sort(
+			Comparator.comparing(CommerceDiscountModel::getLevel));
+
 		BigDecimal[] commerceDiscountLevels = _getCommerceDiscountLevels(
-			StringPool.BLANK, commercePrice, commerceContext,
-			commerceDiscounts);
+			StringPool.BLANK, commercePrice, commerceContext, commerceDiscounts,
+			commerceOrderItem);
 
 		CommerceDiscountApplicationStrategy
 			commerceDiscountApplicationStrategy =

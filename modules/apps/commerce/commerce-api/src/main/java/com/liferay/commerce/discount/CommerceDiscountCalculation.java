@@ -16,6 +16,7 @@ package com.liferay.commerce.discount;
 
 import com.liferay.commerce.context.CommerceContext;
 import com.liferay.commerce.model.CommerceOrder;
+import com.liferay.commerce.model.CommerceOrderItem;
 import com.liferay.portal.kernel.exception.PortalException;
 
 import java.math.BigDecimal;
@@ -41,13 +42,15 @@ public interface CommerceDiscountCalculation {
 		throws PortalException;
 
 	public CommerceDiscountValue getProductCommerceDiscountValue(
-			long cpInstanceId, int quantity, BigDecimal productUnitPrice,
+			CommerceOrderItem commerceOrderItem, long cpInstanceId,
+			int quantity, BigDecimal productUnitPrice,
 			CommerceContext commerceContext)
 		throws PortalException;
 
 	public CommerceDiscountValue getProductCommerceDiscountValue(
-			long cpInstanceId, long commercePriceListId, int quantity,
-			BigDecimal productUnitPrice, CommerceContext commerceContext)
+			CommerceOrderItem commerceOrderItem, long cpInstanceId,
+			long commercePriceListId, int quantity, BigDecimal productUnitPrice,
+			CommerceContext commerceContext)
 		throws PortalException;
 
 }

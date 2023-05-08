@@ -75,7 +75,7 @@ public class RulesCommerceDiscountValidator
 
 			boolean commerceDiscountRuleTypeEvaluation =
 				commerceDiscountRuleType.evaluate(
-					commerceDiscountRule, commerceContext);
+					commerceDiscount, commerceDiscountRule, commerceContext);
 
 			if (!commerceDiscountRuleTypeEvaluation &&
 				commerceDiscount.isRulesConjunction()) {

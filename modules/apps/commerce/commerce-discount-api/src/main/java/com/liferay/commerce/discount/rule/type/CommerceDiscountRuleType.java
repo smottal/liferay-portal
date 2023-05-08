@@ -15,6 +15,7 @@
 package com.liferay.commerce.discount.rule.type;
 
 import com.liferay.commerce.context.CommerceContext;
+import com.liferay.commerce.discount.model.CommerceDiscount;
 import com.liferay.commerce.discount.model.CommerceDiscountRule;
 import com.liferay.portal.kernel.exception.PortalException;
 
@@ -27,6 +28,7 @@ import java.util.Locale;
 public interface CommerceDiscountRuleType {
 
 	public boolean evaluate(
+			CommerceDiscount commerceDiscount,
 			CommerceDiscountRule commerceDiscountRule,
 			CommerceContext commerceContext)
 		throws PortalException;

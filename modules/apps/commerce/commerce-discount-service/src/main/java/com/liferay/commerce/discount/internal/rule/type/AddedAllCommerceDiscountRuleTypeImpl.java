@@ -16,6 +16,7 @@ package com.liferay.commerce.discount.internal.rule.type;
 
 import com.liferay.commerce.context.CommerceContext;
 import com.liferay.commerce.discount.constants.CommerceDiscountRuleConstants;
+import com.liferay.commerce.discount.model.CommerceDiscount;
 import com.liferay.commerce.discount.model.CommerceDiscountRule;
 import com.liferay.commerce.discount.rule.type.CommerceDiscountRuleType;
 import com.liferay.commerce.model.CommerceOrder;
@@ -48,6 +49,7 @@ public class AddedAllCommerceDiscountRuleTypeImpl
 
 	@Override
 	public boolean evaluate(
+			CommerceDiscount commerceDiscount,
 			CommerceDiscountRule commerceDiscountRule,
 			CommerceContext commerceContext)
 		throws PortalException {

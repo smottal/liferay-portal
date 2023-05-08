@@ -24,6 +24,7 @@ import com.liferay.commerce.discount.application.strategy.CommerceDiscountApplic
 import com.liferay.commerce.discount.application.strategy.CommerceDiscountApplicationStrategyRegistry;
 import com.liferay.commerce.internal.util.CommercePriceConverterUtil;
 import com.liferay.commerce.model.CommerceOrder;
+import com.liferay.commerce.model.CommerceOrderItem;
 import com.liferay.commerce.price.CommerceProductPrice;
 import com.liferay.commerce.price.CommerceProductPriceCalculation;
 import com.liferay.commerce.price.CommerceProductPriceImpl;
@@ -163,6 +164,7 @@ public class CommerceProductPriceCalculationV2Impl
 
 		if (discountsTargetNetPrice) {
 			commerceDiscountValue = _getCommerceDiscountValue(
+				commerceProductPriceRequest.getCommerceOrderitem(),
 				cpInstanceId, commercePriceListId, quantity, finalPrice,
 				commerceContext);
 
@@ -181,6 +183,7 @@ public class CommerceProductPriceCalculationV2Impl
 		}
 		else {
 			commerceDiscountValue = _getCommerceDiscountValue(
+				commerceProductPriceRequest.getCommerceOrderitem(),
 				cpInstanceId, commercePriceListId, quantity,
 				finalPriceWithTaxAmount, commerceContext);
 
@@ -536,8 +539,9 @@ public class CommerceProductPriceCalculationV2Impl
 	}
 
 	private CommerceDiscountValue _getCommerceDiscountValue(
-			long cpInstanceId, long commercePriceListId, int quantity,
-			BigDecimal finalPrice, CommerceContext commerceContext)
+			CommerceOrderItem commerceOrderItem, long cpInstanceId,
+			long commercePriceListId, int quantity, BigDecimal finalPrice,
+			CommerceContext commerceContext)
 		throws PortalException {
 
 		if ((finalPrice == null) ||
@@ -555,7 +559,8 @@ public class CommerceProductPriceCalculationV2Impl
 
 		if (commercePriceEntry == null) {
 			return _commerceDiscountCalculation.getProductCommerceDiscountValue(
-				cpInstanceId, quantity, finalPrice, commerceContext);
+				commerceOrderItem, cpInstanceId, quantity, finalPrice,
+				commerceContext);
 		}
 
 		BigDecimal[] values = new BigDecimal[4];
@@ -574,7 +579,8 @@ public class CommerceProductPriceCalculationV2Impl
 
 		if (!commercePriceEntry.isBulkPricing()) {
 			return _commerceDiscountCalculation.getProductCommerceDiscountValue(
-				cpInstanceId, quantity, finalPrice, commerceContext);
+				commerceOrderItem, cpInstanceId, quantity, finalPrice,
+				commerceContext);
 		}
 
 		CommerceTierPriceEntry commerceTierPriceEntry =
@@ -586,7 +592,8 @@ public class CommerceProductPriceCalculationV2Impl
 			commerceTierPriceEntry.isDiscountDiscovery()) {
 
 			return _commerceDiscountCalculation.getProductCommerceDiscountValue(
-				cpInstanceId, quantity, finalPrice, commerceContext);
+				commerceOrderItem, cpInstanceId, quantity, finalPrice,
+				commerceContext);
 		}
 
 		values[0] = commerceTierPriceEntry.getDiscountLevel1();

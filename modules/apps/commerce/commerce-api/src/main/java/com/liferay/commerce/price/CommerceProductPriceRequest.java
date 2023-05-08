@@ -15,6 +15,7 @@
 package com.liferay.commerce.price;
 
 import com.liferay.commerce.context.CommerceContext;
+import com.liferay.commerce.model.CommerceOrderItem;
 import com.liferay.commerce.product.option.CommerceOptionValue;
 
 import java.util.ArrayList;
@@ -33,6 +34,10 @@ public class CommerceProductPriceRequest {
 
 	public List<CommerceOptionValue> getCommerceOptionValues() {
 		return _commerceOptionValues;
+	}
+
+	public CommerceOrderItem getCommerceOrderitem() {
+		return _commerceOrderItem;
 	}
 
 	public long getCpInstanceId() {
@@ -67,6 +72,10 @@ public class CommerceProductPriceRequest {
 		_commerceOptionValues = new ArrayList<>(commerceOptionValues);
 	}
 
+	public void setCommerceOrderItem(CommerceOrderItem commerceOrderItem) {
+		_commerceOrderItem = commerceOrderItem;
+	}
+
 	public void setCpInstanceId(long cpInstanceId) {
 		_cpInstanceId = cpInstanceId;
 	}
@@ -83,6 +92,7 @@ public class CommerceProductPriceRequest {
 	private CommerceContext _commerceContext;
 	private List<CommerceOptionValue> _commerceOptionValues =
 		Collections.emptyList();
+	private CommerceOrderItem _commerceOrderItem;
 	private long _cpInstanceId;
 	private int _quantity;
 	private boolean _secure;
