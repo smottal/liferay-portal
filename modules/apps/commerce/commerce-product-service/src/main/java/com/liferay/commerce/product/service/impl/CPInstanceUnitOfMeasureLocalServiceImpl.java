@@ -13,6 +13,7 @@ import com.liferay.commerce.product.exception.DuplicateCPInstanceUnitOfMeasureKe
 import com.liferay.commerce.product.model.CPInstanceUnitOfMeasure;
 import com.liferay.commerce.product.service.base.CPInstanceUnitOfMeasureLocalServiceBaseImpl;
 import com.liferay.portal.aop.AopService;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.UserLocalService;
@@ -22,6 +23,7 @@ import com.liferay.portal.kernel.util.Validator;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -155,16 +157,6 @@ public class CPInstanceUnitOfMeasureLocalServiceImpl
 		cpInstanceUnitOfMeasure.setNameMap(nameMap);
 		cpInstanceUnitOfMeasure.setPrecision(precision);
 		cpInstanceUnitOfMeasure.setPrimary(primary);
-		cpInstanceUnitOfMeasure.setPriority(priority);
-		cpInstanceUnitOfMeasure.setRate(rate);
-		cpInstanceUnitOfMeasure.setSku(sku);
-
-		if (cpInstanceUnitOfMeasure.isPrimary()) {
-			_updatePrimary(
-				cpInstanceUnitOfMeasure.getCPInstanceUnitOfMeasureId(),
-				cpInstanceId);
-		}
-
 		return cpInstanceUnitOfMeasurePersistence.update(
 			cpInstanceUnitOfMeasure);
 	}
