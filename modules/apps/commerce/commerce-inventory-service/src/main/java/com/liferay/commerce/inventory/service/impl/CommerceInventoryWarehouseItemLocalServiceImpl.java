@@ -188,10 +188,10 @@ public class CommerceInventoryWarehouseItemLocalServiceImpl
 
 	@Override
 	public void deleteCommerceInventoryWarehouseItems(
-		long companyId, String sku) {
+		long companyId, String sku, String unitOfMeasureKey) {
 
-		commerceInventoryWarehouseItemPersistence.removeByCompanyId_Sku(
-			companyId, sku);
+		commerceInventoryWarehouseItemPersistence.removeByC_S_U(
+			companyId, sku, unitOfMeasureKey);
 	}
 
 	@Override
@@ -203,19 +203,22 @@ public class CommerceInventoryWarehouseItemLocalServiceImpl
 
 	@Override
 	public CommerceInventoryWarehouseItem fetchCommerceInventoryWarehouseItem(
-		long commerceInventoryWarehouseId, String sku) {
+			long commerceInventoryWarehouseId, String sku,
+			String unitOfMeasureKey)
+		throws PortalException {
 
-		return commerceInventoryWarehouseItemPersistence.fetchByC_S(
-			commerceInventoryWarehouseId, sku);
+		return commerceInventoryWarehouseItemPersistence.fetchByCIWI_S_U(
+			commerceInventoryWarehouseId, sku, unitOfMeasureKey);
 	}
 
 	@Override
 	public CommerceInventoryWarehouseItem getCommerceInventoryWarehouseItem(
-			long commerceInventoryWarehouseId, String sku)
+			long commerceInventoryWarehouseId, String sku,
+			String unitOfMeasureKey)
 		throws PortalException {
 
-		return commerceInventoryWarehouseItemPersistence.findByC_S(
-			commerceInventoryWarehouseId, sku);
+		return commerceInventoryWarehouseItemPersistence.findByCIWI_S_U(
+			commerceInventoryWarehouseId, sku, unitOfMeasureKey);
 	}
 
 	@Override
@@ -230,6 +233,16 @@ public class CommerceInventoryWarehouseItemLocalServiceImpl
 
 	@Override
 	public List<CommerceInventoryWarehouseItem>
+		getCommerceInventoryWarehouseItems(
+			long companyId, String sku, String unitOfMeasureKey, int start,
+			int end) {
+
+		return commerceInventoryWarehouseItemPersistence.findByC_S_U(
+			companyId, sku, unitOfMeasureKey, start, end);
+	}
+
+	@Override
+	public List<CommerceInventoryWarehouseItem>
 		getCommerceInventoryWarehouseItemsByCompanyId(
 			long companyId, int start, int end) {
 
@@ -240,10 +253,11 @@ public class CommerceInventoryWarehouseItemLocalServiceImpl
 	@Override
 	public List<CommerceInventoryWarehouseItem>
 		getCommerceInventoryWarehouseItemsByCompanyIdAndSku(
-			long companyId, String sku, int start, int end) {
+			long companyId, String sku, String unitOfMeasureKey, int start,
+			int end) {
 
-		return commerceInventoryWarehouseItemPersistence.findByCompanyId_Sku(
-			companyId, sku, start, end);
+		return commerceInventoryWarehouseItemPersistence.findByC_S_U(
+			companyId, sku, unitOfMeasureKey, start, end);
 	}
 
 	@Override
@@ -283,7 +297,7 @@ public class CommerceInventoryWarehouseItemLocalServiceImpl
 
 	@Override
 	public int getCommerceInventoryWarehouseItemsCount(
-		long companyId, long groupId, String sku) {
+		long companyId, long groupId, String sku, String unitOfMeasureKey) {
 
 		return dslQueryCount(
 			DSLQueryFactoryUtil.countDistinct(
@@ -321,6 +335,15 @@ public class CommerceInventoryWarehouseItemLocalServiceImpl
 				).and(
 					CommerceInventoryWarehouseItemTable.INSTANCE.sku.eq(sku)
 				).and(
+					() -> {
+						if (Validator.isNull(unitOfMeasureKey)) {
+							return null;
+						}
+
+						return CommerceInventoryWarehouseItemTable.INSTANCE.
+							unitOfMeasureKey.eq(unitOfMeasureKey);
+					}
+				).and(
 					CommerceInventoryWarehouseTable.INSTANCE.active.eq(true)
 				).and(
 					GroupTable.INSTANCE.groupId.eq(groupId)
@@ -330,10 +353,10 @@ public class CommerceInventoryWarehouseItemLocalServiceImpl
 
 	@Override
 	public int getCommerceInventoryWarehouseItemsCount(
-		long companyId, String sku) {
+		long companyId, String sku, String unitOfMeasureKey) {
 
-		return commerceInventoryWarehouseItemPersistence.countByCompanyId_Sku(
-			companyId, sku);
+		return commerceInventoryWarehouseItemPersistence.countByC_S_U(
+			companyId, sku, unitOfMeasureKey);
 	}
 
 	@Override
@@ -371,7 +394,8 @@ public class CommerceInventoryWarehouseItemLocalServiceImpl
 
 	@Override
 	public List<CIWarehouseItem> getItemsByCompanyId(
-		long companyId, String sku, int start, int end) {
+		long companyId, String sku, String unitOfMeasureKey, int start,
+		int end) {
 
 		List<Object[]> sumStocks = dslQuery(
 			DSLQueryFactoryUtil.select(
@@ -622,14 +646,16 @@ public class CommerceInventoryWarehouseItemLocalServiceImpl
 		throws PortalException {
 
 		CommerceInventoryWarehouseItem fromWarehouseItem =
-			commerceInventoryWarehouseItemPersistence.findByC_S(
-				fromCommerceInventoryWarehouseId, sku);
+			commerceInventoryWarehouseItemPersistence.findByCIWI_S_U(
+				fromCommerceInventoryWarehouseId, sku, unitOfMeasureKey);
 
 		BigDecimal fromWarehouseItemQuantity = fromWarehouseItem.getQuantity();
 
 		if (quantity.compareTo(fromWarehouseItemQuantity) == 1) {
 			throw new PortalException("Quantity to transfer unavailable");
 		}
+
+		BigDecimal fromItemQuantity = fromWarehouseItem.getQuantity();
 
 		commerceInventoryWarehouseItemLocalService.
 			updateCommerceInventoryWarehouseItem(
@@ -639,8 +665,10 @@ public class CommerceInventoryWarehouseItemLocalServiceImpl
 				fromWarehouseItem.getUnitOfMeasureKey());
 
 		CommerceInventoryWarehouseItem toWarehouseItem =
-			commerceInventoryWarehouseItemPersistence.findByC_S(
-				toCommerceInventoryWarehouseId, sku);
+			commerceInventoryWarehouseItemPersistence.findByCIWI_S_U(
+				toCommerceInventoryWarehouseId, sku, unitOfMeasureKey);
+
+		BigDecimal toItemQuantity = toWarehouseItem.getQuantity();
 
 		BigDecimal toWarehouseItemQuantity = toWarehouseItem.getQuantity();
 
@@ -696,6 +724,16 @@ public class CommerceInventoryWarehouseItemLocalServiceImpl
 		if (commerceInventoryWarehouseItem.getMvccVersion() != mvccVersion) {
 			throw new MVCCException();
 		}
+
+		User user = _userLocalService.getUser(userId);
+
+		_normalizeQuantity(
+			user.getCompanyId(), commerceInventoryWarehouseItem.getSku(),
+			commerceInventoryWarehouseItem.getUnitOfMeasureKey(), quantity);
+		_normalizeQuantity(
+			user.getCompanyId(), commerceInventoryWarehouseItem.getSku(),
+			commerceInventoryWarehouseItem.getUnitOfMeasureKey(),
+			reservedQuantity);
 
 		commerceInventoryWarehouseItem.setQuantity(quantity);
 		commerceInventoryWarehouseItem.setReservedQuantity(reservedQuantity);
@@ -832,8 +870,8 @@ public class CommerceInventoryWarehouseItemLocalServiceImpl
 		}
 
 		CommerceInventoryWarehouseItem commerceInventoryWarehouseItem =
-			commerceInventoryWarehouseItemPersistence.fetchByC_S(
-				commerceInventoryWarehouseId, sku);
+			commerceInventoryWarehouseItemPersistence.fetchByCIWI_S_U(
+				commerceInventoryWarehouseId, sku, unitOfMeasureKey);
 
 		if (commerceInventoryWarehouseItem != null) {
 			throw new DuplicateCommerceInventoryWarehouseItemException();
