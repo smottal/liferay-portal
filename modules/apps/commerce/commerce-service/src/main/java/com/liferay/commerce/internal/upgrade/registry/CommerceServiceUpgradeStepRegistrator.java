@@ -38,6 +38,7 @@ import com.liferay.commerce.internal.upgrade.v9_3_0.ConfigurationUpgradeProcess;
 import com.liferay.commerce.internal.upgrade.v9_4_0.AccountRoleUpgradeProcess;
 import com.liferay.commerce.internal.upgrade.v9_6_1.SupplierRoleUpgradeProcess;
 import com.liferay.commerce.model.impl.CPDAvailabilityEstimateModelImpl;
+import com.liferay.commerce.model.impl.CPDefinitionInventoryModelImpl;
 import com.liferay.commerce.model.impl.CommerceAvailabilityEstimateModelImpl;
 import com.liferay.commerce.model.impl.CommerceOrderItemModelImpl;
 import com.liferay.commerce.model.impl.CommerceShipmentItemModelImpl;
