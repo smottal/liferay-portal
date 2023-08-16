@@ -430,18 +430,18 @@ public class CommerceOrderGenerator {
 			CPDefinitionInventoryEngine cpDefinitionInventoryEngine)
 		throws PortalException {
 
-		int stockQuantity = _commerceInventoryEngine.getStockQuantity(
+		BigDecimal stockQuantity = _commerceInventoryEngine.getStockQuantity(
 			cpInstance.getCompanyId(), cpInstance.getGroupId(),
-			cpInstance.getSku());
+			cpInstance.getSku(), StringPool.BLANK);
 
-		int maxOrderQuantity = cpDefinitionInventoryEngine.getMaxOrderQuantity(
-			cpInstance);
+		BigDecimal maxOrderQuantity =
+			cpDefinitionInventoryEngine.getMaxOrderQuantity(cpInstance);
 
-		if (stockQuantity < maxOrderQuantity) {
-			return stockQuantity;
+		if (stockQuantity.compareTo(maxOrderQuantity) < 0) {
+			return stockQuantity.intValue();
 		}
 
-		return maxOrderQuantity;
+		return maxOrderQuantity.intValue();
 	}
 
 	private SearchContext _getSearchContext(long groupId) throws Exception {

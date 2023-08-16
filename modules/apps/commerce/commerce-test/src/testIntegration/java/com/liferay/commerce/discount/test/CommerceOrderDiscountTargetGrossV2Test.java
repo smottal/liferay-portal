@@ -36,6 +36,7 @@ import com.liferay.commerce.test.util.CommerceInventoryTestUtil;
 import com.liferay.commerce.test.util.CommerceTaxTestUtil;
 import com.liferay.commerce.test.util.CommerceTestUtil;
 import com.liferay.commerce.test.util.context.TestCommerceContext;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -182,11 +183,14 @@ public class CommerceOrderDiscountTargetGrossV2Test {
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
 			_commerceChannel.getCommerceChannelId());
 
+<<<<<<< HEAD
 		int quantity = 10;
 
+=======
+>>>>>>> f4510516abac (COMMERCE-11740 Update usage of services)
 		CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 			_user.getUserId(), commerceInventoryWarehouse,
-			cpInstanceDiscount.getSku(), quantity);
+			cpInstanceDiscount.getSku(), StringPool.BLANK, BigDecimal.TEN);
 
 		String couponCode = StringUtil.randomString();
 
@@ -200,8 +204,12 @@ public class CommerceOrderDiscountTargetGrossV2Test {
 
 		CommerceTestUtil.addCommerceOrderItem(
 			commerceOrder.getCommerceOrderId(),
+<<<<<<< HEAD
 			cpInstanceDiscount.getCPInstanceId(), BigDecimal.ONE,
 			commerceContext);
+=======
+			cpInstanceDiscount.getCPInstanceId(), 1, commerceContext);
+>>>>>>> f4510516abac (COMMERCE-11740 Update usage of services)
 
 		commerceOrder = _commerceOrderLocalService.applyCouponCode(
 			commerceOrder.getCommerceOrderId(), couponCode, commerceContext);
@@ -315,16 +323,20 @@ public class CommerceOrderDiscountTargetGrossV2Test {
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
 			_commerceChannel.getCommerceChannelId());
 
+<<<<<<< HEAD
 		int quantity = 10;
 		BigDecimal orderedQuantity = BigDecimal.ONE;
+=======
+		BigDecimal quantity = BigDecimal.TEN;
+>>>>>>> f4510516abac (COMMERCE-11740 Update usage of services)
 
 		CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 			_user.getUserId(), commerceInventoryWarehouse,
-			cpInstanceDiscount.getSku(), quantity);
+			cpInstanceDiscount.getSku(), StringPool.BLANK, quantity);
 
 		CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 			_user.getUserId(), commerceInventoryWarehouse,
-			cpInstancePlain.getSku(), quantity);
+			cpInstancePlain.getSku(), StringPool.BLANK, quantity);
 
 		CommerceDiscount commerceDiscount1 =
 			CommerceDiscountTestUtil.addFixedCommerceDiscount(
@@ -340,6 +352,8 @@ public class CommerceOrderDiscountTargetGrossV2Test {
 		CommerceContext commerceContext = new TestCommerceContext(
 			_accountEntry, _commerceCurrency, _commerceChannel, _user, _group,
 			commerceOrder);
+
+		int orderedQuantity = 1;
 
 		CommerceTestUtil.addCommerceOrderItem(
 			commerceOrder.getCommerceOrderId(),
@@ -486,16 +500,20 @@ public class CommerceOrderDiscountTargetGrossV2Test {
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
 			_commerceChannel.getCommerceChannelId());
 
+<<<<<<< HEAD
 		int quantity = 10;
 		BigDecimal orderedQuantity = BigDecimal.ONE;
+=======
+		BigDecimal quantity = BigDecimal.TEN;
+>>>>>>> f4510516abac (COMMERCE-11740 Update usage of services)
 
 		CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 			_user.getUserId(), commerceInventoryWarehouse,
-			cpInstanceDiscount.getSku(), quantity);
+			cpInstanceDiscount.getSku(), StringPool.BLANK, quantity);
 
 		CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 			_user.getUserId(), commerceInventoryWarehouse,
-			cpInstancePlain.getSku(), quantity);
+			cpInstancePlain.getSku(), StringPool.BLANK, quantity);
 
 		CommerceDiscount commerceDiscount1 =
 			CommerceDiscountTestUtil.addFixedCommerceDiscount(
@@ -513,6 +531,8 @@ public class CommerceOrderDiscountTargetGrossV2Test {
 		CommerceContext commerceContext = new TestCommerceContext(
 			_accountEntry, _commerceCurrency, _commerceChannel, _user, _group,
 			commerceOrder);
+
+		int orderedQuantity = 1;
 
 		CommerceTestUtil.addCommerceOrderItem(
 			commerceOrder.getCommerceOrderId(),

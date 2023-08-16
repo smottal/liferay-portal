@@ -35,6 +35,7 @@ import com.liferay.commerce.service.CommerceOrderItemLocalService;
 import com.liferay.commerce.service.CommerceOrderLocalService;
 import com.liferay.commerce.test.util.CommerceInventoryTestUtil;
 import com.liferay.commerce.test.util.context.TestCommerceContext;
+import com.liferay.commerce.util.CommerceBigDecimalUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.model.Group;
@@ -188,15 +189,15 @@ public class CommerceInventoryEngineTest {
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouse(
 				_serviceContext);
 
-		int warehouse1ItemQuantity = 5;
-		int warehouse2ItemQuantity = 5;
+		BigDecimal warehouse1ItemQuantity = BigDecimal.valueOf(5);
+		BigDecimal warehouse2ItemQuantity = BigDecimal.valueOf(5);
 
 		_commerceInventoryWarehouseItemLocalService.
 			addCommerceInventoryWarehouseItem(
 				StringPool.BLANK, _user.getUserId(),
 				commerceInventoryWarehouse1.getCommerceInventoryWarehouseId(),
-				BigDecimal.valueOf(warehouse1ItemQuantity),
-				_cpInstance1.getSku(), StringPool.BLANK);
+				_cpInstance1.getSku(), StringPool.BLANK,
+				warehouse1ItemQuantity);
 
 		_commerceInventoryWarehouseItemLocalService.
 			addCommerceInventoryWarehouseItem(
@@ -222,11 +223,28 @@ public class CommerceInventoryEngineTest {
 		int remainingCompanyStockQuantity =
 			_commerceInventoryEngine.getStockQuantity(
 				_group.getCompanyId(), _cpInstance1.getGroupId(),
-				_cpInstance1.getSku());
+				_cpInstance1.getSku(), StringPool.BLANK);
 
-		Assert.assertEquals(
-			companyStockQuantity - bookedQuantity.intValue(),
-			remainingCompanyStockQuantity);
+		Assert.assertTrue(
+			CommerceBigDecimalUtil.eq(
+				companyStockQuantity,
+				warehouse1ItemQuantity.add(warehouse2ItemQuantity)));
+
+		BigDecimal bookedQuantity = BigDecimal.valueOf(7);
+
+		_commerceBookedQuantityLocalService.addCommerceBookedQuantity(
+			_user.getUserId(), _cpInstance1.getSku(), StringPool.BLANK,
+			bookedQuantity, null, Collections.emptyMap());
+
+		BigDecimal remainingCompanyStockQuantity =
+			_commerceInventoryEngine.getStockQuantity(
+				_group.getCompanyId(), _cpInstance1.getGroupId(),
+				_cpInstance1.getSku(), StringPool.BLANK);
+
+		Assert.assertTrue(
+			CommerceBigDecimalUtil.eq(
+				remainingCompanyStockQuantity,
+				companyStockQuantity.subtract(bookedQuantity)));
 	}
 
 	@Test
@@ -258,30 +276,32 @@ public class CommerceInventoryEngineTest {
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouse(
 				_serviceContext);
 
-		int warehouse1ItemQuantity = 5;
-		int warehouse2ItemQuantity = 5;
+		BigDecimal warehouse1ItemQuantity = BigDecimal.valueOf(5);
+		BigDecimal warehouse2ItemQuantity = BigDecimal.valueOf(5);
 
 		_commerceInventoryWarehouseItemLocalService.
 			addCommerceInventoryWarehouseItem(
 				StringPool.BLANK, _user.getUserId(),
 				commerceInventoryWarehouse1.getCommerceInventoryWarehouseId(),
-				BigDecimal.valueOf(warehouse1ItemQuantity),
-				_cpInstance1.getSku(), StringPool.BLANK);
+				_cpInstance1.getSku(), StringPool.BLANK,
+				warehouse1ItemQuantity);
 
 		_commerceInventoryWarehouseItemLocalService.
 			addCommerceInventoryWarehouseItem(
 				StringPool.BLANK, _user.getUserId(),
 				commerceInventoryWarehouse2.getCommerceInventoryWarehouseId(),
-				BigDecimal.valueOf(warehouse2ItemQuantity),
+				_cpInstance1.getSku(), StringPool.BLANK,
+				warehouse2ItemQuantity);
+
+		BigDecimal companyStockQuantity =
+			_commerceInventoryEngine.getStockQuantity(
+				_group.getCompanyId(), _cpInstance1.getGroupId(),
 				_cpInstance1.getSku(), StringPool.BLANK);
 
-		int companyStockQuantity = _commerceInventoryEngine.getStockQuantity(
-			_group.getCompanyId(), _cpInstance1.getGroupId(),
-			_cpInstance1.getSku());
-
-		Assert.assertEquals(
-			warehouse1ItemQuantity + warehouse2ItemQuantity,
-			companyStockQuantity);
+		Assert.assertTrue(
+			CommerceBigDecimalUtil.eq(
+				warehouse1ItemQuantity.add(warehouse2ItemQuantity),
+				companyStockQuantity));
 
 		BigDecimal bookedQuantity = new BigDecimal(12);
 
@@ -290,47 +310,49 @@ public class CommerceInventoryEngineTest {
 				_user.getUserId(), null, bookedQuantity, _cpInstance1.getSku(),
 				StringPool.BLANK, Collections.emptyMap());
 
-		int consumedQuantity = 0;
+		BigDecimal consumedQuantity = BigDecimal.ZERO;
 
-		int quantity = 3;
+		BigDecimal quantity = BigDecimal.valueOf(3);
 
 		_commerceInventoryEngine.consumeQuantity(
 			_user.getUserId(), _cpInstance1.getGroupId(),
 			commerceInventoryWarehouse1.getCommerceInventoryWarehouseId(),
-			_cpInstance1.getSku(), quantity,
+			_cpInstance1.getSku(), StringPool.BLANK, quantity,
 			commerceBookedQuantity.getCommerceInventoryBookedQuantityId(),
 			Collections.emptyMap());
 
-		int remainingCompanyStockQuantity =
+		BigDecimal remainingCompanyStockQuantity =
 			_commerceInventoryEngine.getStockQuantity(
 				_group.getCompanyId(), _cpInstance1.getGroupId(),
-				_cpInstance1.getSku());
+				_cpInstance1.getSku(), StringPool.BLANK);
 
-		consumedQuantity += quantity;
+		consumedQuantity = consumedQuantity.add(quantity);
 
-		Assert.assertEquals(
-			companyStockQuantity - bookedQuantity.intValue(),
-			remainingCompanyStockQuantity);
+		Assert.assertTrue(
+			CommerceBigDecimalUtil.eq(
+				companyStockQuantity.subtract(bookedQuantity),
+				remainingCompanyStockQuantity));
 
-		quantity = 10;
+		quantity = BigDecimal.TEN;
 
 		_commerceInventoryEngine.consumeQuantity(
 			_user.getUserId(), _cpInstance1.getGroupId(),
 			commerceInventoryWarehouse1.getCommerceInventoryWarehouseId(),
-			_cpInstance1.getSku(), quantity,
+			_cpInstance1.getSku(), StringPool.BLANK, quantity,
 			commerceBookedQuantity.getCommerceInventoryBookedQuantityId(),
 			Collections.emptyMap());
 
 		remainingCompanyStockQuantity =
 			_commerceInventoryEngine.getStockQuantity(
 				_group.getCompanyId(), _cpInstance1.getGroupId(),
-				_cpInstance1.getSku());
+				_cpInstance1.getSku(), StringPool.BLANK);
 
-		consumedQuantity += quantity;
+		consumedQuantity = consumedQuantity.add(quantity);
 
-		Assert.assertEquals(
-			companyStockQuantity - consumedQuantity,
-			remainingCompanyStockQuantity);
+		Assert.assertTrue(
+			CommerceBigDecimalUtil.eq(
+				companyStockQuantity.subtract(consumedQuantity),
+				remainingCompanyStockQuantity));
 	}
 
 	@Test(expected = NoSuchInventoryBookedQuantityException.class)
@@ -351,7 +373,7 @@ public class CommerceInventoryEngineTest {
 		_commerceInventoryWarehouseItem1 =
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 				_commerceChannel.getCommerceChannelId(), _cpInstance1.getSku(),
-				10, _serviceContext);
+				StringPool.BLANK, BigDecimal.TEN, _serviceContext);
 
 		BigDecimal bookQuantity = new BigDecimal(5);
 
@@ -388,21 +410,17 @@ public class CommerceInventoryEngineTest {
 					commerceOrderItem.getCompanyId(), _cpInstance1.getGroupId(),
 					_commerceChannel.getGroupId(), _cpInstance1.getSku())));
 
-		_commerceInventoryEngine.consumeQuantity(
-			_user.getUserId(), _cpInstance1.getGroupId(),
-			_commerceInventoryWarehouseItem1.getCommerceInventoryWarehouseId(),
-			_cpInstance1.getSku(), bookQuantity.intValue(),
-			commerceBookedQuantity.getCommerceInventoryBookedQuantityId(),
 			Collections.emptyMap());
 
 		quantity = _commerceInventoryWarehouseItem1.getQuantity();
 
-		Assert.assertEquals(
-			quantity.subtract(bookQuantity),
-			BigDecimal.valueOf(
+		Assert.assertTrue(
+			CommerceBigDecimalUtil.eq(
+				quantity.subtract(bookQuantity),
 				_commerceInventoryEngine.getStockQuantity(
 					_group.getCompanyId(), _cpInstance1.getGroupId(),
-					_commerceChannel.getGroupId(), _cpInstance1.getSku())));
+					_commerceChannel.getGroupId(), _cpInstance1.getSku(),
+					StringPool.BLANK)));
 
 		_commerceBookedQuantityLocalService.getCommerceInventoryBookedQuantity(
 			commerceBookedQuantity.getCommerceInventoryBookedQuantityId());
@@ -433,8 +451,8 @@ public class CommerceInventoryEngineTest {
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouse(
 				_serviceContext);
 
-		int warehouse1ItemQuantity = 5;
-		int warehouse2ItemQuantity = 5;
+		BigDecimal warehouse1ItemQuantity = BigDecimal.valueOf(5);
+		BigDecimal warehouse2ItemQuantity = BigDecimal.valueOf(5);
 
 		_commerceInventoryWarehouseItemLocalService.
 			addCommerceInventoryWarehouseItem(
@@ -450,29 +468,36 @@ public class CommerceInventoryEngineTest {
 				BigDecimal.valueOf(warehouse2ItemQuantity),
 				_cpInstance1.getSku(), StringPool.BLANK);
 
-		int companyStockQuantity = _commerceInventoryEngine.getStockQuantity(
-			_group.getCompanyId(), _cpInstance1.getGroupId(),
-			_cpInstance1.getSku());
+		BigDecimal companyStockQuantity =
+			_commerceInventoryEngine.getStockQuantity(
+				_group.getCompanyId(), _cpInstance1.getGroupId(),
+				_cpInstance1.getSku(), StringPool.BLANK);
 
-		Assert.assertEquals(
-			warehouse1ItemQuantity + warehouse2ItemQuantity,
-			companyStockQuantity);
+		Assert.assertTrue(
+			CommerceBigDecimalUtil.eq(
+				warehouse1ItemQuantity.add(warehouse2ItemQuantity),
+				companyStockQuantity));
 
-		int quantity = 7;
+		BigDecimal quantity = BigDecimal.valueOf(7);
 
 		_commerceInventoryEngine.consumeQuantity(
 			_user.getUserId(), _cpInstance1.getGroupId(),
 			commerceInventoryWarehouse1.getCommerceInventoryWarehouseId(),
-			_cpInstance1.getSku(), quantity, 0, Collections.emptyMap());
+			_cpInstance1.getSku(), StringPool.BLANK, quantity, 0,
+			Collections.emptyMap());
 
-		int remainingCompanyStockQuantity =
+		BigDecimal remainingCompanyStockQuantity =
 			_commerceInventoryEngine.getStockQuantity(
 				_group.getCompanyId(), _cpInstance1.getGroupId(),
-				_cpInstance1.getSku());
+				_cpInstance1.getSku(), StringPool.BLANK);
 
-		Assert.assertEquals(
-			warehouse1ItemQuantity + warehouse2ItemQuantity - quantity,
-			remainingCompanyStockQuantity);
+		warehouse1ItemQuantity = warehouse1ItemQuantity.add(
+			warehouse2ItemQuantity);
+
+		Assert.assertTrue(
+			CommerceBigDecimalUtil.eq(
+				warehouse1ItemQuantity.subtract(quantity),
+				remainingCompanyStockQuantity));
 	}
 
 	@Test(expected = DuplicateCommerceInventoryWarehouseException.class)
@@ -582,9 +607,6 @@ public class CommerceInventoryEngineTest {
 				getCommerceInventoryWarehouseId(),
 			_commerceChannel.getCommerceChannelId(), _serviceContext);
 
-		int inactiveWarehouseQuantity = 5;
-		int activeWarehouseQuantity = 10;
-
 		_commerceInventoryWarehouseItemLocalService.
 			addCommerceInventoryWarehouseItem(
 				StringPool.BLANK, _user.getUserId(),
@@ -598,20 +620,26 @@ public class CommerceInventoryEngineTest {
 				StringPool.BLANK, _user.getUserId(),
 				activeCommerceInventoryWarehouse.
 					getCommerceInventoryWarehouseId(),
+<<<<<<< HEAD
 				BigDecimal.valueOf(activeWarehouseQuantity),
 				_cpInstance1.getSku(), StringPool.BLANK);
+=======
+				_cpInstance1.getSku(), StringPool.BLANK,
+				activeWarehouseQuantity);
 
-		int companyStockQuantity = _commerceInventoryEngine.getStockQuantity(
-			_group.getCompanyId(), _cpInstance1.getGroupId(),
-			_cpInstance1.getSku());
+		BigDecimal companyStockQuantity =
+		Assert.assertTrue(
+			CommerceBigDecimalUtil.eq(
+				activeWarehouseQuantity, companyStockQuantity));
 
-		Assert.assertEquals(activeWarehouseQuantity, companyStockQuantity);
+		BigDecimal channelStockQuantity =
+			_commerceInventoryEngine.getStockQuantity(
+				_group.getCompanyId(), _cpInstance1.getGroupId(),
+				_commerceChannel.getGroupId(), _cpInstance1.getSku(),
+				StringPool.BLANK);
 
-		int channelStockQuantity = _commerceInventoryEngine.getStockQuantity(
-			_group.getCompanyId(), _cpInstance1.getGroupId(),
-			_commerceChannel.getGroupId(), _cpInstance1.getSku());
-
-		Assert.assertEquals(0, channelStockQuantity);
+		Assert.assertTrue(
+			CommerceBigDecimalUtil.eq(BigDecimal.ZERO, channelStockQuantity));
 	}
 
 	@Test
@@ -632,8 +660,6 @@ public class CommerceInventoryEngineTest {
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouse(
 				false, _serviceContext);
 
-		int quantity = 10;
-
 		_commerceInventoryWarehouseItemLocalService.
 			addCommerceInventoryWarehouseItem(
 				StringPool.BLANK, _user.getUserId(),
@@ -641,11 +667,12 @@ public class CommerceInventoryEngineTest {
 				BigDecimal.valueOf(quantity), _cpInstance1.getSku(),
 				StringPool.BLANK);
 
-		Assert.assertEquals(
-			0,
-			_commerceInventoryEngine.getStockQuantity(
-				_group.getCompanyId(), _cpInstance1.getGroupId(),
-				_cpInstance1.getSku()));
+		Assert.assertTrue(
+			CommerceBigDecimalUtil.eq(
+				BigDecimal.ZERO,
+				_commerceInventoryEngine.getStockQuantity(
+					_group.getCompanyId(), _cpInstance1.getGroupId(),
+					_cpInstance1.getSku(), StringPool.BLANK)));
 	}
 
 	@Test
@@ -673,8 +700,6 @@ public class CommerceInventoryEngineTest {
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
 			_commerceChannel.getCommerceChannelId(), _serviceContext);
 
-		int quantity = 10;
-
 		_commerceInventoryWarehouseItemLocalService.
 			addCommerceInventoryWarehouseItem(
 				StringPool.BLANK, _user.getUserId(),
@@ -682,11 +707,13 @@ public class CommerceInventoryEngineTest {
 				BigDecimal.valueOf(quantity), _cpInstance1.getSku(),
 				StringPool.BLANK);
 
-		Assert.assertEquals(
-			0,
-			_commerceInventoryEngine.getStockQuantity(
-				_group.getCompanyId(), _cpInstance1.getGroupId(),
-				_commerceChannel.getGroupId(), _cpInstance1.getSku()));
+		Assert.assertTrue(
+			CommerceBigDecimalUtil.eq(
+				BigDecimal.ZERO,
+				_commerceInventoryEngine.getStockQuantity(
+					_group.getCompanyId(), _cpInstance1.getGroupId(),
+					_commerceChannel.getGroupId(), _cpInstance1.getSku(),
+					StringPool.BLANK)));
 	}
 
 	@Test
@@ -713,8 +740,6 @@ public class CommerceInventoryEngineTest {
 			CPDefinition.class.getName(), _cpInstance1.getCPDefinitionId(),
 			_commerceChannel.getCommerceChannelId(), _serviceContext);
 
-		int quantity = 10;
-
 		_commerceInventoryWarehouseItemLocalService.
 			addCommerceInventoryWarehouseItem(
 				StringPool.BLANK, _user.getUserId(),
@@ -722,11 +747,13 @@ public class CommerceInventoryEngineTest {
 				BigDecimal.valueOf(quantity), _cpInstance1.getSku(),
 				StringPool.BLANK);
 
-		Assert.assertEquals(
-			0,
-			_commerceInventoryEngine.getStockQuantity(
-				_group.getCompanyId(), _cpInstance1.getGroupId(),
-				_commerceChannel.getGroupId(), _cpInstance1.getSku()));
+		Assert.assertTrue(
+			CommerceBigDecimalUtil.eq(
+				BigDecimal.ZERO,
+				_commerceInventoryEngine.getStockQuantity(
+					_group.getCompanyId(), _cpInstance1.getGroupId(),
+					_commerceChannel.getGroupId(), _cpInstance1.getSku(),
+					StringPool.BLANK)));
 	}
 
 	@Test
@@ -745,7 +772,7 @@ public class CommerceInventoryEngineTest {
 		_commerceInventoryWarehouseItem1 =
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 				_commerceChannel.getCommerceChannelId(), _cpInstance1.getSku(),
-				10, _serviceContext);
+				StringPool.BLANK, BigDecimal.TEN, _serviceContext);
 
 		Assert.assertEquals(
 			_commerceInventoryWarehouseItem1.getQuantity(),
@@ -842,7 +869,8 @@ public class CommerceInventoryEngineTest {
 		List<CommerceInventoryWarehouse> expectedWarehouses =
 			_commerceInventoryWarehouseLocalService.
 				getCommerceInventoryWarehouses(
-					_commerceChannel.getGroupId(), _cpInstance1.getSku());
+					_commerceChannel.getGroupId(), _cpInstance1.getSku(),
+					StringPool.BLANK);
 
 		Assert.assertEquals(
 			expectedWarehouses.toString(), 1, expectedWarehouses.size());
@@ -870,7 +898,8 @@ public class CommerceInventoryEngineTest {
 		expectedWarehouses =
 			_commerceInventoryWarehouseLocalService.
 				getCommerceInventoryWarehouses(
-					_commerceChannel.getGroupId(), _cpInstance1.getSku());
+					_commerceChannel.getGroupId(), _cpInstance1.getSku(),
+					StringPool.BLANK);
 
 		Assert.assertEquals(
 			expectedWarehouses.toString(), 1, expectedWarehouses.size());
@@ -897,7 +926,8 @@ public class CommerceInventoryEngineTest {
 		expectedWarehouses =
 			_commerceInventoryWarehouseLocalService.
 				getCommerceInventoryWarehouses(
-					_commerceChannel.getGroupId(), _cpInstance1.getSku());
+					_commerceChannel.getGroupId(), _cpInstance1.getSku(),
+					StringPool.BLANK);
 
 		Assert.assertEquals(
 			expectedWarehouses.toString(), 1, expectedWarehouses.size());
@@ -905,7 +935,8 @@ public class CommerceInventoryEngineTest {
 		expectedWarehouses =
 			_commerceInventoryWarehouseLocalService.
 				getCommerceInventoryWarehouses(
-					_commerceChannel.getGroupId(), _cpInstance2.getSku());
+					_commerceChannel.getGroupId(), _cpInstance2.getSku(),
+					StringPool.BLANK);
 
 		Assert.assertEquals(
 			expectedWarehouses.toString(), 1, expectedWarehouses.size());
@@ -933,7 +964,7 @@ public class CommerceInventoryEngineTest {
 		CommerceInventoryWarehouseItem commerceInventoryWarehouseItem =
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 				_commerceChannel.getCommerceChannelId(), _cpInstance1.getSku(),
-				10, _serviceContext);
+				StringPool.BLANK, BigDecimal.TEN, _serviceContext);
 
 		Date endDate = new Date();
 

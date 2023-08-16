@@ -102,10 +102,12 @@ public class EditCommerceInventoryWarehouseMVCActionCommand
 		String sku = ParamUtil.getString(actionRequest, "sku");
 
 		_commerceInventoryWarehouseItemService.
-			deleteCommerceInventoryWarehouseItems(companyId, sku);
+			deleteCommerceInventoryWarehouseItems(
+				companyId, sku, StringPool.BLANK);
 
 		_commerceInventoryReplenishmentItemService.
-			deleteCommerceInventoryReplenishmentItems(companyId, sku);
+			deleteCommerceInventoryReplenishmentItems(
+				companyId, sku, StringPool.BLANK);
 	}
 
 	private void _updateCommerceInventoryWarehouse(ActionRequest actionRequest)
@@ -116,12 +118,13 @@ public class EditCommerceInventoryWarehouseMVCActionCommand
 
 		String sku = ParamUtil.getString(actionRequest, "sku");
 
-		int quantity = ParamUtil.getInteger(actionRequest, "quantity");
+		BigDecimal quantity = (BigDecimal)ParamUtil.getNumber(
+			actionRequest, "quantity");
 
 		CommerceInventoryWarehouseItem commerceInventoryWarehouseItem =
 			_commerceInventoryWarehouseItemService.
 				fetchCommerceInventoryWarehouseItem(
-					commerceInventoryWarehouseId, sku);
+					commerceInventoryWarehouseId, sku, StringPool.BLANK);
 
 		if (commerceInventoryWarehouseItem == null) {
 			_commerceInventoryWarehouseItemService.

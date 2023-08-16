@@ -109,15 +109,16 @@ public class CommerceShippableOrderItemsFDSDataProvider
 
 			if (commerceShipmentItem == null) {
 				BigDecimal quantity = commerceOrderItem.getQuantity();
+				BigDecimal stockQuantity =
+					_commerceInventoryEngine.getStockQuantity(
+						commerceOrderItem.getCompanyId(),
+						commerceCatalogGroupId, commerceOrderItem.getGroupId(),
+						commerceOrderItem.getSku(), StringPool.BLANK);
 
 				orderItems.add(
 					new OrderItem(
-						_commerceInventoryEngine.getStockQuantity(
-							commerceOrderItem.getCompanyId(),
-							commerceCatalogGroupId,
-							commerceOrderItem.getGroupId(),
-							commerceOrderItem.getSku()),
-						icon, commerceOrderItem.getCommerceOrderId(),
+						stockQuantity.intValue(), icon,
+						commerceOrderItem.getCommerceOrderId(),
 						commerceOrderItem.getCommerceOrderItemId(),
 						quantity.intValue() -
 							commerceOrderItem.getShippedQuantity(),

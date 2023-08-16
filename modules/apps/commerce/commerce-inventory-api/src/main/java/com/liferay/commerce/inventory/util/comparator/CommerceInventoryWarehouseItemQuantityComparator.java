@@ -35,17 +35,16 @@ public class CommerceInventoryWarehouseItemQuantityComparator
 		CommerceInventoryWarehouseItem commerceInventoryWarehouseItem1,
 		CommerceInventoryWarehouseItem commerceInventoryWarehouseItem2) {
 
-		BigDecimal commerceInventoryWarehouseItemQuantity =
-			commerceInventoryWarehouseItem1.getQuantity();
+		BigDecimal quantity = commerceInventoryWarehouseItem1.getQuantity();
 
-		int value = commerceInventoryWarehouseItemQuantity.compareTo(
+		int compareTo = quantity.compareTo(
 			commerceInventoryWarehouseItem2.getQuantity());
 
 		if (_ascending) {
-			return value;
+			return compareTo;
 		}
 
-		return Math.negateExact(value);
+		return Math.negateExact(compareTo);
 	}
 
 	@Override

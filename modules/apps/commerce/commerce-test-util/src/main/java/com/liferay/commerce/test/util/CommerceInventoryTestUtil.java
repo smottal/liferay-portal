@@ -124,7 +124,7 @@ public class CommerceInventoryTestUtil {
 			addCommerceInventoryWarehouseItem(
 				long userId,
 				CommerceInventoryWarehouse commerceInventoryWarehouse,
-				String sku, int quantity)
+				String sku, String unitOfMeasureKey, BigDecimal quantity)
 		throws Exception {
 
 		return CommerceInventoryWarehouseItemLocalServiceUtil.
@@ -136,8 +136,8 @@ public class CommerceInventoryTestUtil {
 
 	public static CommerceInventoryWarehouseItem
 			addCommerceInventoryWarehouseItem(
-				long commerceChannelId, String sku, int quantity,
-				ServiceContext serviceContext)
+				long commerceChannelId, String sku, String unitOfMeasureKey,
+				BigDecimal quantity, ServiceContext serviceContext)
 		throws Exception {
 
 		CommerceInventoryWarehouse commerceInventoryWarehouse =

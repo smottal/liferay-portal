@@ -216,7 +216,7 @@ public class CommerceInventoryWarehouseIndexer
 		return super.isUseSearchResultPermissionFilter(searchContext);
 	}
 
-	private int _getItemsQuantity(
+	private BigDecimal _getItemsQuantity(
 		CommerceInventoryWarehouse commerceInventoryWarehouse) {
 
 		BigDecimal count = BigDecimal.ZERO;

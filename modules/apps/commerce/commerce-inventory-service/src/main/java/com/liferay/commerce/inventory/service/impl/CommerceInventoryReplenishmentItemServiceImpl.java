@@ -81,7 +81,7 @@ public class CommerceInventoryReplenishmentItemServiceImpl
 
 	@Override
 	public void deleteCommerceInventoryReplenishmentItems(
-			long companyId, String sku)
+			long companyId, String sku, String unitOfMeasureKey)
 		throws PortalException {
 
 		PortletResourcePermission portletResourcePermission =
@@ -93,7 +93,8 @@ public class CommerceInventoryReplenishmentItemServiceImpl
 			CommerceInventoryActionKeys.MANAGE_INVENTORY);
 
 		commerceInventoryReplenishmentItemLocalService.
-			deleteCommerceInventoryReplenishmentItems(companyId, sku);
+			deleteCommerceInventoryReplenishmentItems(
+				companyId, sku, unitOfMeasureKey);
 	}
 
 	@Override
@@ -156,7 +157,8 @@ public class CommerceInventoryReplenishmentItemServiceImpl
 	@Override
 	public List<CommerceInventoryReplenishmentItem>
 			getCommerceInventoryReplenishmentItemsByCompanyIdAndSku(
-				long companyId, String sku, int start, int end)
+				long companyId, String sku, String unitOfMeasureKey, int start,
+				int end)
 		throws PortalException {
 
 		PortletResourcePermission portletResourcePermission =
@@ -169,12 +171,13 @@ public class CommerceInventoryReplenishmentItemServiceImpl
 
 		return commerceInventoryReplenishmentItemLocalService.
 			getCommerceInventoryReplenishmentItemsByCompanyIdAndSku(
-				companyId, sku, start, end);
+				companyId, sku, unitOfMeasureKey, start, end);
 	}
 
 	@Override
-	public BigDecimal getCommerceInventoryReplenishmentItemsCount(
-			long commerceInventoryWarehouseId, String sku)
+	public long getCommerceInventoryReplenishmentItemsCount(
+			long commerceInventoryWarehouseId, String sku,
+			String unitOfMeasureKey)
 		throws PortalException {
 
 		_commerceInventoryWarehouseModelResourcePermission.check(
@@ -183,7 +186,7 @@ public class CommerceInventoryReplenishmentItemServiceImpl
 
 		return commerceInventoryReplenishmentItemLocalService.
 			getCommerceInventoryReplenishmentItemsCount(
-				commerceInventoryWarehouseId, sku);
+				commerceInventoryWarehouseId, sku, unitOfMeasureKey);
 	}
 
 	@Override
@@ -203,7 +206,7 @@ public class CommerceInventoryReplenishmentItemServiceImpl
 
 	@Override
 	public int getCommerceInventoryReplenishmentItemsCountByCompanyIdAndSku(
-			long companyId, String sku)
+			long companyId, String sku, String unitOfMeasureKey)
 		throws PortalException {
 
 		PortletResourcePermission portletResourcePermission =
@@ -216,7 +219,7 @@ public class CommerceInventoryReplenishmentItemServiceImpl
 
 		return commerceInventoryReplenishmentItemLocalService.
 			getCommerceInventoryReplenishmentItemsCountByCompanyIdAndSku(
-				companyId, sku);
+				companyId, sku, unitOfMeasureKey);
 	}
 
 	@Override

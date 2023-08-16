@@ -11,6 +11,8 @@ import com.liferay.commerce.service.CPDefinitionInventoryLocalServiceUtil;
 import com.liferay.commerce.taglib.servlet.taglib.internal.servlet.ServletContextUtil;
 import com.liferay.taglib.util.IncludeTag;
 
+import java.math.BigDecimal;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.PageContext;
@@ -25,11 +27,14 @@ public class QuantityInputTag extends IncludeTag {
 	public int doStartTag() throws JspException {
 		_allowedOrderQuantities = new int[0];
 		_maxOrderQuantity =
-			CPDefinitionInventoryConstants.DEFAULT_MAX_ORDER_QUANTITY;
+			CPDefinitionInventoryConstants.DEFAULT_MAX_ORDER_QUANTITY.
+				intValue();
 		_minOrderQuantity =
-			CPDefinitionInventoryConstants.DEFAULT_MIN_ORDER_QUANTITY;
+			CPDefinitionInventoryConstants.DEFAULT_MIN_ORDER_QUANTITY.
+				intValue();
 		_multipleOrderQuantity =
-			CPDefinitionInventoryConstants.DEFAULT_MULTIPLE_ORDER_QUANTITY;
+			CPDefinitionInventoryConstants.DEFAULT_MULTIPLE_ORDER_QUANTITY.
+				intValue();
 
 		CPDefinitionInventory cpDefinitionInventory =
 			CPDefinitionInventoryLocalServiceUtil.
@@ -38,10 +43,21 @@ public class QuantityInputTag extends IncludeTag {
 		if (cpDefinitionInventory != null) {
 			_allowedOrderQuantities =
 				cpDefinitionInventory.getAllowedOrderQuantitiesArray();
-			_maxOrderQuantity = cpDefinitionInventory.getMaxOrderQuantity();
-			_minOrderQuantity = cpDefinitionInventory.getMinOrderQuantity();
-			_multipleOrderQuantity =
+
+			BigDecimal maxOrderQuantity =
+				cpDefinitionInventory.getMaxOrderQuantity();
+
+			_maxOrderQuantity = maxOrderQuantity.intValue();
+
+			BigDecimal minOrderQuantity =
+				cpDefinitionInventory.getMinOrderQuantity();
+
+			_minOrderQuantity = minOrderQuantity.intValue();
+
+			BigDecimal multipleOrderQuantity =
 				cpDefinitionInventory.getMultipleOrderQuantity();
+
+			_multipleOrderQuantity = multipleOrderQuantity.intValue();
 		}
 
 		if (_value == 0) {

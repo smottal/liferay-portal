@@ -27,6 +27,7 @@ import com.liferay.commerce.product.service.CPInstanceUnitOfMeasureLocalService;
 import com.liferay.commerce.service.CommerceOrderItemLocalService;
 import com.liferay.commerce.service.base.CommerceShipmentItemLocalServiceBaseImpl;
 import com.liferay.commerce.service.persistence.CommerceShipmentPersistence;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
@@ -453,7 +454,8 @@ public class CommerceShipmentItemLocalServiceImpl
 
 		return _commerceInventoryWarehouseItemLocalService.
 			fetchCommerceInventoryWarehouseItem(
-				commerceShipmentItem.getCommerceInventoryWarehouseId(), sku);
+				commerceShipmentItem.getCommerceInventoryWarehouseId(), sku,
+				StringPool.BLANK);
 	}
 
 	private void _restoreStockQuantity(
@@ -472,7 +474,8 @@ public class CommerceShipmentItemLocalServiceImpl
 		_commerceInventoryEngine.increaseStockQuantity(
 			commerceShipmentItem.getUserId(), commerceCatalogGroupId,
 			commerceShipmentItem.getCommerceInventoryWarehouseId(),
-			commerceOrderItem.getSku(), quantity);
+			commerceOrderItem.getSku(), StringPool.BLANK,
+			BigDecimal.valueOf(quantity));
 
 		_commerceInventoryBookedQuantityLocalService.
 			resetCommerceBookedQuantity(
@@ -523,7 +526,8 @@ public class CommerceShipmentItemLocalServiceImpl
 		_commerceInventoryEngine.consumeQuantity(
 			commerceShipmentItem.getUserId(), commerceCatalogGroupId,
 			commerceShipmentItem.getCommerceInventoryWarehouseId(),
-			commerceOrderItem.getSku(), quantity,
+			commerceOrderItem.getSku(), StringPool.BLANK,
+			BigDecimal.valueOf(quantity),
 			commerceOrderItem.getBookedQuantityId(),
 			HashMapBuilder.put(
 				CommerceInventoryAuditTypeConstants.ORDER_ID,

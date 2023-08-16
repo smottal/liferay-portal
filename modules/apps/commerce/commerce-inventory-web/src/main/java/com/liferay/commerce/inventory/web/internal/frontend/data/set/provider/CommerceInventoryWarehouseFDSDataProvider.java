@@ -14,6 +14,7 @@ import com.liferay.commerce.inventory.web.internal.model.Warehouse;
 import com.liferay.frontend.data.set.provider.FDSDataProvider;
 import com.liferay.frontend.data.set.provider.search.FDSKeywords;
 import com.liferay.frontend.data.set.provider.search.FDSPagination;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -54,7 +55,7 @@ public class CommerceInventoryWarehouseFDSDataProvider
 			_commerceInventoryWarehouseItemService.
 				getCommerceInventoryWarehouseItemsByCompanyIdAndSku(
 					_portal.getCompanyId(httpServletRequest), sku,
-					fdsPagination.getStartPosition(),
+					StringPool.BLANK, fdsPagination.getStartPosition(),
 					fdsPagination.getEndPosition());
 
 		for (CommerceInventoryWarehouseItem commerceInventoryWarehouseItem :
@@ -118,7 +119,8 @@ public class CommerceInventoryWarehouseFDSDataProvider
 
 		return _commerceInventoryWarehouseItemService.
 			getCommerceInventoryWarehouseItemsCount(
-				_portal.getCompanyId(httpServletRequest), sku);
+				_portal.getCompanyId(httpServletRequest), sku,
+				StringPool.BLANK);
 	}
 
 	@Reference

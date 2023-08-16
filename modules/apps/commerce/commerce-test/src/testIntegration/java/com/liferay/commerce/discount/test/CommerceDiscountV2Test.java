@@ -885,11 +885,9 @@ public class CommerceDiscountV2Test {
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
 			commerceChannel.getCommerceChannelId());
 
-		int quantity = 10;
-
 		CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 			_user.getUserId(), commerceInventoryWarehouse, cpInstance.getSku(),
-			quantity);
+			StringPool.BLANK, BigDecimal.TEN);
 
 		String couponCode = StringUtil.randomString();
 

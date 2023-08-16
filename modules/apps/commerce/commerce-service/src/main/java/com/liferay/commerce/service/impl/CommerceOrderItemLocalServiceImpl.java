@@ -411,7 +411,8 @@ public class CommerceOrderItemLocalServiceImpl
 		CommerceInventoryWarehouseItem commerceInventoryWarehouseItem =
 			_commerceInventoryWarehouseItemLocalService.
 				fetchCommerceInventoryWarehouseItem(
-					commerceInventoryWarehouseId, commerceOrderItem.getSku());
+					commerceInventoryWarehouseId, commerceOrderItem.getSku(),
+					StringPool.BLANK);
 
 		if (commerceInventoryWarehouseItem == null) {
 			return 0;
@@ -2149,7 +2150,7 @@ public class CommerceOrderItemLocalServiceImpl
 						userId,
 						commerceInventoryBookedQuantity.
 							getCommerceInventoryBookedQuantityId(),
-						quantity,
+						BigDecimal.valueOf(quantity),
 						HashMapBuilder.put(
 							CommerceInventoryAuditTypeConstants.ORDER_ID,
 							String.valueOf(

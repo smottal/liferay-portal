@@ -182,7 +182,7 @@ public class CommerceOrderItemLocalServiceTest {
 		_commerceInventoryWarehouseItems.add(
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 				_user.getUserId(), _commerceInventoryWarehouse,
-				cpInstance.getSku(), 2));
+				cpInstance.getSku(), StringPool.BLANK, BigDecimal.valueOf(2)));
 
 		Assert.assertNotNull(_commerceCurrency);
 
@@ -255,7 +255,7 @@ public class CommerceOrderItemLocalServiceTest {
 		_commerceInventoryWarehouseItems.add(
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 				_user.getUserId(), _commerceInventoryWarehouse,
-				cpInstance.getSku(), 2));
+				cpInstance.getSku(), StringPool.BLANK, BigDecimal.valueOf(2)));
 
 		Assert.assertNotNull(_commerceCurrency);
 
@@ -313,7 +313,7 @@ public class CommerceOrderItemLocalServiceTest {
 		_commerceInventoryWarehouseItems.add(
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 				_user.getUserId(), _commerceInventoryWarehouse,
-				cpInstance.getSku(), 2));
+				cpInstance.getSku(), StringPool.BLANK, BigDecimal.valueOf(2)));
 
 		Assert.assertNotNull(_commerceCurrency);
 
@@ -531,7 +531,8 @@ public class CommerceOrderItemLocalServiceTest {
 		_commerceInventoryWarehouseItems.add(
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 				_user.getUserId(), _commerceInventoryWarehouse,
-				bundleCPInstance.getSku(), 100));
+				bundleCPInstance.getSku(), StringPool.BLANK,
+				BigDecimal.valueOf(100)));
 
 		BigDecimal quantity = BigDecimal.ONE;
 
@@ -983,7 +984,7 @@ public class CommerceOrderItemLocalServiceTest {
 
 		CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 			_user.getUserId(), _commerceInventoryWarehouse, optionSKU1.getSku(),
-			100);
+			StringPool.BLANK, BigDecimal.valueOf(100));
 
 		BigDecimal option2Price = BigDecimal.valueOf(200);
 
@@ -1005,7 +1006,7 @@ public class CommerceOrderItemLocalServiceTest {
 
 		CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 			_user.getUserId(), _commerceInventoryWarehouse, optionSKU2.getSku(),
-			100);
+			StringPool.BLANK, BigDecimal.valueOf(100));
 
 		Assert.assertNotNull(_commerceCurrency);
 
@@ -1078,7 +1079,8 @@ public class CommerceOrderItemLocalServiceTest {
 
 		CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 			_user.getUserId(), _commerceInventoryWarehouse,
-			bundleCPInstance.getSku(), 100);
+			bundleCPInstance.getSku(), StringPool.BLANK,
+			BigDecimal.valueOf(100));
 
 		BigDecimal quantity = BigDecimal.ONE;
 
@@ -1161,7 +1163,7 @@ public class CommerceOrderItemLocalServiceTest {
 		_commerceInventoryWarehouseItems.add(
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 				_user.getUserId(), _commerceInventoryWarehouse,
-				cpInstance1.getSku(), 0));
+				cpInstance1.getSku(), StringPool.BLANK, BigDecimal.ZERO));
 
 		if (backOrderAllowed) {
 			CommerceTestUtil.updateBackOrderCPDefinitionInventory(
@@ -1177,7 +1179,7 @@ public class CommerceOrderItemLocalServiceTest {
 		_commerceInventoryWarehouseItems.add(
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 				_user.getUserId(), _commerceInventoryWarehouse,
-				cpInstance2.getSku(), 1));
+				cpInstance2.getSku(), StringPool.BLANK, BigDecimal.ONE));
 
 		CPOption dynamicPriceTypeCPOption = CPTestUtil.addCPOption(
 			_commerceCatalog.getGroupId(),
@@ -1234,7 +1236,8 @@ public class CommerceOrderItemLocalServiceTest {
 		_commerceInventoryWarehouseItems.add(
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 				_user.getUserId(), _commerceInventoryWarehouse,
-				bundleCPInstanceWithUnavailableChildSKU.getSku(), 1));
+				bundleCPInstanceWithUnavailableChildSKU.getSku(),
+				StringPool.BLANK, BigDecimal.ONE));
 
 		CommerceOrder commerceOrder =
 			_commerceOrderLocalService.addCommerceOrder(
@@ -1306,7 +1309,8 @@ public class CommerceOrderItemLocalServiceTest {
 		_commerceInventoryWarehouseItems.add(
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 				_user.getUserId(), _commerceInventoryWarehouse,
-				optionSKU1.getSku(), 100));
+				optionSKU1.getSku(), StringPool.BLANK,
+				BigDecimal.valueOf(100)));
 
 		_commerceChannelRel = CommerceTestUtil.addWarehouseCommerceChannelRel(
 			_commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
@@ -1348,7 +1352,8 @@ public class CommerceOrderItemLocalServiceTest {
 		_commerceInventoryWarehouseItems.add(
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 				_user.getUserId(), _commerceInventoryWarehouse,
-				optionSKU2.getSku(), 100));
+				optionSKU2.getSku(), StringPool.BLANK,
+				BigDecimal.valueOf(100)));
 
 		String option1Key = FriendlyURLNormalizerUtil.normalize(
 			RandomTestUtil.randomString());
@@ -1404,7 +1409,8 @@ public class CommerceOrderItemLocalServiceTest {
 		_commerceInventoryWarehouseItems.add(
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 				_user.getUserId(), _commerceInventoryWarehouse,
-				bundleCPInstance.getSku(), 100));
+				bundleCPInstance.getSku(), StringPool.BLANK,
+				BigDecimal.valueOf(100)));
 
 		BigDecimal quantity = BigDecimal.ONE;
 

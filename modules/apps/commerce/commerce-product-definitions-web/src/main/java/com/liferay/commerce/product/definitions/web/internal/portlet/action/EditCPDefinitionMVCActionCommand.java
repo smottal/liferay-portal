@@ -64,6 +64,8 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
+import java.math.BigDecimal;
+
 import java.net.URL;
 
 import java.util.Calendar;
@@ -594,13 +596,13 @@ public class EditCPDefinitionMVCActionCommand extends BaseMVCActionCommand {
 		boolean displayStockQuantity = ParamUtil.getBoolean(
 			actionRequest, "displayStockQuantity");
 		boolean backOrders = ParamUtil.getBoolean(actionRequest, "backOrders");
-		int minStockQuantity = ParamUtil.getInteger(
+		BigDecimal minStockQuantity = (BigDecimal)ParamUtil.getNumber(
 			actionRequest, "minStockQuantity");
-		int minOrderQuantity = ParamUtil.getInteger(
+		BigDecimal minOrderQuantity = (BigDecimal)ParamUtil.getNumber(
 			actionRequest, "minOrderQuantity");
-		int maxOrderQuantity = ParamUtil.getInteger(
+		BigDecimal maxOrderQuantity = (BigDecimal)ParamUtil.getNumber(
 			actionRequest, "maxOrderQuantity");
-		int multipleOrderQuantity = ParamUtil.getInteger(
+		BigDecimal multipleOrderQuantity = (BigDecimal)ParamUtil.getNumber(
 			actionRequest, "multipleOrderQuantity");
 		String allowedOrderQuantities = ParamUtil.getString(
 			actionRequest, "allowedOrderQuantities");

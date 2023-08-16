@@ -198,7 +198,8 @@ public class CommerceInventoryWarehouseItemFDSDataProvider
 		return _commerceInventoryWarehouseItemLocalService.
 			getCommerceInventoryWarehouseItemsCount(
 				_portal.getCompanyId(httpServletRequest),
-				commerceOrderItem.getGroupId(), commerceOrderItem.getSku());
+				commerceOrderItem.getGroupId(), commerceOrderItem.getSku(),
+				StringPool.BLANK);
 	}
 
 	@Reference

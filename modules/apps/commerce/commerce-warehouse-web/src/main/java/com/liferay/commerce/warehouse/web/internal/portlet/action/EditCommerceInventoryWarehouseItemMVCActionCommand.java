@@ -73,7 +73,8 @@ public class EditCommerceInventoryWarehouseItemMVCActionCommand
 
 		long commerceInventoryWarehouseItemId = ParamUtil.getLong(
 			actionRequest, "commerceInventoryWarehouseItemId");
-		int quantity = ParamUtil.getInteger(actionRequest, "quantity");
+		BigDecimal quantity = (BigDecimal)ParamUtil.getNumber(
+			actionRequest, "quantity");
 
 		CommerceInventoryWarehouseItem commerceInventoryWarehouseItem = null;
 

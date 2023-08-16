@@ -13,6 +13,7 @@ import com.liferay.commerce.inventory.web.internal.model.Replenishment;
 import com.liferay.frontend.data.set.provider.FDSDataProvider;
 import com.liferay.frontend.data.set.provider.search.FDSKeywords;
 import com.liferay.frontend.data.set.provider.search.FDSPagination;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -68,7 +69,7 @@ public class CommerceInventoryReplenishmentFDSDataProvider
 				_commerceInventoryReplenishmentItemService.
 					getCommerceInventoryReplenishmentItemsByCompanyIdAndSku(
 						_portal.getCompanyId(httpServletRequest), sku,
-						fdsPagination.getStartPosition(),
+						StringPool.BLANK, fdsPagination.getStartPosition(),
 						fdsPagination.getEndPosition());
 
 		for (CommerceInventoryReplenishmentItem
@@ -112,7 +113,8 @@ public class CommerceInventoryReplenishmentFDSDataProvider
 
 		return _commerceInventoryReplenishmentItemService.
 			getCommerceInventoryReplenishmentItemsCountByCompanyIdAndSku(
-				_portal.getCompanyId(httpServletRequest), sku);
+				_portal.getCompanyId(httpServletRequest), sku,
+				StringPool.BLANK);
 	}
 
 	@Reference

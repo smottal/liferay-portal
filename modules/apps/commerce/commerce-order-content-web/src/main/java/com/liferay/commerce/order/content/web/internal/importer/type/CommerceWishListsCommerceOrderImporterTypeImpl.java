@@ -238,6 +238,9 @@ public class CommerceWishListsCommerceOrderImporterTypeImpl
 				cpDefinition.getCPDefinitionId());
 			commerceOrderImporterItemImpl.setNameMap(cpDefinition.getNameMap());
 
+			BigDecimal minOrderQuantity =
+				_cpDefinitionInventoryEngine.getMinOrderQuantity(cpInstance);
+
 			commerceOrderImporterItemImpl.setQuantity(
 				BigDecimal.valueOf(
 					_cpDefinitionInventoryEngine.getMinOrderQuantity(

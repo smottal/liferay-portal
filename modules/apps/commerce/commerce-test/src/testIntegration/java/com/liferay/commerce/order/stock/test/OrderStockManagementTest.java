@@ -23,6 +23,7 @@ import com.liferay.commerce.service.CommerceOrderLocalService;
 import com.liferay.commerce.shipment.test.util.CommerceShipmentTestUtil;
 import com.liferay.commerce.test.util.CommerceInventoryTestUtil;
 import com.liferay.commerce.test.util.CommerceTestUtil;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.UserLocalService;
@@ -160,7 +161,9 @@ public class OrderStockManagementTest {
 		CommerceInventoryWarehouseItem commerceInventoryWarehouseItem =
 			CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 				_user.getUserId(), commerceInventoryWarehouse,
-				cpInstance.getSku(), quantity);
+				cpInstance.getSku(), StringPool.BLANK, quantity);
+
+		int orderedQuantity = 4;
 
 		CommerceOrderItem commerceOrderItem =
 			CommerceTestUtil.addCommerceOrderItem(
@@ -231,7 +234,7 @@ public class OrderStockManagementTest {
 
 		CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 			_user.getUserId(), commerceInventoryWarehouse, cpInstance.getSku(),
-			10);
+			StringPool.BLANK, BigDecimal.TEN);
 
 		BigDecimal orderedQuantity = BigDecimal.valueOf(2);
 
@@ -303,7 +306,7 @@ public class OrderStockManagementTest {
 
 		CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 			_user.getUserId(), commerceInventoryWarehouse, cpInstance.getSku(),
-			10);
+			StringPool.BLANK, BigDecimal.TEN);
 
 		CommerceTestUtil.addCommerceOrderItem(
 			commerceOrder.getCommerceOrderId(), cpInstance.getCPInstanceId(),
@@ -350,7 +353,7 @@ public class OrderStockManagementTest {
 
 		CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 			_user.getUserId(), commerceInventoryWarehouse, cpInstance.getSku(),
-			10);
+			StringPool.BLANK, BigDecimal.TEN);
 
 		CommerceTestUtil.addCommerceOrderItem(
 			commerceOrder1.getCommerceOrderId(), cpInstance.getCPInstanceId(),

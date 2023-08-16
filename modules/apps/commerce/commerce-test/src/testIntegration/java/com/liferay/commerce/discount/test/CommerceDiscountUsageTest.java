@@ -207,11 +207,9 @@ public class CommerceDiscountUsageTest {
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
 			commerceChannel.getCommerceChannelId());
 
-		int quantity = 10;
-
 		CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 			_user.getUserId(), commerceInventoryWarehouse, cpInstance.getSku(),
-			quantity);
+			StringPool.BLANK, BigDecimal.TEN);
 
 		String couponCode = StringUtil.randomString();
 
@@ -340,11 +338,9 @@ public class CommerceDiscountUsageTest {
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
 			commerceChannel.getCommerceChannelId());
 
-		int quantity = 10;
-
 		CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 			_user.getUserId(), commerceInventoryWarehouse, cpInstance.getSku(),
-			quantity);
+			StringPool.BLANK, BigDecimal.TEN);
 
 		String couponCode = StringUtil.randomString();
 
@@ -544,11 +540,9 @@ public class CommerceDiscountUsageTest {
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
 			commerceChannel.getCommerceChannelId());
 
-		int quantity = 1000;
-
 		CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
 			_user.getUserId(), commerceInventoryWarehouse, cpInstance.getSku(),
-			quantity);
+			StringPool.BLANK, BigDecimal.valueOf(1000));
 
 		String couponCode = StringUtil.randomString();
 

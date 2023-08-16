@@ -17,6 +17,8 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 
+import java.math.BigDecimal;
+
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -37,9 +39,10 @@ public class CPDefinitionInventoryServiceImpl
 	public CPDefinitionInventory addCPDefinitionInventory(
 			long cpDefinitionId, String cpDefinitionInventoryEngine,
 			String lowStockActivity, boolean displayAvailability,
-			boolean displayStockQuantity, int minStockQuantity,
-			boolean backOrders, int minOrderQuantity, int maxOrderQuantity,
-			String allowedOrderQuantities, int multipleOrderQuantity)
+			boolean displayStockQuantity, BigDecimal minStockQuantity,
+			boolean backOrders, BigDecimal minOrderQuantity,
+			BigDecimal maxOrderQuantity, String allowedOrderQuantities,
+			BigDecimal multipleOrderQuantity)
 		throws PortalException {
 
 		_checkCommerceCatalog(cpDefinitionId, ActionKeys.UPDATE);
@@ -92,9 +95,9 @@ public class CPDefinitionInventoryServiceImpl
 			long groupId, long cpDefinitionInventoryId,
 			String cpDefinitionInventoryEngine, String lowStockActivity,
 			boolean displayAvailability, boolean displayStockQuantity,
-			int minStockQuantity, boolean backOrders, int minOrderQuantity,
-			int maxOrderQuantity, String allowedOrderQuantities,
-			int multipleOrderQuantity)
+			BigDecimal minStockQuantity, boolean backOrders,
+			BigDecimal minOrderQuantity, BigDecimal maxOrderQuantity,
+			String allowedOrderQuantities, BigDecimal multipleOrderQuantity)
 		throws PortalException {
 
 		CPDefinitionInventory cpDefinitionInventory =
@@ -115,9 +118,10 @@ public class CPDefinitionInventoryServiceImpl
 	public CPDefinitionInventory updateCPDefinitionInventory(
 			long cpDefinitionInventoryId, String cpDefinitionInventoryEngine,
 			String lowStockActivity, boolean displayAvailability,
-			boolean displayStockQuantity, int minStockQuantity,
-			boolean backOrders, int minOrderQuantity, int maxOrderQuantity,
-			String allowedOrderQuantities, int multipleOrderQuantity)
+			boolean displayStockQuantity, BigDecimal minStockQuantity,
+			boolean backOrders, BigDecimal minOrderQuantity,
+			BigDecimal maxOrderQuantity, String allowedOrderQuantities,
+			BigDecimal multipleOrderQuantity)
 		throws PortalException {
 
 		CPDefinitionInventory cpDefinitionInventory =

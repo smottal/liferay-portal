@@ -48,6 +48,8 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.taglib.util.IncludeTag;
 
+import java.math.BigDecimal;
+
 import java.util.List;
 
 import javax.portlet.PortletRequest;
@@ -131,10 +133,14 @@ public class AddToCartTag extends IncludeTag {
 			}
 
 			if (sku != null) {
-				_stockQuantity = _commerceInventoryEngine.getStockQuantity(
-					PortalUtil.getCompanyId(httpServletRequest),
-					_cpCatalogEntry.getGroupId(),
-					commerceContext.getCommerceChannelGroupId(), sku);
+				BigDecimal stockQuantity =
+					_commerceInventoryEngine.getStockQuantity(
+						PortalUtil.getCompanyId(httpServletRequest),
+						_cpCatalogEntry.getGroupId(),
+						commerceContext.getCommerceChannelGroupId(), sku,
+						StringPool.BLANK);
+
+				_stockQuantity = stockQuantity.intValue();
 
 				if (!_disabled) {
 					_disabled =

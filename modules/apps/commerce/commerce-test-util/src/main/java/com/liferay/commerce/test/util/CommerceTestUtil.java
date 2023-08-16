@@ -203,7 +203,8 @@ public class CommerceTestUtil {
 			commerceChannel.getCommerceChannelId());
 
 		CommerceInventoryTestUtil.addCommerceInventoryWarehouseItem(
-			userId, commerceInventoryWarehouse, cpInstance.getSku(), 10);
+			userId, commerceInventoryWarehouse, cpInstance.getSku(),
+			StringPool.BLANK, BigDecimal.TEN);
 
 		addCommerceOrderItem(
 			commerceOrder.getCommerceOrderId(), cpInstance.getCPInstanceId(),

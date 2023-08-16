@@ -95,14 +95,14 @@ public class ReplenishmentItemResourceImpl
 			transform(
 				_commerceInventoryReplenishmentItemService.
 					getCommerceInventoryReplenishmentItemsByCompanyIdAndSku(
-						contextCompany.getCompanyId(), sku,
+						contextCompany.getCompanyId(), sku, StringPool.BLANK,
 						pagination.getStartPosition(),
 						pagination.getEndPosition()),
 				this::_toReplenishmentItem),
 			pagination,
 			_commerceInventoryReplenishmentItemService.
 				getCommerceInventoryReplenishmentItemsCountByCompanyIdAndSku(
-					contextCompany.getCompanyId(), sku));
+					contextCompany.getCompanyId(), sku, StringPool.BLANK));
 	}
 
 	@Override
@@ -195,7 +195,8 @@ public class ReplenishmentItemResourceImpl
 
 		CommerceInventoryWarehouseItem commerceInventoryWarehouseItem =
 			_commerceInventoryWarehouseItemService.
-				getCommerceInventoryWarehouseItem(warehouseId, sku);
+				getCommerceInventoryWarehouseItem(
+					warehouseId, sku, StringPool.BLANK);
 
 		return _toReplenishmentItem(
 			_commerceInventoryReplenishmentItemService.
@@ -230,6 +231,16 @@ public class ReplenishmentItemResourceImpl
 		}
 
 		return commerceInventoryReplenishmentItem;
+	}
+
+	private BigDecimal _getBigDecimal(
+		Integer quantity, BigDecimal defaultValue) {
+
+		if (quantity == null) {
+			return defaultValue;
+		}
+
+		return BigDecimal.valueOf(quantity);
 	}
 
 	private ReplenishmentItem _toReplenishmentItem(
