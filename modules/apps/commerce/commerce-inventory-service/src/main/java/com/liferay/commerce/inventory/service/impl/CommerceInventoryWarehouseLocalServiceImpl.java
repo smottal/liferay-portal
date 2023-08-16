@@ -268,7 +268,7 @@ public class CommerceInventoryWarehouseLocalServiceImpl
 
 	@Override
 	public List<CommerceInventoryWarehouse> getCommerceInventoryWarehouses(
-		long groupId, String sku) {
+		long groupId, String sku, String unitOfMeasureKey) {
 
 		return dslQuery(
 			DSLQueryFactoryUtil.select(
