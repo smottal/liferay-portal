@@ -8,10 +8,15 @@ export class ApplicationsMenuPage {
 		this.applicationMenuButton = page.getByLabel(
 			'Open Applications MenuCtrl+'
 		);
+		this.commerceButton = page.getByRole('tab', {
+			exact: true,
+			name: 'Commerce',
+		});
 		this.controlPanelButton = page.getByRole('tab', {
 			name: 'Control Panel',
 		});
-		this.instanceSettingsLink = page.getByRole('link', {
+		this.instanceSettingsMenuItem = page.getByRole('menuitem', {
+			exact: true,
 			name: 'Instance Settings',
 		});
 		this.objectsMenuItem = page.getByRole('menuitem', {
@@ -19,6 +24,9 @@ export class ApplicationsMenuPage {
 			name: 'Objects',
 		});
 		this.page = page;
+		this.paymentLink = page.getByRole('link', {exact: true, name: 'Payment',});
+		this.paymentsMenuItem = page.getByRole('menuitem', {exact: true, name: 'Payments',});
+		this.refundReasonsMenuItem = page.getByRole('menuitem', {exact: true, name: 'Refund Reasons',});
 		this.signInButton = page.getByRole('button', {name: 'Sign In'});
 	}
 
@@ -26,19 +34,37 @@ export class ApplicationsMenuPage {
 		await this.page.goto('/');
 	}
 
-	async goToObjects() {
-		await this.goToControlPanel();
-		await this.objectsMenuItem.click();
-	}
-
-	async goToInstanceSettings() {
-		await this.goToControlPanel();
-		await this.instanceSettingsLink.click();
+	async goToCommerce() {
+		await this.goto();
+		await this.applicationMenuButton.click();
+		await this.commerceButton.click();
 	}
 
 	async goToControlPanel() {
 		await this.goto();
 		await this.applicationMenuButton.click();
 		await this.controlPanelButton.click();
+	}
+
+	async goToInstanceSettings() {
+		await this.goToControlPanel();
+		await this.instanceSettingsMenuItem.click();
+	}
+
+	async goToInstanceSettingsPaymentRefundReasons() {
+		await this.goToControlPanel();
+		await this.instanceSettingsMenuItem.click();
+		await this.paymentLink.click();
+		await this.refundReasonsMenuItem.click();
+	}
+
+	async goToObjects() {
+		await this.goToControlPanel();
+		await this.objectsMenuItem.click();
+	}
+
+	async goToPayments() {
+		await this.goToCommerce();
+		await this.paymentsMenuItem.click();
 	}
 }
