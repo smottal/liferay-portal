@@ -4,9 +4,15 @@
  */
 
 import {ApplicationsMenuPage} from '../product-navigation-applications-menu/applicationsMenu.page';
+import {Locator, Page} from "@playwright/test";
 
 export class PaymentsPage {
-	constructor(page) {
+	readonly applicationsMenuPage: ApplicationsMenuPage;
+	readonly makeRefundButton: Locator;
+	readonly page: Page;
+	readonly titleHeading: Locator;
+
+	constructor(page: Page) {
 		this.applicationsMenuPage = new ApplicationsMenuPage(page);
 		this.makeRefundButton = page.locator('.dnd-td > .btn').first();
 		this.page = page;

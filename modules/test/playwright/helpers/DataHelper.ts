@@ -6,12 +6,15 @@
 import {ApiHelpers} from './ApiHelpers';
 
 export class DataHelper {
+	readonly apiHelpers: any;
+	data: TDataHelperData[];
+
 	constructor(page) {
 		this.apiHelpers = new ApiHelpers(this, page);
 		this.data = [];
 	}
 
-	addDataObject(dataObject) {
+	addDataObject(dataObject: TDataHelperData) {
 		if (dataObject && dataObject.handleDelete && dataObject.id) {
 			this.data.push(dataObject);
 		}
@@ -26,4 +29,14 @@ export class DataHelper {
 
 		this.data = [];
 	}
+}
+
+export type TDataHelper = {
+	addDataObject(data: TDataHelperData): void;
+	clearData(): void;
+}
+
+type TDataHelperData = {
+	handleDelete(apiHelper: any, id: number): Promise<any>;
+	id: number;
 }
