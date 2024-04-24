@@ -8,9 +8,9 @@ package com.liferay.portal.defaultpermissions.web.internal.configuration;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.liferay.defaultpermissions.kernel.configuration.provider.PortalDefaultPermissionsConfiguration;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
-import com.liferay.portal.defaultpermissions.configuration.PortalDefaultPermissionsConfiguration;
 import com.liferay.portal.defaultpermissions.configuration.PortalDefaultPermissionsGroupConfiguration;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -64,13 +64,15 @@ public class PortalDefaultPermissionsGroupConfigurationImpl
 	public Map<String, String[]> getDefaultPermissions(
 		long companyId, long groupId, String className) {
 
-		Map<String, Map<String, String[]>> defaultPermissions =
-			getDefaultPermissions(companyId, groupId);
+		if (groupId > 0) {
+			Map<String, Map<String, String[]>> defaultPermissions =
+				getDefaultPermissions(companyId, groupId);
 
-		if ((defaultPermissions != null) &&
-			(defaultPermissions.get(className) != null)) {
+			if ((defaultPermissions != null) &&
+				(defaultPermissions.get(className) != null)) {
 
-			return defaultPermissions.get(className);
+				return defaultPermissions.get(className);
+			}
 		}
 
 		return _companyPortalDefaultPermissionsConfiguration.
@@ -78,8 +80,8 @@ public class PortalDefaultPermissionsGroupConfigurationImpl
 	}
 
 	@Override
-	public ExtendedObjectClassDefinition.Scope getScope() {
-		return ExtendedObjectClassDefinition.Scope.GROUP;
+	public String getScope() {
+		return ExtendedObjectClassDefinition.Scope.GROUP.toString();
 	}
 
 	@Override

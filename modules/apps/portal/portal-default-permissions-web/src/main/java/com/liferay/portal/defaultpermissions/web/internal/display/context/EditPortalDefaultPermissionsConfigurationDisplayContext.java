@@ -5,8 +5,8 @@
 
 package com.liferay.portal.defaultpermissions.web.internal.display.context;
 
+import com.liferay.defaultpermissions.kernel.configuration.provider.PortalDefaultPermissionsConfiguration;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.defaultpermissions.configuration.PortalDefaultPermissionsConfiguration;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -37,6 +37,7 @@ import com.liferay.roles.admin.search.RoleSearchTerms;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -119,13 +120,18 @@ public class EditPortalDefaultPermissionsConfigurationDisplayContext {
 		Map<String, String[]> defaultPermissions = _getDefaultPermissions();
 
 		if (defaultPermissions == null) {
-			return Collections.emptyList();
+			defaultPermissions = new HashMap<>();
 		}
 
 		String[] actions = defaultPermissions.get(role.getName());
 
 		if (actions == null) {
-			return Collections.emptyList();
+			if (!Objects.equals(role.getName(), RoleConstants.GUEST)) {
+				return Collections.emptyList();
+			}
+
+			return ResourceActionsUtil.getModelResourceGuestDefaultActions(
+				getModelResource());
 		}
 
 		return Arrays.asList(actions);
@@ -198,6 +204,7 @@ public class EditPortalDefaultPermissionsConfigurationDisplayContext {
 		Set<String> excludedRoleNamesSet = new HashSet<String>() {
 			{
 				add(RoleConstants.ADMINISTRATOR);
+				add(RoleConstants.OWNER);
 			}
 		};
 

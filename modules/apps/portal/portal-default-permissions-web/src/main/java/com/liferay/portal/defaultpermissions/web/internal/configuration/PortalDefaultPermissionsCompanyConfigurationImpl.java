@@ -8,10 +8,10 @@ package com.liferay.portal.defaultpermissions.web.internal.configuration;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.liferay.defaultpermissions.kernel.configuration.provider.PortalDefaultPermissionsConfiguration;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.defaultpermissions.configuration.PortalDefaultPermissionsCompanyConfiguration;
-import com.liferay.portal.defaultpermissions.configuration.PortalDefaultPermissionsConfiguration;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
@@ -76,8 +76,8 @@ public class PortalDefaultPermissionsCompanyConfigurationImpl
 	}
 
 	@Override
-	public ExtendedObjectClassDefinition.Scope getScope() {
-		return ExtendedObjectClassDefinition.Scope.COMPANY;
+	public String getScope() {
+		return ExtendedObjectClassDefinition.Scope.COMPANY.toString();
 	}
 
 	@Override
