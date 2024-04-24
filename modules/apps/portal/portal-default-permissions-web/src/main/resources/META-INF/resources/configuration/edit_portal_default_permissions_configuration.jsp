@@ -80,9 +80,10 @@ SearchContainer<Role> roleSearchContainer = editPortalDefaultPermissionsConfigur
 
 						boolean disabled = false;
 
-						List<String> guestUnsupportedActions = editPortalDefaultPermissionsConfigurationDisplayContext.getGuestUnsupportedActions();
+						List<String> guestDisabledActions = editPortalDefaultPermissionsConfigurationDisplayContext.getGuestDisabledActions();
+						List<String> groupDisabledActions = editPortalDefaultPermissionsConfigurationDisplayContext.getGroupDisabledActions();
 
-						if (name.equals(RoleConstants.GUEST) && guestUnsupportedActions.contains(action)) {
+						if ((name.equals(RoleConstants.GUEST) && guestDisabledActions.contains(action)) || (name.equals(RoleConstants.SITE_MEMBER) && groupDisabledActions.contains(action))) {
 							disabled = true;
 						}
 

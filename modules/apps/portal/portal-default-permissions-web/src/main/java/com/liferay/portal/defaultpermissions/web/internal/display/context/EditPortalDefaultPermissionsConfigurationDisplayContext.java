@@ -126,27 +126,47 @@ public class EditPortalDefaultPermissionsConfigurationDisplayContext {
 		String[] actions = defaultPermissions.get(role.getName());
 
 		if (actions == null) {
-			if (!Objects.equals(role.getName(), RoleConstants.GUEST)) {
-				return Collections.emptyList();
+			if (Objects.equals(role.getName(), RoleConstants.GUEST)) {
+				return ResourceActionsUtil.getModelResourceGuestDefaultActions(
+					getModelResource());
+			}
+			else if (Objects.equals(
+						role.getName(), RoleConstants.SITE_MEMBER)) {
+
+				return ResourceActionsUtil.getModelResourceGroupDefaultActions(
+					getModelResource());
 			}
 
-			return ResourceActionsUtil.getModelResourceGuestDefaultActions(
-				getModelResource());
+			return Collections.emptyList();
 		}
 
 		return Arrays.asList(actions);
 	}
 
-	public List<String> getGuestUnsupportedActions() {
-		if (_guestUnsupportedActions != null) {
-			return _guestUnsupportedActions;
+	public List<String> getGroupDisabledActions() {
+		if (_groupDisabledActions != null) {
+			return _groupDisabledActions;
 		}
 
-		_guestUnsupportedActions =
-			ResourceActionsUtil.getResourceGuestUnsupportedActions(
-				_getPortletResource(), getModelResource());
+		_groupDisabledActions =
+			ResourceActionsUtil.getModelResourceGroupDefaultActions(
+				getModelResource());
 
-		return _guestUnsupportedActions;
+		return _groupDisabledActions;
+	}
+
+	public List<String> getGuestDisabledActions() {
+		if (_guestDisabledActions != null) {
+			return _guestDisabledActions;
+		}
+
+		_guestDisabledActions = ListUtil.concat(
+			ResourceActionsUtil.getModelResourceGuestDefaultActions(
+				getModelResource()),
+			ResourceActionsUtil.getModelResourceGuestUnsupportedActions(
+				getModelResource()));
+
+		return _guestDisabledActions;
 	}
 
 	public PortletURL getIteratorURL() throws Exception {
@@ -416,7 +436,8 @@ public class EditPortalDefaultPermissionsConfigurationDisplayContext {
 	private List<String> _actions;
 	private Map<String, String[]> _defaultPermissions;
 	private final Group _group;
-	private List<String> _guestUnsupportedActions;
+	private List<String> _groupDisabledActions;
+	private List<String> _guestDisabledActions;
 	private final HttpServletRequest _httpServletRequest;
 	private String _modelResource;
 	private final PortalDefaultPermissionsConfiguration
