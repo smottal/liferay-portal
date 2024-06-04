@@ -204,128 +204,118 @@ test.describe('LPD-26142 Refactor of CommerceSalesAgent#CanSalesAgentWithPermiss
 
 		await performLogin(page, user.alternateName);
 
-		try {
-			await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
 
-			await expect(
-				commerceAccountManagementPage.accountsTableRowLink(account1.id)
-			).toBeVisible();
+		await expect(
+			commerceAccountManagementPage.accountsTableRowLink(account1.id)
+		).toBeVisible();
 
-			await expect(
-				commerceAccountManagementPage.accountsTableRowLink(account2.id)
-			).toHaveCount(0);
+		await expect(
+			commerceAccountManagementPage.accountsTableRowLink(account2.id)
+		).toHaveCount(0);
 
-			await commerceAccountManagementPage
-				.accountsTableRowLink(account1.id)
-				.click();
+		await commerceAccountManagementPage
+			.accountsTableRowLink(account1.id)
+			.click();
 
-			await commerceAccountManagementPage.channelDefaultsLink.click();
+		await commerceAccountManagementPage.channelDefaultsLink.click();
 
-			await expect(
-				commerceChannelDefaultsPage.defaultBillingCommerceAddresses
-			).toBeVisible();
+		await expect(
+			commerceChannelDefaultsPage.defaultBillingCommerceAddresses
+		).toBeVisible();
 
-			await commerceChannelDefaultsPage.defaultBillingCommerceAddressesActions.click();
-			await commerceChannelDefaultsPage.editMenuItem.click();
-			await expect(
-				commerceChannelDefaultsPage.editFrameChannelSelect
-			).not.toBeEmpty();
-			await commerceChannelDefaultsPage.editFrameSaveButton.click();
+		await commerceChannelDefaultsPage.defaultBillingCommerceAddressesActions.click();
+		await commerceChannelDefaultsPage.editMenuItem.click();
+		await expect(
+			commerceChannelDefaultsPage.editFrameChannelSelect
+		).not.toBeEmpty();
+		await commerceChannelDefaultsPage.editFrameSaveButton.click();
 
-			await commerceChannelDefaultsPage.defaultShippingCommerceAddressesActions.click();
-			await commerceChannelDefaultsPage.editMenuItem.click();
-			await expect(
-				commerceChannelDefaultsPage.editFrameChannelSelect
-			).not.toBeEmpty();
-			await commerceChannelDefaultsPage.editFrameSaveButton.click();
+		await commerceChannelDefaultsPage.defaultShippingCommerceAddressesActions.click();
+		await commerceChannelDefaultsPage.editMenuItem.click();
+		await expect(
+			commerceChannelDefaultsPage.editFrameChannelSelect
+		).not.toBeEmpty();
+		await commerceChannelDefaultsPage.editFrameSaveButton.click();
 
-			await commerceChannelDefaultsPage.defaultDeliveryCommerceTermEntriesButton.click();
-			await expect(
-				commerceChannelDefaultsPage.editFrameChannelSelect
-			).not.toBeEmpty();
-			await commerceChannelDefaultsPage.editFrameSaveButton.click();
-			await expect(
-				commerceChannelDefaultsPage.defaultDeliveryCommerceTermEntries.getByText(
-					deliveryTerms.label['en_US']
-				)
-			).toBeVisible();
+		await commerceChannelDefaultsPage.defaultDeliveryCommerceTermEntriesButton.click();
+		await expect(
+			commerceChannelDefaultsPage.editFrameChannelSelect
+		).not.toBeEmpty();
+		await commerceChannelDefaultsPage.editFrameSaveButton.click();
+		await expect(
+			commerceChannelDefaultsPage.defaultDeliveryCommerceTermEntries.getByText(
+				deliveryTerms.label['en_US']
+			)
+		).toBeVisible();
 
-			await commerceChannelDefaultsPage.defaultPaymentCommerceTermEntriesButton.click();
-			await expect(
-				commerceChannelDefaultsPage.editFrameChannelSelect
-			).not.toBeEmpty();
-			await commerceChannelDefaultsPage.editFrameSaveButton.click();
-			await expect(
-				commerceChannelDefaultsPage.defaultPaymentCommerceTermEntries.getByText(
-					paymentTerms.label['en_US']
-				)
-			).toBeVisible();
+		await commerceChannelDefaultsPage.defaultPaymentCommerceTermEntriesButton.click();
+		await expect(
+			commerceChannelDefaultsPage.editFrameChannelSelect
+		).not.toBeEmpty();
+		await commerceChannelDefaultsPage.editFrameSaveButton.click();
+		await expect(
+			commerceChannelDefaultsPage.defaultPaymentCommerceTermEntries.getByText(
+				paymentTerms.label['en_US']
+			)
+		).toBeVisible();
 
-			await commerceChannelDefaultsPage.defaultCommerceShippingOptionButton.click();
-			await commerceChannelDefaultsPage.editFrameSaveButton.click();
-			await expect(
-				commerceChannelDefaultsPage.defaultCommerceShippingOption
-					.getByText('Use Priority Settings')
-					.first()
-			).toBeVisible();
+		await commerceChannelDefaultsPage.defaultCommerceShippingOptionButton.click();
+		await commerceChannelDefaultsPage.editFrameSaveButton.click();
+		await expect(
+			commerceChannelDefaultsPage.defaultCommerceShippingOption
+				.getByText('Use Priority Settings')
+				.first()
+		).toBeVisible();
 
-			await commerceChannelDefaultsPage.defaultCommercePriceListsButton.click();
-			await commerceChannelDefaultsPage.editFramePriceListSelect.selectOption(
-				{label: 'Master Base Price List'}
-			);
-			await commerceChannelDefaultsPage.editFrameSaveButton.click();
-			await expect(
-				commerceChannelDefaultsPage.defaultCommercePriceLists.getByText(
-					'Master Base Price List'
-				)
-			).toBeVisible();
+		await commerceChannelDefaultsPage.defaultCommercePriceListsButton.click();
+		await commerceChannelDefaultsPage.editFramePriceListSelect.selectOption(
+			{label: 'Master Base Price List'}
+		);
+		await commerceChannelDefaultsPage.editFrameSaveButton.click();
+		await expect(
+			commerceChannelDefaultsPage.defaultCommercePriceLists.getByText(
+				'Master Base Price List'
+			)
+		).toBeVisible();
 
-			await commerceChannelDefaultsPage.defaultCommerceDiscountsButton.click();
-			await expect(
-				commerceChannelDefaultsPage.editFrameChannelSelect
-			).not.toBeEmpty();
-			await commerceChannelDefaultsPage.editFrameSaveButton.click();
-			await expect(
-				commerceChannelDefaultsPage.defaultCommerceDiscounts.getByText(
-					discount.title
-				)
-			).toBeVisible();
+		await commerceChannelDefaultsPage.defaultCommerceDiscountsButton.click();
+		await expect(
+			commerceChannelDefaultsPage.editFrameChannelSelect
+		).not.toBeEmpty();
+		await commerceChannelDefaultsPage.editFrameSaveButton.click();
+		await expect(
+			commerceChannelDefaultsPage.defaultCommerceDiscounts.getByText(
+				discount.title
+			)
+		).toBeVisible();
 
-			await commerceChannelDefaultsPage.defaultCommerceCurrenciesButton.click();
-			await expect(
-				commerceChannelDefaultsPage.editFrameChannelSelect
-			).not.toBeEmpty();
-			await commerceChannelDefaultsPage.editFrameSaveButton.click();
-			await expect(
-				commerceChannelDefaultsPage.defaultCommerceCurrencies.getByText(
-					'US Dollar'
-				)
-			).toBeVisible();
+		await commerceChannelDefaultsPage.defaultCommerceCurrenciesButton.click();
+		await expect(
+			commerceChannelDefaultsPage.editFrameChannelSelect
+		).not.toBeEmpty();
+		await commerceChannelDefaultsPage.editFrameSaveButton.click();
+		await expect(
+			commerceChannelDefaultsPage.defaultCommerceCurrencies.getByText(
+				'US Dollar'
+			)
+		).toBeVisible();
 
-			await commerceChannelDefaultsPage.defaultCommercePaymentMethodButton.click();
-			await commerceChannelDefaultsPage.editFrameSaveButton.click();
-			await expect(
-				commerceChannelDefaultsPage.defaultCommercePaymentMethod
-					.getByText('Use Priority Settings')
-					.first()
-			).toBeVisible();
+		await commerceChannelDefaultsPage.defaultCommercePaymentMethodButton.click();
+		await commerceChannelDefaultsPage.editFrameSaveButton.click();
+		await expect(
+			commerceChannelDefaultsPage.defaultCommercePaymentMethod
+				.getByText('Use Priority Settings')
+				.first()
+		).toBeVisible();
 
-			await commerceChannelDefaultsPage.defaultUsersButton.click();
-			await expect(
-				commerceChannelDefaultsPage.editFrameChannelSelect
-			).not.toBeEmpty();
-			await commerceChannelDefaultsPage.editFrameSaveButton.click();
-			await expect(
-				commerceChannelDefaultsPage.defaultUsers.getByText('Test')
-			).toBeVisible();
-		}
-		catch (error: any) {
-			throw new Error(error);
-		}
-		finally {
-			await performLogout(page);
-
-			await performLogin(page, 'test');
-		}
+		await commerceChannelDefaultsPage.defaultUsersButton.click();
+		await expect(
+			commerceChannelDefaultsPage.editFrameChannelSelect
+		).not.toBeEmpty();
+		await commerceChannelDefaultsPage.editFrameSaveButton.click();
+		await expect(
+			commerceChannelDefaultsPage.defaultUsers.getByText('Test')
+		).toBeVisible();
 	});
 });

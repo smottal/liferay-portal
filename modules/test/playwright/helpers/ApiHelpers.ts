@@ -352,4 +352,12 @@ export class DataApiHelpers extends ApiHelpers {
 			}
 		}
 	}
+
+	setData(data: TDataApiHelpersData[]) {
+		this.data.length = 0;
+
+		while (data.length) {
+			this.data.push(data.pop());
+		}
+	}
 }
