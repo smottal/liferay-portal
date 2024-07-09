@@ -195,3 +195,45 @@ test('LPD-30589 Add Organization Team', async ({
 		(await teamsPage.teamsTableRow(1, newTeamName, true)).row
 	).toBeVisible();
 });
+
+test('LPD-31020 Assign User', async ({
+	apiHelpers,
+	usersAndOrganizationsPage,
+}) => {
+	const user = await apiHelpers.headlessAdminUser.postUserAccount();
+	const organization = await apiHelpers.headlessAdminUser.postOrganization();
+
+	await usersAndOrganizationsPage.goToOrganizations();
+
+	await (
+		await usersAndOrganizationsPage.organizationActionsMenu(
+			organization.name
+		)
+	).click();
+
+	await usersAndOrganizationsPage.assignUsersMenuItem.click();
+
+	await (
+		await usersAndOrganizationsPage.assignUsersCheckbox(user.name)
+	).check();
+
+	await usersAndOrganizationsPage.assignUsersDoneButton.click();
+
+	await usersAndOrganizationsPage.goToOrganizations();
+
+	await (
+		await usersAndOrganizationsPage.organizationsTableRowLink(
+			organization.name
+		)
+	).click();
+
+	await expect(
+		(
+			await usersAndOrganizationsPage.organizationUsersTableRow(
+				1,
+				user.name,
+				true
+			)
+		).row
+	).toBeVisible();
+});
