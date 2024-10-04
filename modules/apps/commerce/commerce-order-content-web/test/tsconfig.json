@@ -1,0 +1,26 @@
+{
+	"compilerOptions": {
+		"allowSyntheticDefaultImports": true,
+		"baseUrl": ".",
+		"checkJs": false,
+		"composite": true,
+		"esModuleInterop": true,
+		"jsx": "react",
+		"module": "ESNext",
+		"moduleResolution": "node",
+		"rootDir": "../",
+		"strict": true,
+		"target": "es2020",
+		"typeRoots": [
+			"../../../../node_modules/@types"
+		]
+	},
+	"include": [
+		"**/*.js",
+		"**/*.ts",
+		"**/*.tsx",
+		"../src/**/*.js",
+		"../src/**/*.ts",
+		"../src/**/*.tsx"
+	]
+}
