@@ -13,6 +13,7 @@ export {default as editCommerceReturnItem} from './editCommerceReturnItem';
 export {default as editCommerceReturn} from './editCommerceReturn';
 export {default as InfoBox} from './InfoBox';
 export {default as InlineEditableOrderField} from './inline_editable_order_field/InlineEditableOrderField';
+export {default as MultiShipping} from './multi_shipping/MultiShipping';
 export {default as newView} from './newView';
 export {default as OrderActions} from './OrderActions';
 export {default as PendingOrderItemActionDropdownPropsTransformer} from './PendingOrderItemActionDropdownPropsTransformer';
