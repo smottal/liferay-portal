@@ -6,7 +6,9 @@
 import ClayEmptyState from '@clayui/empty-state';
 import {ClayInput} from '@clayui/form';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
-import ClayManagementToolbar from '@clayui/management-toolbar';
+import ClayManagementToolbar, {
+	ClayResultsBar,
+} from '@clayui/management-toolbar';
 import {ClayPaginationBarWithBasicItems} from '@clayui/pagination-bar';
 import ClayTable from '@clayui/table';
 
@@ -16,10 +18,19 @@ import {CommerceServiceProvider} from 'commerce-frontend-js';
 import React, {useCallback, useEffect, useState} from 'react';
 
 import './MultiShipping.scss';
+
+import ClayButton from '@clayui/button';
+import ClayIcon from '@clayui/icon';
+
 import AddDeliveryGroupButton from './AddDeliveryGroupButton';
 import DeliveryGroupHeaderCell from './DeliveryGroupHeaderCell';
 import {showError} from './ErrorMessage';
-import OrderItemRow from './OrderItemRow';
+import OrderItemRow, {
+	copyColumnOrderItem,
+	removeOrderItem,
+	resetOrderItem,
+	splitOrderItem,
+} from './OrderItemRow';
 import {
 	IAPIResponseError,
 	IDeliveryGroup,
@@ -126,6 +137,9 @@ const MultiShipping = ({
 	const [deliveryGroups, setDeliveryGroups] = useState<Array<IDeliveryGroup>>(
 		[]
 	);
+	const [checkedOrderItemIds, setCheckedOrderItemIds] = useState<
+		Array<number>
+	>([]);
 	const [filterFormattedOrderItems, setFilteredFormattedOrderItems] =
 		useState<Array<IOrderItem>>([]);
 	const [formattedOrderItems, setFormattedOrderItems] = useState<
@@ -299,6 +313,90 @@ const MultiShipping = ({
 		[orderId, prepareData]
 	);
 
+	const handleBulkAction = useCallback(
+		async (action: string) => {
+			const originalFormattedOrderItems = JSON.parse(
+				JSON.stringify(formattedOrderItems)
+			);
+
+			try {
+				let currentFormattedOrderItems = JSON.parse(
+					JSON.stringify(formattedOrderItems)
+				);
+
+				for (const orderItemId of checkedOrderItemIds) {
+					const orderItem = currentFormattedOrderItems.find(
+						(orderItem: IOrderItem) => orderItem.id === orderItemId
+					);
+
+					if (!orderItem) {
+						continue;
+					}
+
+					let currentOrderItem: IOrderItem | null = null;
+
+					if (action === 'remove') {
+						currentOrderItem = removeOrderItem(orderItem);
+					}
+					else if (action === 'reset') {
+						currentOrderItem = resetOrderItem(
+							deliveryGroups[0],
+							orderItem
+						);
+					}
+					else if (action === 'split') {
+						currentOrderItem = splitOrderItem(
+							deliveryGroups,
+							orderItem
+						);
+					}
+					else {
+						currentOrderItem = copyColumnOrderItem(
+							deliveryGroups,
+							orderItem
+						);
+					}
+
+					currentFormattedOrderItems = currentFormattedOrderItems.map(
+						(item: IOrderItem) => {
+							if (item.id === orderItemId) {
+								return currentOrderItem;
+							}
+
+							return item;
+						}
+					);
+				}
+
+				await updateFullCart(
+					createRequestData(
+						deliveryGroups,
+						currentFormattedOrderItems
+					)
+				);
+
+				setCheckedOrderItemIds([]);
+			}
+			catch (error) {
+				console.error(error);
+
+				setFormattedOrderItems(originalFormattedOrderItems);
+
+				showError({
+					detail: Liferay.Language.get(
+						'the-item-s-quantity-is-not-valid-for-the-the-number-of-delivery-groups'
+					),
+				});
+			}
+		},
+		[
+			checkedOrderItemIds,
+			deliveryGroups,
+			formattedOrderItems,
+			updateFullCart,
+		]
+	);
+
 	const handleDeleteDeliveryGroup = useCallback(
 		async (deliveryGroup) => {
 			try {
@@ -356,9 +454,31 @@ const MultiShipping = ({
 		}));
 	}, []);
 
+	const handleRowSelection = useCallback(async (orderItemId: number) => {
+		setCheckedOrderItemIds((prevState) => {
+			const currentCheckedOrderItemIds = [...prevState];
+
+			if (currentCheckedOrderItemIds.includes(orderItemId)) {
+				currentCheckedOrderItemIds.splice(
+					currentCheckedOrderItemIds.indexOf(orderItemId),
+					1
+				);
+			}
+			else {
+				currentCheckedOrderItemIds.push(orderItemId);
+			}
+
+			return currentCheckedOrderItemIds;
+		});
+	}, []);
+
 	const handleRowUpdate = useCallback(
 		async (orderItem: IOrderItem, saveFullOrder: boolean = false) => {
-			const originalFormattedOrderItems = {...formattedOrderItems};
+			const originalFormattedOrderItems = formattedOrderItems.map(
+				(item) => {
+					return {...item};
+				}
+			);
 			const currentFormattedOrderItems = formattedOrderItems.map(
 				(item) => {
 					if (item.id === orderItem.id) {
@@ -519,6 +639,111 @@ const MultiShipping = ({
 						</ClayManagementToolbar.Item>
 					</ClayManagementToolbar.ItemList>
 				</ClayManagementToolbar>
+
+				{!!checkedOrderItemIds.length && (
+					<ClayResultsBar>
+						<ClayResultsBar.Item>
+							<span className="component-text text-truncate-inline">
+								<span className="text-truncate">
+									{`${checkedOrderItemIds.length} ${Liferay.Language.get('of')} ${filterFormattedOrderItems.length}`}
+								</span>
+							</span>
+						</ClayResultsBar.Item>
+
+						<ClayResultsBar.Item expand>
+							<ClayButton
+								className="tbar-link"
+								displayType="link"
+								onClick={() => {
+									setCheckedOrderItemIds(
+										filterFormattedOrderItems.map(
+											(orderItem) => orderItem.id
+										)
+									);
+								}}
+							>
+								{Liferay.Language.get('select-all')}
+							</ClayButton>
+						</ClayResultsBar.Item>
+
+						<ClayResultsBar.Item>
+							<ClayButton
+								borderless
+								className="tbar-link"
+								disabled={!deliveryGroups.length}
+								displayType="secondary"
+								onClick={async () => {
+									await handleBulkAction('split');
+								}}
+							>
+								<span className="inline-item inline-item-before">
+									<ClayIcon
+										spritemap={spritemap}
+										symbol="arrow-split"
+									/>
+								</span>
+
+								{Liferay.Language.get('split-quantity-evenly')}
+							</ClayButton>
+
+							<ClayButton
+								borderless
+								className="tbar-link"
+								disabled={!deliveryGroups.length}
+								displayType="secondary"
+								onClick={async () => {
+									await handleBulkAction('reset');
+								}}
+							>
+								<span className="inline-item inline-item-before">
+									<ClayIcon
+										spritemap={spritemap}
+										symbol="reload"
+									/>
+								</span>
+
+								{Liferay.Language.get('reset-rows')}
+							</ClayButton>
+
+							<ClayButton
+								borderless
+								className="tbar-link"
+								disabled={!deliveryGroups.length}
+								displayType="secondary"
+								onClick={async () => {
+									await handleBulkAction('copy');
+								}}
+							>
+								<span className="inline-item inline-item-before">
+									<ClayIcon
+										spritemap={spritemap}
+										symbol="copy"
+									/>
+								</span>
+
+								{Liferay.Language.get('copy-column-1-to-all')}
+							</ClayButton>
+
+							<ClayButton
+								borderless
+								className="tbar-link"
+								displayType="secondary"
+								onClick={async () => {
+									await handleBulkAction('remove');
+								}}
+							>
+								<span className="inline-item inline-item-before">
+									<ClayIcon
+										spritemap={spritemap}
+										symbol="times-circle"
+									/>
+								</span>
+
+								{Liferay.Language.get('remove-items')}
+							</ClayButton>
+						</ClayResultsBar.Item>
+					</ClayResultsBar>
+				)}
 			</>
 		</div>
 	);
@@ -534,6 +759,11 @@ const MultiShipping = ({
 				>
 					<ClayTable.Head>
 						<ClayTable.Row>
+							<ClayTable.Cell
+								headingCell
+								key="selection"
+							></ClayTable.Cell>
+
 							<ClayTable.Cell headingCell key="sku">
 								<div className="align-items-center d-flex flex-nowrap">
 									<div className="flex-grow-1">
@@ -581,8 +811,12 @@ const MultiShipping = ({
 							)
 							.map((orderItem, currentIndex) => (
 								<OrderItemRow
+									checked={checkedOrderItemIds.includes(
+										orderItem.id
+									)}
 									deliveryGroups={deliveryGroups}
 									disabled={readonly || saving}
+									handleSelection={handleRowSelection}
 									handleSubmit={handleRowUpdate}
 									key={orderItem.id}
 									orderId={orderId}

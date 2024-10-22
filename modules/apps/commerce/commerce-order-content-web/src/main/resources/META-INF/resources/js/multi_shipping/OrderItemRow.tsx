@@ -5,6 +5,7 @@
 
 import {ClayButtonWithIcon} from '@clayui/button';
 import DropDown from '@clayui/drop-down';
+import {ClayCheckbox} from '@clayui/form';
 import ClayLink from '@clayui/link';
 import {useModal} from '@clayui/modal';
 import ClayTable from '@clayui/table';
@@ -17,7 +18,7 @@ import {
 
 } from 'commerce-frontend-js';
 import {debounce, openConfirmModal} from 'frontend-js-web';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 
 import {showError} from './ErrorMessage';
 import {formatCartItem} from './MultiShipping';
@@ -30,7 +31,9 @@ import {
 } from './Types';
 
 interface IOrderItemRowProps {
+	handleSelection(orderItemId: number): void;
 	handleSubmit(item: IOrderItem, saveFullOrder?: boolean): void;
+	checked?: boolean;
 	deliveryGroups?: Array<IDeliveryGroup>;
 	disabled?: boolean;
 	namespace?: string;
@@ -51,10 +54,10 @@ const calculateOrderItemQuantity = (orderItemDeliveryGroups: {
 	);
 };
 
-const copyColumnOrderItem = (
+export function copyColumnOrderItem(
 	deliveryGroups: Array<IDeliveryGroup>,
 	orderItem: IOrderItem
-): IOrderItem => {
+): IOrderItem {
 	orderItem.deliveryGroups = orderItem.deliveryGroups || {};
 
 	const defaultDeliveryGroup = orderItem.deliveryGroups[deliveryGroups[0].id];
@@ -84,9 +87,9 @@ const copyColumnOrderItem = (
 	orderItem.quantity = calculateOrderItemQuantity(orderItem.deliveryGroups);
 
 	return orderItem;
-};
+}
 
-const removeOrderItem = (orderItem: IOrderItem): IOrderItem => {
+export function removeOrderItem(orderItem: IOrderItem): IOrderItem {
 	orderItem.deliveryGroups = orderItem.deliveryGroups || {};
 	orderItem.quantity = 0;
 
@@ -95,12 +98,12 @@ const removeOrderItem = (orderItem: IOrderItem): IOrderItem => {
 	}
 
 	return orderItem;
-};
+}
 
-const resetOrderItem = (
+export function resetOrderItem(
 	deliveryGroup: IDeliveryGroup,
 	orderItem: IOrderItem
-): IOrderItem => {
+): IOrderItem {
 	orderItem.deliveryGroups = orderItem.deliveryGroups || {};
 	orderItem.quantity = orderItem.settings?.minQuantity || 1;
 
@@ -126,16 +129,25 @@ const resetOrderItem = (
 	}
 
 	return orderItem;
-};
+}
 
-const splitOrderItem = (
+export function splitOrderItem(
 	deliveryGroups: Array<IDeliveryGroup>,
 	orderItem: IOrderItem
-): IOrderItem => {
+): IOrderItem {
 	orderItem.deliveryGroups = orderItem.deliveryGroups || {};
 
 	if (!orderItem.quantity || !deliveryGroups.length) {
 		return orderItem;
+	}
+
+	if (
+		(deliveryGroups?.length || 0) <= 1 ||
+		!!orderItem.settings?.allowedQuantities?.length ||
+		orderItem.quantity <
+			(orderItem.settings?.minQuantity || 1) * deliveryGroups?.length
+	) {
+		throw new Error('invalid quantity');
 	}
 
 	const quantity = Math.floor(orderItem.quantity / deliveryGroups.length);
@@ -166,11 +178,13 @@ const splitOrderItem = (
 	orderItem.quantity = calculateOrderItemQuantity(orderItem.deliveryGroups);
 
 	return orderItem;
-};
+}
 
 const OrderItemRow = ({
+	checked = false,
 	deliveryGroups = [],
 	disabled = false,
+	handleSelection,
 	handleSubmit,
 	orderId,
 	orderItem: orderItemProp,
@@ -178,6 +192,7 @@ const OrderItemRow = ({
 	spritemap = 'OrderItemRow',
 }: IOrderItemRowProps) => {
 	const {observer, onOpenChange, open} = useModal();
+	const [isChecked, setIsChecked] = useState(checked);
 	const [orderItem, setOrderItem] = useState<IOrderItem>(orderItemProp);
 
 	// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -284,6 +299,14 @@ const OrderItemRow = ({
 		[handleSubmit]
 	);
 
+	const handleInternalSelection = useCallback(() => {
+		setIsChecked((prevState) => {
+			return !prevState;
+		});
+
+		handleSelection(orderItem.id);
+	}, [handleSelection, orderItem]);
+
 	const handleUpdateField = useCallback(
 		(deliveryGroupId: number, quantity: number) => {
 			const currentDeliveryGroup = deliveryGroups?.find(
@@ -338,11 +361,23 @@ const OrderItemRow = ({
 		[deliveryGroups, finalizeSave, orderId, orderItem]
 	);
 
+	useEffect(() => {
+		setIsChecked(checked);
+	}, [checked]);
+
 	return (
 		<ClayTable.Row
 			data-qa-id={`orderItem${orderItem.id}Row`}
 			key={orderItem.id}
 		>
+			<ClayTable.Cell>
+				<ClayCheckbox
+					checked={isChecked}
+					disabled={disabled}
+					onChange={() => handleInternalSelection()}
+				/>
+			</ClayTable.Cell>
+
 			<ClayTable.Cell aria-label="sku-name">
 				<ClayTooltipProvider>
 					<div className="align-items-center d-flex flex-nowrap sku-name">
