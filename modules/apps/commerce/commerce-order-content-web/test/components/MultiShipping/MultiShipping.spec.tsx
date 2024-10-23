@@ -14,6 +14,7 @@ import {
 
 import '@testing-library/jest-dom/extend-expect';
 import {RenderResult, cleanup, render, waitFor} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import {act} from 'react-dom/test-utils';
 
@@ -22,10 +23,19 @@ import {setFieldValue} from '../../utils/utils.spec';
 
 interface ILocators {
 	addDeliveryGroupButton: HTMLButtonElement;
+	bulkCopyActionButton: HTMLButtonElement;
+	bulkRemoveActionButton: HTMLButtonElement;
+	bulkResetActionButton: HTMLButtonElement;
+	bulkSplitActionButton: HTMLButtonElement;
 	loadingSpinner: HTMLElement;
 	orderItem1Row: HTMLTableRowElement;
 	orderItem2Row: HTMLTableRowElement;
+	row0SelectCheckbox: HTMLInputElement;
+	row1SelectCheckbox: HTMLInputElement;
 	searchInput: HTMLInputElement;
+	selectAllButton: HTMLButtonElement;
+	selectAllCheckbox: HTMLInputElement;
+	selectionStatsSpan: HTMLSpanElement;
 }
 
 const getLocators = (
@@ -36,6 +46,18 @@ const getLocators = (
 		addDeliveryGroupButton: renderedComponent.queryByRole('button', {
 			name: 'add-delivery-group',
 		}) as HTMLButtonElement,
+		bulkCopyActionButton: renderedComponent.queryByTestId(
+			'bulkCopyAction'
+		) as HTMLButtonElement,
+		bulkRemoveActionButton: renderedComponent.queryByTestId(
+			'bulkRemoveAction'
+		) as HTMLButtonElement,
+		bulkResetActionButton: renderedComponent.queryByTestId(
+			'bulkResetAction'
+		) as HTMLButtonElement,
+		bulkSplitActionButton: renderedComponent.queryByTestId(
+			'bulkSplitAction'
+		) as HTMLButtonElement,
 		loadingSpinner: renderedComponent.queryByTestId(
 			'loadingSpinner'
 		) as HTMLInputElement,
@@ -45,9 +67,24 @@ const getLocators = (
 		orderItem2Row: renderedComponent.queryByTestId(
 			`orderItem${orderItems[1].id}Row`
 		) as HTMLTableRowElement,
+		row0SelectCheckbox: renderedComponent.queryByTestId(
+			`row0Select`
+		) as HTMLInputElement,
+		row1SelectCheckbox: renderedComponent.queryByTestId(
+			`row1Select`
+		) as HTMLInputElement,
 		searchInput: renderedComponent.queryByRole('textbox', {
 			name: 'search',
 		}) as HTMLInputElement,
+		selectAllButton: renderedComponent.queryByTestId(
+			`selectAllButton`
+		) as HTMLButtonElement,
+		selectAllCheckbox: renderedComponent.queryByTestId(
+			`selectAllCheckbox`
+		) as HTMLInputElement,
+		selectionStatsSpan: renderedComponent.queryByTestId(
+			`selectionStats`
+		) as HTMLSpanElement,
 	};
 };
 
@@ -1039,7 +1076,7 @@ describe('MultiShipping', () => {
 		).toHaveLength(1);
 	});
 
-	it.only('Must create the default delivery group if address is passed and no delivery groups are there', async () => {
+	it('Must create the default delivery group if address is passed and no delivery groups are there', async () => {
 		const orderItems = [
 			{
 				deliveryGroup: '',
@@ -1107,17 +1144,22 @@ describe('MultiShipping', () => {
 			mockFetch
 		);
 
-		let renderedComponent = render(
-			<MultiShipping accountId={10} defaultAddressId={1000} orderId={10} />
+		const renderedComponent = render(
+			<MultiShipping
+				accountId={10}
+				defaultAddressId={1000}
+				orderId={10}
+			/>
 		);
 
-		let {loadingSpinner} = getLocators(orderItems, renderedComponent);
+		const {loadingSpinner} = getLocators(orderItems, renderedComponent);
 
 		await waitFor(() => {
 			expect(loadingSpinner).not.toBeInTheDocument();
 		});
 
-		const defaultDeliveryGroup = renderedComponent.queryAllByTestId(/deliveryGroup[0-9]*$/);
+		const defaultDeliveryGroup =
+			renderedComponent.queryAllByTestId(/deliveryGroup[0-9]*$/);
 
 		expect(defaultDeliveryGroup).toHaveLength(1);
 		expect(defaultDeliveryGroup[0]).toHaveTextContent('Default');
@@ -1127,14 +1169,448 @@ describe('MultiShipping', () => {
 	});
 });
 
+describe('MultiShipping - bulk actions', () => {
+	afterEach(() => {
+		fetchMock.restore();
+		jest.clearAllMocks();
+
+		cleanup();
+	});
+
+	it('Must check all the rows if select all is checked and the bulk actions are available', async () => {
+		const orderItems = [
+			{
+				deliveryGroup: `deliveryGroup1`,
+				id: 1000,
+				name: `ProductName1`,
+				options: '[]',
+				quantity: 3,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-12',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU1`,
+				skuId: 100,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+			{
+				deliveryGroup: 'deliveryGroup1',
+				id: 1002,
+				name: `ProductName1`,
+				options: '[]',
+				quantity: 8,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-12',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU2`,
+				skuId: 101,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+		] as Array<IOrderItem>;
+
+		fetchMock.get(
+			/headless-commerce-delivery-cart\/.*\/carts\/.*\/items\?.*/i,
+			(): IOrderItemAPIResponse => {
+				return {
+					items: orderItems,
+				} as IOrderItemAPIResponse;
+			}
+		);
+
+		const renderedComponent = render(
+			<MultiShipping accountId={10} orderId={10} />
+		);
+
+		const {loadingSpinner} = getLocators(orderItems, renderedComponent);
+
+		await waitFor(() => {
+			expect(loadingSpinner).not.toBeInTheDocument();
+		});
+
+		const {row0SelectCheckbox, row1SelectCheckbox} = getLocators(
+			orderItems,
+			renderedComponent
+		);
+
+		let {
+			bulkCopyActionButton,
+			bulkRemoveActionButton,
+			bulkResetActionButton,
+			bulkSplitActionButton,
+			selectAllCheckbox,
+			selectionStatsSpan,
+		} = getLocators(orderItems, renderedComponent);
+
+		expect(bulkCopyActionButton).not.toBeInTheDocument();
+		expect(bulkRemoveActionButton).not.toBeInTheDocument();
+		expect(bulkResetActionButton).not.toBeInTheDocument();
+		expect(bulkSplitActionButton).not.toBeInTheDocument();
+		expect(row0SelectCheckbox).toBeVisible();
+		expect(row0SelectCheckbox).not.toBeChecked();
+		expect(row1SelectCheckbox).toBeVisible();
+		expect(row1SelectCheckbox).not.toBeChecked();
+		expect(selectionStatsSpan).not.toBeInTheDocument();
+		expect(selectAllCheckbox).toBeVisible();
+		expect(selectAllCheckbox).toBeEnabled();
+		expect(selectAllCheckbox).not.toBeChecked();
+
+		userEvent.click(selectAllCheckbox);
+
+		({
+			bulkCopyActionButton,
+			bulkRemoveActionButton,
+			bulkResetActionButton,
+			bulkSplitActionButton,
+			selectAllCheckbox,
+			selectionStatsSpan,
+		} = getLocators(orderItems, renderedComponent));
+
+		expect(bulkCopyActionButton).toBeInTheDocument();
+		expect(bulkRemoveActionButton).toBeInTheDocument();
+		expect(bulkResetActionButton).toBeInTheDocument();
+		expect(bulkSplitActionButton).toBeInTheDocument();
+		expect(row0SelectCheckbox).toBeChecked();
+		expect(row1SelectCheckbox).toBeChecked();
+		expect(selectAllCheckbox).toBeChecked();
+		expect(selectionStatsSpan).toBeInTheDocument();
+		expect(selectionStatsSpan).toHaveTextContent('2 of 2');
+
+		userEvent.click(selectAllCheckbox);
+
+		({selectAllCheckbox} = getLocators(orderItems, renderedComponent));
+
+		expect(bulkCopyActionButton).not.toBeInTheDocument();
+		expect(bulkRemoveActionButton).not.toBeInTheDocument();
+		expect(bulkResetActionButton).not.toBeInTheDocument();
+		expect(bulkSplitActionButton).not.toBeInTheDocument();
+		expect(row0SelectCheckbox).not.toBeChecked();
+		expect(row1SelectCheckbox).not.toBeChecked();
+		expect(selectAllCheckbox).not.toBeChecked();
+		expect(selectionStatsSpan).not.toBeInTheDocument();
+	});
+
+	it('Must check a single row and the bulk actions are available', async () => {
+		const orderItems = [
+			{
+				deliveryGroup: `deliveryGroup1`,
+				id: 1000,
+				name: `ProductName1`,
+				options: '[]',
+				quantity: 3,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-12',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU1`,
+				skuId: 100,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+			{
+				deliveryGroup: 'deliveryGroup1',
+				id: 1002,
+				name: `ProductName1`,
+				options: '[]',
+				quantity: 8,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-12',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU2`,
+				skuId: 101,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+		] as Array<IOrderItem>;
+
+		fetchMock.get(
+			/headless-commerce-delivery-cart\/.*\/carts\/.*\/items\?.*/i,
+			(): IOrderItemAPIResponse => {
+				return {
+					items: orderItems,
+				} as IOrderItemAPIResponse;
+			}
+		);
+
+		const renderedComponent = render(
+			<MultiShipping accountId={10} orderId={10} />
+		);
+
+		const {loadingSpinner} = getLocators(orderItems, renderedComponent);
+
+		await waitFor(() => {
+			expect(loadingSpinner).not.toBeInTheDocument();
+		});
+
+		const {row0SelectCheckbox, row1SelectCheckbox} = getLocators(
+			orderItems,
+			renderedComponent
+		);
+
+		let {
+			bulkCopyActionButton,
+			bulkRemoveActionButton,
+			bulkResetActionButton,
+			bulkSplitActionButton,
+			selectAllCheckbox,
+			selectionStatsSpan,
+		} = getLocators(orderItems, renderedComponent);
+
+		expect(bulkCopyActionButton).not.toBeInTheDocument();
+		expect(bulkRemoveActionButton).not.toBeInTheDocument();
+		expect(bulkResetActionButton).not.toBeInTheDocument();
+		expect(bulkSplitActionButton).not.toBeInTheDocument();
+		expect(row0SelectCheckbox).toBeVisible();
+		expect(row0SelectCheckbox).not.toBeChecked();
+		expect(row1SelectCheckbox).toBeVisible();
+		expect(row1SelectCheckbox).not.toBeChecked();
+		expect(selectionStatsSpan).not.toBeInTheDocument();
+		expect(selectAllCheckbox).toBeVisible();
+		expect(selectAllCheckbox).not.toBeChecked();
+
+		userEvent.click(row0SelectCheckbox);
+
+		({
+			bulkCopyActionButton,
+			bulkRemoveActionButton,
+			bulkResetActionButton,
+			bulkSplitActionButton,
+			selectAllCheckbox,
+			selectionStatsSpan,
+		} = getLocators(orderItems, renderedComponent));
+
+		expect(bulkCopyActionButton).toBeInTheDocument();
+		expect(bulkRemoveActionButton).toBeInTheDocument();
+		expect(bulkResetActionButton).toBeInTheDocument();
+		expect(bulkSplitActionButton).toBeInTheDocument();
+		expect(row0SelectCheckbox).toBeChecked();
+		expect(row1SelectCheckbox).not.toBeChecked();
+		expect(selectAllCheckbox).toBeChecked();
+		expect(selectionStatsSpan).toBeInTheDocument();
+		expect(selectionStatsSpan).toHaveTextContent('1 of 2');
+
+		userEvent.click(row1SelectCheckbox);
+
+		expect(bulkCopyActionButton).toBeInTheDocument();
+		expect(bulkRemoveActionButton).toBeInTheDocument();
+		expect(bulkResetActionButton).toBeInTheDocument();
+		expect(bulkSplitActionButton).toBeInTheDocument();
+		expect(row0SelectCheckbox).toBeChecked();
+		expect(row1SelectCheckbox).toBeChecked();
+		expect(selectAllCheckbox).toBeChecked();
+		expect(selectionStatsSpan).toBeInTheDocument();
+		expect(selectionStatsSpan).toHaveTextContent('2 of 2');
+
+		userEvent.click(row1SelectCheckbox);
+
+		expect(bulkCopyActionButton).toBeInTheDocument();
+		expect(bulkRemoveActionButton).toBeInTheDocument();
+		expect(bulkResetActionButton).toBeInTheDocument();
+		expect(bulkSplitActionButton).toBeInTheDocument();
+		expect(row0SelectCheckbox).toBeChecked();
+		expect(row1SelectCheckbox).not.toBeChecked();
+		expect(selectAllCheckbox).toBeChecked();
+		expect(selectionStatsSpan).toBeInTheDocument();
+		expect(selectionStatsSpan).toHaveTextContent('1 of 2');
+
+		userEvent.click(row0SelectCheckbox);
+
+		({selectAllCheckbox} = getLocators(orderItems, renderedComponent));
+
+		expect(bulkCopyActionButton).not.toBeInTheDocument();
+		expect(bulkRemoveActionButton).not.toBeInTheDocument();
+		expect(bulkResetActionButton).not.toBeInTheDocument();
+		expect(bulkSplitActionButton).not.toBeInTheDocument();
+		expect(row0SelectCheckbox).not.toBeChecked();
+		expect(row1SelectCheckbox).not.toBeChecked();
+		expect(selectAllCheckbox).not.toBeChecked();
+		expect(selectionStatsSpan).not.toBeInTheDocument();
+	});
+
+	it('Must select all the rows', async () => {
+		const orderItems = [
+			{
+				deliveryGroup: `deliveryGroup1`,
+				id: 1000,
+				name: `ProductName1`,
+				options: '[]',
+				quantity: 3,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-12',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU1`,
+				skuId: 100,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+			{
+				deliveryGroup: 'deliveryGroup1',
+				id: 1002,
+				name: `ProductName1`,
+				options: '[]',
+				quantity: 8,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-12',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU2`,
+				skuId: 101,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+		] as Array<IOrderItem>;
+
+		fetchMock.get(
+			/headless-commerce-delivery-cart\/.*\/carts\/.*\/items\?.*/i,
+			(): IOrderItemAPIResponse => {
+				return {
+					items: orderItems,
+				} as IOrderItemAPIResponse;
+			}
+		);
+
+		const renderedComponent = render(
+			<MultiShipping accountId={10} orderId={10} />
+		);
+
+		const {loadingSpinner} = getLocators(orderItems, renderedComponent);
+
+		await waitFor(() => {
+			expect(loadingSpinner).not.toBeInTheDocument();
+		});
+
+		const {row0SelectCheckbox, row1SelectCheckbox} = getLocators(
+			orderItems,
+			renderedComponent
+		);
+
+		expect(row0SelectCheckbox).toBeVisible();
+		expect(row0SelectCheckbox).not.toBeChecked();
+		expect(row1SelectCheckbox).toBeVisible();
+		expect(row1SelectCheckbox).not.toBeChecked();
+
+		userEvent.click(row0SelectCheckbox);
+
+		const {selectAllButton, selectionStatsSpan} = getLocators(
+			orderItems,
+			renderedComponent
+		);
+
+		expect(row0SelectCheckbox).toBeChecked();
+		expect(row1SelectCheckbox).not.toBeChecked();
+		expect(selectAllButton).toBeInTheDocument();
+		expect(selectionStatsSpan).toHaveTextContent('1 of 2');
+
+		userEvent.click(selectAllButton);
+
+		expect(row0SelectCheckbox).toBeChecked();
+		expect(row1SelectCheckbox).toBeChecked();
+		expect(selectionStatsSpan).toHaveTextContent('2 of 2');
+	});
+
+	it('Bulk actions should be disabled if no delivery groups', async () => {
+		const orderItems = [
+			{
+				id: 1000,
+				name: `ProductName1`,
+				options: '[]',
+				quantity: 3,
+				replacedSkuId: 0,
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 0,
+				sku: `SKU1`,
+				skuId: 100,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+			{
+				id: 1002,
+				name: `ProductName1`,
+				options: '[]',
+				quantity: 8,
+				replacedSkuId: 0,
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 0,
+				sku: `SKU2`,
+				skuId: 101,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+		] as Array<IOrderItem>;
+
+		fetchMock.get(
+			/headless-commerce-delivery-cart\/.*\/carts\/.*\/items\?.*/i,
+			(): IOrderItemAPIResponse => {
+				return {
+					items: orderItems,
+				} as IOrderItemAPIResponse;
+			}
+		);
+
+		const renderedComponent = render(
+			<MultiShipping accountId={10} orderId={10} />
+		);
+
+		const {loadingSpinner} = getLocators(orderItems, renderedComponent);
+
+		await waitFor(() => {
+			expect(loadingSpinner).not.toBeInTheDocument();
+		});
+
+		const {row0SelectCheckbox} = getLocators(orderItems, renderedComponent);
+
+		expect(row0SelectCheckbox).toBeVisible();
+		expect(row0SelectCheckbox).not.toBeChecked();
+
+		userEvent.click(row0SelectCheckbox);
+
+		const {
+			bulkCopyActionButton,
+			bulkRemoveActionButton,
+			bulkResetActionButton,
+			bulkSplitActionButton,
+		} = getLocators(orderItems, renderedComponent);
+
+		expect(bulkCopyActionButton).toBeDisabled();
+		expect(bulkRemoveActionButton).toBeEnabled();
+		expect(bulkResetActionButton).toBeDisabled();
+		expect(bulkSplitActionButton).toBeDisabled();
+	});
+});
+
 /* TODO:
-checkbox + uncheckbox
-select all
 bulk split
 bulk split errore
 bulk copy
 bulk copy errore
-azioni bulk disabilitate
 bulk reset
 bulk reset errore
 bulk remove

@@ -647,6 +647,7 @@ const MultiShipping = ({
 											: Liferay.Language.get('select-all')
 									}
 									checked={!!checkedOrderItemIds.length}
+									data-qa-id="selectAllCheckbox"
 									disabled={loading || readonly || saving}
 									onChange={({target}) => {
 										setCheckedOrderItemIds(
@@ -710,6 +711,7 @@ const MultiShipping = ({
 										: Liferay.Language.get('select-all')
 								}
 								checked={!!checkedOrderItemIds.length}
+								data-qa-id="selectAllCheckbox"
 								onChange={({target}) => {
 									setCheckedOrderItemIds(
 										target.checked
@@ -724,7 +726,10 @@ const MultiShipping = ({
 
 						<ClayResultsBar.Item>
 							<span className="component-text text-truncate-inline">
-								<span className="text-truncate">
+								<span
+									className="text-truncate"
+									data-qa-id="selectionStats"
+								>
 									{`${checkedOrderItemIds.length} ${Liferay.Language.get('of')} ${filterFormattedOrderItems.length}`}
 								</span>
 							</span>
@@ -733,6 +738,7 @@ const MultiShipping = ({
 						<ClayResultsBar.Item expand>
 							<ClayButton
 								className="tbar-link"
+								data-qa-id="selectAllButton"
 								displayType="link"
 								onClick={() => {
 									setCheckedOrderItemIds(
@@ -750,6 +756,7 @@ const MultiShipping = ({
 							<ClayButton
 								borderless
 								className="tbar-link"
+								data-qa-id="bulkSplitAction"
 								disabled={!deliveryGroups.length}
 								displayType="secondary"
 								onClick={async () => {
@@ -769,6 +776,7 @@ const MultiShipping = ({
 							<ClayButton
 								borderless
 								className="tbar-link"
+								data-qa-id="bulkResetAction"
 								disabled={!deliveryGroups.length}
 								displayType="secondary"
 								onClick={async () => {
@@ -788,6 +796,7 @@ const MultiShipping = ({
 							<ClayButton
 								borderless
 								className="tbar-link"
+								data-qa-id="bulkCopyAction"
 								disabled={!deliveryGroups.length}
 								displayType="secondary"
 								onClick={async () => {
@@ -807,6 +816,7 @@ const MultiShipping = ({
 							<ClayButton
 								borderless
 								className="tbar-link"
+								data-qa-id="bulkRemoveAction"
 								displayType="secondary"
 								onClick={async () => {
 									await handleBulkAction('remove');
