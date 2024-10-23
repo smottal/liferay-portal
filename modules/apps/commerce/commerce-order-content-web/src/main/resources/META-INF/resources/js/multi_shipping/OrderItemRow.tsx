@@ -10,6 +10,7 @@ import ClayLink from '@clayui/link';
 import {useModal} from '@clayui/modal';
 import ClayTable from '@clayui/table';
 import {ClayTooltipProvider} from '@clayui/tooltip';
+import classNames from 'classnames';
 import {
 	CommerceServiceProvider,
 	QuantitySelectorComponent as QuantitySelector,
@@ -367,12 +368,16 @@ const OrderItemRow = ({
 
 	return (
 		<ClayTable.Row
+			className={classNames({
+				'row-checked': isChecked,
+			})}
 			data-qa-id={`orderItem${orderItem.id}Row`}
 			key={orderItem.id}
 		>
 			<ClayTable.Cell>
 				<ClayCheckbox
 					checked={isChecked}
+					data-qa-id={`row${rowIndex}Select`}
 					disabled={disabled}
 					onChange={() => handleInternalSelection()}
 				/>

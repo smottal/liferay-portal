@@ -4,7 +4,7 @@
  */
 
 import ClayEmptyState from '@clayui/empty-state';
-import {ClayInput} from '@clayui/form';
+import {ClayCheckbox, ClayInput} from '@clayui/form';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
 import ClayManagementToolbar, {
 	ClayResultsBar,
@@ -43,6 +43,8 @@ const MAX_DELIVERY_GROUPS = 20;
 
 interface IMultiShippingProps {
 	accountId: number;
+	defaultAddressId?: number;
+	defaultAddressName?: string;
 	namespace?: string;
 	orderId: number;
 	readonly?: boolean;
@@ -129,6 +131,8 @@ const createRequestData = (
 
 const MultiShipping = ({
 	accountId,
+	defaultAddressId = 0,
+	defaultAddressName = '',
 	namespace = '',
 	orderId,
 	readonly = false,
@@ -258,6 +262,33 @@ const MultiShipping = ({
 
 					showError(error as IAPIResponseError);
 				}
+			}
+		}
+		else if (defaultAddressId) {
+			try {
+
+				// eslint-disable-next-line @typescript-eslint/no-use-before-define
+				await updateFullCart(
+					formattedItems.map((item) => {
+						return formatCartItem(
+							{
+								addressId: defaultAddressId,
+								deliveryDate: '',
+								id: 0,
+								name: defaultAddressName || 'Default',
+							},
+							item,
+							item.quantity
+						);
+					})
+				);
+
+				return;
+			}
+			catch (error) {
+				console.error(error);
+
+				showError(error as IAPIResponseError);
 			}
 		}
 
@@ -603,45 +634,94 @@ const MultiShipping = ({
 	const managementBar = (
 		<div className="management-bar-wrapper">
 			<>
-				<ClayManagementToolbar>
-					<ClayManagementToolbar.Search>
-						<ClayInput.Group>
-							<ClayInput.GroupItem>
-								<ClayInput
-									aria-label="search"
-									className="form-control"
-									disabled={loading}
-									onChange={({target: {value}}) => {
-										setSearch(value);
+				{!checkedOrderItemIds.length && (
+					<ClayManagementToolbar>
+						<ClayManagementToolbar.ItemList>
+							<ClayManagementToolbar.Item>
+								<ClayCheckbox
+									aria-label={
+										checkedOrderItemIds.length
+											? Liferay.Language.get(
+													'unselect-all'
+												)
+											: Liferay.Language.get('select-all')
+									}
+									checked={!!checkedOrderItemIds.length}
+									disabled={loading || readonly || saving}
+									onChange={({target}) => {
+										setCheckedOrderItemIds(
+											target.checked
+												? filterFormattedOrderItems.map(
+														(orderItem) =>
+															orderItem.id
+													)
+												: []
+										);
 									}}
-									type="text"
-									value={search}
 								/>
-							</ClayInput.GroupItem>
-						</ClayInput.Group>
-					</ClayManagementToolbar.Search>
+							</ClayManagementToolbar.Item>
+						</ClayManagementToolbar.ItemList>
 
-					<ClayManagementToolbar.ItemList>
-						<ClayManagementToolbar.Item>
-							<AddDeliveryGroupButton
-								accountId={accountId}
-								disabled={
-									loading ||
-									readonly ||
-									saving ||
-									deliveryGroups.length >= MAX_DELIVERY_GROUPS
-								}
-								handleSubmit={handleSubmitDeliveryGroup}
-								hasManageAddressesPermission={true}
-								namespace={namespace}
-								spritemap={spritemap}
-							/>
-						</ClayManagementToolbar.Item>
-					</ClayManagementToolbar.ItemList>
-				</ClayManagementToolbar>
+						<ClayManagementToolbar.Search>
+							<ClayInput.Group>
+								<ClayInput.GroupItem>
+									<ClayInput
+										aria-label="search"
+										className="form-control"
+										disabled={loading}
+										onChange={({target: {value}}) => {
+											setSearch(value);
+										}}
+										type="text"
+										value={search}
+									/>
+								</ClayInput.GroupItem>
+							</ClayInput.Group>
+						</ClayManagementToolbar.Search>
+
+						<ClayManagementToolbar.ItemList>
+							<ClayManagementToolbar.Item>
+								<AddDeliveryGroupButton
+									accountId={accountId}
+									disabled={
+										loading ||
+										readonly ||
+										saving ||
+										deliveryGroups.length >=
+											MAX_DELIVERY_GROUPS
+									}
+									handleSubmit={handleSubmitDeliveryGroup}
+									hasManageAddressesPermission={true}
+									namespace={namespace}
+									spritemap={spritemap}
+								/>
+							</ClayManagementToolbar.Item>
+						</ClayManagementToolbar.ItemList>
+					</ClayManagementToolbar>
+				)}
 
 				{!!checkedOrderItemIds.length && (
 					<ClayResultsBar>
+						<ClayResultsBar.Item className="justify-content-center">
+							<ClayCheckbox
+								aria-label={
+									checkedOrderItemIds.length
+										? Liferay.Language.get('unselect-all')
+										: Liferay.Language.get('select-all')
+								}
+								checked={!!checkedOrderItemIds.length}
+								onChange={({target}) => {
+									setCheckedOrderItemIds(
+										target.checked
+											? filterFormattedOrderItems.map(
+													(orderItem) => orderItem.id
+												)
+											: []
+									);
+								}}
+							/>
+						</ClayResultsBar.Item>
+
 						<ClayResultsBar.Item>
 							<span className="component-text text-truncate-inline">
 								<span className="text-truncate">
@@ -755,7 +835,6 @@ const MultiShipping = ({
 					borderedColumns
 					borderless
 					className="order-items-table"
-					striped
 				>
 					<ClayTable.Head>
 						<ClayTable.Row>
@@ -860,7 +939,7 @@ const MultiShipping = ({
 		<div className="data-set data-set-fluid multi-shipping-container">
 			{managementBar}
 
-			<div className="container-fluid container-fluid-max-xl">
+			<div>
 				{loading ? (
 					<ClayLoadingIndicator
 						data-qa-id="loadingSpinner"

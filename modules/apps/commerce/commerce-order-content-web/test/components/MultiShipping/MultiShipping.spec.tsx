@@ -1039,3 +1039,19 @@ describe('MultiShipping', () => {
 		).toHaveLength(1);
 	});
 });
+
+/* TODO:
+default address id senza nome
+default address id con nome
+checkbox + uncheckbox
+select all
+bulk split
+bulk split errore
+bulk copy
+bulk copy errore
+azioni bulk disabilitate
+bulk reset
+bulk reset errore
+bulk remove
+bulk remove errore
+ */
