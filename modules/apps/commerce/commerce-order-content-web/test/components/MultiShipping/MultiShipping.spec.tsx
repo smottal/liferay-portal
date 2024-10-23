@@ -1038,11 +1038,96 @@ describe('MultiShipping', () => {
 			renderedComponent.queryAllByTestId(/orderItem.*Row/)
 		).toHaveLength(1);
 	});
+
+	it.only('Must create the default delivery group if address is passed and no delivery groups are there', async () => {
+		const orderItems = [
+			{
+				deliveryGroup: '',
+				id: 1000,
+				name: `ProductName1`,
+				options: '[]',
+				quantity: 3,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 0,
+				sku: `SKU1`,
+				skuId: 100,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+			{
+				deliveryGroup: '',
+				id: 1002,
+				name: `ProductName1`,
+				options: '[]',
+				quantity: 8,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 0,
+				sku: `SKU2`,
+				skuId: 101,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+		] as Array<IOrderItem>;
+
+		const mockFetch = jest
+			.fn()
+			.mockReturnValueOnce(() => {
+				return {
+					items: orderItems,
+				} as IOrderItemAPIResponse;
+			})
+			.mockReturnValue(() => {
+				orderItems[0].deliveryGroup = 'Default';
+				orderItems[0].shippingAddressId = 1000;
+				orderItems[1].deliveryGroup = 'Default';
+				orderItems[1].shippingAddressId = 1000;
+
+				return {
+					cartItems: orderItems,
+				} as IOrderItemAPIResponse;
+			});
+
+		fetchMock.get(
+			/headless-commerce-delivery-cart\/.*\/carts\/.*\/items\?.*/i,
+			mockFetch
+		);
+
+		fetchMock.patch(
+			/headless-commerce-delivery-cart\/.*\/carts\/.*\?.*/i,
+			mockFetch
+		);
+
+		let renderedComponent = render(
+			<MultiShipping accountId={10} defaultAddressId={1000} orderId={10} />
+		);
+
+		let {loadingSpinner} = getLocators(orderItems, renderedComponent);
+
+		await waitFor(() => {
+			expect(loadingSpinner).not.toBeInTheDocument();
+		});
+
+		const defaultDeliveryGroup = renderedComponent.queryAllByTestId(/deliveryGroup[0-9]*$/);
+
+		expect(defaultDeliveryGroup).toHaveLength(1);
+		expect(defaultDeliveryGroup[0]).toHaveTextContent('Default');
+		expect(
+			renderedComponent.queryAllByTestId(/orderItem.*Row/)
+		).toHaveLength(2);
+	});
 });
 
 /* TODO:
-default address id senza nome
-default address id con nome
 checkbox + uncheckbox
 select all
 bulk split
