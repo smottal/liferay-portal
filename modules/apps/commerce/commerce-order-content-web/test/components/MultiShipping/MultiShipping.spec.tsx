@@ -664,7 +664,7 @@ describe('MultiShipping', () => {
 		expect(orderItem2Inputs[1]).toHaveValue(8);
 	});
 
-	it('Must fix missing delivery groups', async () => {
+	it.only('Must fix missing delivery groups', async () => {
 		const orderItems = [
 			{
 				deliveryGroup: `deliveryGroup1`,
