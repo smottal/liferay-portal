@@ -18,8 +18,9 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import {act} from 'react-dom/test-utils';
 
+import * as ErrorMessage from '../../../src/main/resources/META-INF/resources/js/multi_shipping/ErrorMessage';
 import MultiShipping from '../../../src/main/resources/META-INF/resources/js/multi_shipping/MultiShipping';
-import {setFieldValue} from '../../utils/utils.spec';
+import {isArrayEqual, setFieldValue} from '../../utils/utils.spec';
 
 interface ILocators {
 	addDeliveryGroupButton: HTMLButtonElement;
@@ -664,7 +665,7 @@ describe('MultiShipping', () => {
 		expect(orderItem2Inputs[1]).toHaveValue(8);
 	});
 
-	it.only('Must fix missing delivery groups', async () => {
+	it('Must fix missing delivery groups', async () => {
 		const orderItems = [
 			{
 				deliveryGroup: `deliveryGroup1`,
@@ -764,6 +765,16 @@ describe('MultiShipping', () => {
 		expect(
 			renderedComponent.queryByTestId(/orderItem1001.*Input/)
 		).toHaveValue(5);
+
+		expect(
+			isArrayEqual(
+				JSON.parse(fetchMock.calls().matched[1][1].body).cartItems,
+				JSON.parse(
+					'[{"deliveryGroup":"deliveryGroup1","id":1000,"options":"[]","quantity":3,"replacedSkuId":0,"requestedDeliveryDate":"","shippingAddressId":1000,"skuId":100},{"deliveryGroup":"deliveryGroup1","id":1001,"options":"[]","quantity":5,"replacedSkuId":0,"requestedDeliveryDate":"","shippingAddressId":1000,"skuId":100},{"deliveryGroup":"deliveryGroup1","id":1002,"options":"[]","quantity":8,"replacedSkuId":0,"requestedDeliveryDate":"","shippingAddressId":1000,"skuId":102}]'
+				)
+			)
+		).toBeTruthy();
+		expect(fetchMock.calls().matched[1][1].method).toBe('PATCH');
 	});
 
 	it('Must show correct display groups for different products', async () => {
@@ -1166,6 +1177,16 @@ describe('MultiShipping', () => {
 		expect(
 			renderedComponent.queryAllByTestId(/orderItem.*Row/)
 		).toHaveLength(2);
+
+		expect(
+			isArrayEqual(
+				JSON.parse(fetchMock.calls().matched[1][1].body).cartItems,
+				JSON.parse(
+					'[{"deliveryGroup":"Default","options":"[]","quantity":3,"replacedSkuId":0,"requestedDeliveryDate":"","shippingAddressId":1000,"skuId":100},{"deliveryGroup":"Default","options":"[]","quantity":8,"replacedSkuId":0,"requestedDeliveryDate":"","shippingAddressId":1000,"skuId":101}]'
+				)
+			)
+		).toBeTruthy();
+		expect(fetchMock.calls().matched[1][1].method).toBe('PATCH');
 	});
 });
 
@@ -1604,15 +1625,620 @@ describe('MultiShipping - bulk actions', () => {
 		expect(bulkResetActionButton).toBeDisabled();
 		expect(bulkSplitActionButton).toBeDisabled();
 	});
-});
 
-/* TODO:
-bulk split
-bulk split errore
-bulk copy
-bulk copy errore
-bulk reset
-bulk reset errore
-bulk remove
-bulk remove errore
- */
+	it('Bulk split action', async () => {
+		const orderItems = [
+			{
+				deliveryGroup: `deliveryGroup1`,
+				id: 1000,
+				name: `ProductName1`,
+				options: '[]',
+				quantity: 3,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-12',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU1`,
+				skuId: 100,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+			{
+				deliveryGroup: 'deliveryGroup1',
+				id: 1002,
+				name: `ProductName2`,
+				options: '[]',
+				quantity: 8,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-12',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU2`,
+				skuId: 101,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+			{
+				deliveryGroup: 'deliveryGroup2',
+				id: 1003,
+				name: `ProductName3`,
+				options: '[]',
+				quantity: 8,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-13',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU3`,
+				skuId: 102,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+		] as Array<IOrderItem>;
+
+		const mockFetch = jest
+			.fn()
+			.mockReturnValueOnce(() => {
+				return {
+					items: orderItems,
+				} as IOrderItemAPIResponse;
+			})
+			.mockReturnValue(() => {
+				return {
+					cartItems: orderItems,
+				} as IOrderItemAPIResponse;
+			});
+
+		fetchMock.get(
+			/headless-commerce-delivery-cart\/.*\/carts\/.*\/items\?.*/i,
+			mockFetch
+		);
+
+		fetchMock.patch(
+			/headless-commerce-delivery-cart\/.*\/carts\/.*\?.*/i,
+			mockFetch
+		);
+
+		const renderedComponent = render(
+			<MultiShipping accountId={10} orderId={10} />
+		);
+
+		const {loadingSpinner} = getLocators(orderItems, renderedComponent);
+
+		await waitFor(() => {
+			expect(loadingSpinner).not.toBeInTheDocument();
+		});
+
+		const {row0SelectCheckbox, row1SelectCheckbox} = getLocators(
+			orderItems,
+			renderedComponent
+		);
+
+		userEvent.click(row0SelectCheckbox);
+		userEvent.click(row1SelectCheckbox);
+
+		const {bulkSplitActionButton} = getLocators(
+			orderItems,
+			renderedComponent
+		);
+
+		expect(bulkSplitActionButton).toBeEnabled();
+
+		userEvent.click(bulkSplitActionButton);
+
+		expect(
+			isArrayEqual(
+				JSON.parse(fetchMock.calls().matched[1][1].body).cartItems,
+				JSON.parse(
+					'[{"deliveryGroup":"deliveryGroup2","id":0,"options":"[]","quantity":1,"replacedSkuId":0,"requestedDeliveryDate":"2024-12-13","shippingAddressId":1000,"skuId":100},{"deliveryGroup":"deliveryGroup1","id":1000,"options":"[]","quantity":2,"replacedSkuId":0,"requestedDeliveryDate":"2024-12-12","shippingAddressId":1000,"skuId":100},{"deliveryGroup":"deliveryGroup1","id":1002,"options":"[]","quantity":4,"replacedSkuId":0,"requestedDeliveryDate":"2024-12-12","shippingAddressId":1000,"skuId":101},{"deliveryGroup":"deliveryGroup2","id":0,"options":"[]","quantity":4,"replacedSkuId":0,"requestedDeliveryDate":"2024-12-13","shippingAddressId":1000,"skuId":101},{"deliveryGroup":"deliveryGroup2","id":1003,"options":"[]","quantity":8,"replacedSkuId":0,"requestedDeliveryDate":"2024-12-13","shippingAddressId":1000,"skuId":102}]'
+				)
+			)
+		).toBeTruthy();
+		expect(fetchMock.calls().matched[1][1].method).toBe('PATCH');
+	});
+
+	it('Bulk split action error', async () => {
+		const orderItems = [
+			{
+				deliveryGroup: `deliveryGroup1`,
+				id: 1000,
+				name: `ProductName1`,
+				options: '[]',
+				quantity: 3,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-12',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU1`,
+				skuId: 100,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+			{
+				deliveryGroup: 'deliveryGroup1',
+				id: 1002,
+				name: `ProductName2`,
+				options: '[]',
+				quantity: 8,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-12',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU2`,
+				skuId: 101,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+		] as Array<IOrderItem>;
+
+		fetchMock.get(
+			/headless-commerce-delivery-cart\/.*\/carts\/.*\/items\?.*/i,
+			{
+				items: orderItems,
+			} as IOrderItemAPIResponse
+		);
+
+		const spyOnShowError = jest.spyOn(ErrorMessage, 'showError');
+
+		const renderedComponent = render(
+			<MultiShipping accountId={10} orderId={10} />
+		);
+
+		const {loadingSpinner} = getLocators(orderItems, renderedComponent);
+
+		await waitFor(() => {
+			expect(loadingSpinner).not.toBeInTheDocument();
+		});
+
+		const {row0SelectCheckbox, row1SelectCheckbox} = getLocators(
+			orderItems,
+			renderedComponent
+		);
+
+		userEvent.click(row0SelectCheckbox);
+		userEvent.click(row1SelectCheckbox);
+
+		const {bulkSplitActionButton} = getLocators(
+			orderItems,
+			renderedComponent
+		);
+
+		expect(bulkSplitActionButton).toBeEnabled();
+
+		userEvent.click(bulkSplitActionButton);
+
+		expect(spyOnShowError).toBeCalledWith({
+			detail: 'the-item-s-quantity-is-not-valid-for-the-the-number-of-delivery-groups',
+		});
+	});
+
+	it('Bulk copy action', async () => {
+		const orderItems = [
+			{
+				deliveryGroup: `deliveryGroup1`,
+				id: 1000,
+				name: `ProductName1`,
+				options: '[]',
+				quantity: 3,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-12',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU1`,
+				skuId: 100,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+			{
+				deliveryGroup: 'deliveryGroup1',
+				id: 1002,
+				name: `ProductName2`,
+				options: '[]',
+				quantity: 8,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-12',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU2`,
+				skuId: 101,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+			{
+				deliveryGroup: 'deliveryGroup2',
+				id: 1003,
+				name: `ProductName3`,
+				options: '[]',
+				quantity: 8,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-13',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU3`,
+				skuId: 102,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+		] as Array<IOrderItem>;
+
+		const mockFetch = jest
+			.fn()
+			.mockReturnValueOnce(() => {
+				return {
+					items: orderItems,
+				} as IOrderItemAPIResponse;
+			})
+			.mockReturnValue(() => {
+				return {
+					cartItems: orderItems,
+				} as IOrderItemAPIResponse;
+			});
+
+		fetchMock.get(
+			/headless-commerce-delivery-cart\/.*\/carts\/.*\/items\?.*/i,
+			mockFetch
+		);
+
+		fetchMock.patch(
+			/headless-commerce-delivery-cart\/.*\/carts\/.*\?.*/i,
+			mockFetch
+		);
+
+		const renderedComponent = render(
+			<MultiShipping accountId={10} orderId={10} />
+		);
+
+		const {loadingSpinner} = getLocators(orderItems, renderedComponent);
+
+		await waitFor(() => {
+			expect(loadingSpinner).not.toBeInTheDocument();
+		});
+
+		const {row0SelectCheckbox, row1SelectCheckbox} = getLocators(
+			orderItems,
+			renderedComponent
+		);
+
+		userEvent.click(row0SelectCheckbox);
+		userEvent.click(row1SelectCheckbox);
+
+		const {bulkCopyActionButton} = getLocators(
+			orderItems,
+			renderedComponent
+		);
+
+		expect(bulkCopyActionButton).toBeEnabled();
+
+		userEvent.click(bulkCopyActionButton);
+
+		expect(
+			isArrayEqual(
+				JSON.parse(fetchMock.calls().matched[1][1].body).cartItems,
+				JSON.parse(
+					'[{"deliveryGroup":"deliveryGroup2","id":0,"options":"[]","quantity":3,"replacedSkuId":0,"requestedDeliveryDate":"2024-12-13","shippingAddressId":1000,"skuId":100},{"deliveryGroup":"deliveryGroup1","id":1000,"options":"[]","quantity":3,"replacedSkuId":0,"requestedDeliveryDate":"2024-12-12","shippingAddressId":1000,"skuId":100},{"deliveryGroup":"deliveryGroup2","id":0,"options":"[]","quantity":8,"replacedSkuId":0,"requestedDeliveryDate":"2024-12-13","shippingAddressId":1000,"skuId":101},{"deliveryGroup":"deliveryGroup1","id":1002,"options":"[]","quantity":8,"replacedSkuId":0,"requestedDeliveryDate":"2024-12-12","shippingAddressId":1000,"skuId":101},{"deliveryGroup":"deliveryGroup2","id":1003,"options":"[]","quantity":8,"replacedSkuId":0,"requestedDeliveryDate":"2024-12-13","shippingAddressId":1000,"skuId":102}]'
+				)
+			)
+		).toBeTruthy();
+		expect(fetchMock.calls().matched[1][1].method).toBe('PATCH');
+	});
+
+	it('Bulk copy action error', async () => {
+		const orderItems = [
+			{
+				deliveryGroup: `deliveryGroup1`,
+				id: 1000,
+				name: `ProductName1`,
+				options: '[]',
+				quantity: 3,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-12',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU1`,
+				skuId: 100,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+			{
+				deliveryGroup: 'deliveryGroup1',
+				id: 1002,
+				name: `ProductName2`,
+				options: '[]',
+				quantity: 8,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-12',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU2`,
+				skuId: 101,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+		] as Array<IOrderItem>;
+
+		fetchMock.get(
+			/headless-commerce-delivery-cart\/.*\/carts\/.*\/items\?.*/i,
+			{
+				items: orderItems,
+			} as IOrderItemAPIResponse
+		);
+
+		const spyOnShowError = jest.spyOn(ErrorMessage, 'showError');
+
+		const renderedComponent = render(
+			<MultiShipping accountId={10} orderId={10} />
+		);
+
+		const {loadingSpinner} = getLocators(orderItems, renderedComponent);
+
+		await waitFor(() => {
+			expect(loadingSpinner).not.toBeInTheDocument();
+		});
+
+		const {row0SelectCheckbox, row1SelectCheckbox} = getLocators(
+			orderItems,
+			renderedComponent
+		);
+
+		userEvent.click(row0SelectCheckbox);
+		userEvent.click(row1SelectCheckbox);
+
+		const {bulkCopyActionButton} = getLocators(
+			orderItems,
+			renderedComponent
+		);
+
+		expect(bulkCopyActionButton).toBeEnabled();
+
+		userEvent.click(bulkCopyActionButton);
+
+		expect(spyOnShowError).toBeCalledWith({
+			detail: 'the-item-s-quantity-is-not-valid-for-the-the-number-of-delivery-groups',
+		});
+	});
+
+	it('Bulk reset action', async () => {
+		const orderItems = [
+			{
+				deliveryGroup: `deliveryGroup1`,
+				id: 1000,
+				name: `ProductName1`,
+				options: '[]',
+				quantity: 3,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-12',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU1`,
+				skuId: 100,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+			{
+				deliveryGroup: `deliveryGroup2`,
+				id: 1001,
+				name: `ProductName1`,
+				options: '[]',
+				quantity: 5,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-13',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU1`,
+				skuId: 100,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+			{
+				deliveryGroup: 'deliveryGroup2',
+				id: 1003,
+				name: `ProductName3`,
+				options: '[]',
+				quantity: 8,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-13',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU3`,
+				skuId: 102,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+		] as Array<IOrderItem>;
+
+		const mockFetch = jest
+			.fn()
+			.mockReturnValueOnce(() => {
+				return {
+					items: orderItems,
+				} as IOrderItemAPIResponse;
+			})
+			.mockReturnValue(() => {
+				return {
+					cartItems: orderItems,
+				} as IOrderItemAPIResponse;
+			});
+
+		fetchMock.get(
+			/headless-commerce-delivery-cart\/.*\/carts\/.*\/items\?.*/i,
+			mockFetch
+		);
+
+		fetchMock.patch(
+			/headless-commerce-delivery-cart\/.*\/carts\/.*\?.*/i,
+			mockFetch
+		);
+
+		const renderedComponent = render(
+			<MultiShipping accountId={10} orderId={10} />
+		);
+
+		const {loadingSpinner} = getLocators(orderItems, renderedComponent);
+
+		await waitFor(() => {
+			expect(loadingSpinner).not.toBeInTheDocument();
+		});
+
+		const {row0SelectCheckbox, row1SelectCheckbox} = getLocators(
+			orderItems,
+			renderedComponent
+		);
+
+		userEvent.click(row0SelectCheckbox);
+		userEvent.click(row1SelectCheckbox);
+
+		const {bulkResetActionButton} = getLocators(
+			orderItems,
+			renderedComponent
+		);
+
+		expect(bulkResetActionButton).toBeEnabled();
+
+		userEvent.click(bulkResetActionButton);
+
+		expect(
+			isArrayEqual(
+				JSON.parse(fetchMock.calls().matched[1][1].body).cartItems,
+				JSON.parse(
+					'[{"deliveryGroup":"deliveryGroup1","id":1000,"options":"[]","quantity":1,"replacedSkuId":0,"requestedDeliveryDate":"2024-12-12","shippingAddressId":1000,"skuId":100},{"deliveryGroup":"deliveryGroup1","id":0,"options":"[]","quantity":1,"replacedSkuId":0,"requestedDeliveryDate":"2024-12-12","shippingAddressId":1000,"skuId":102}]'
+				)
+			)
+		).toBeTruthy();
+		expect(fetchMock.calls().matched[1][1].method).toBe('PATCH');
+	});
+
+	it('Bulk remove action', async () => {
+		const orderItems = [
+			{
+				deliveryGroup: `deliveryGroup1`,
+				id: 1000,
+				name: `ProductName1`,
+				options: '[]',
+				quantity: 3,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-12',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU1`,
+				skuId: 100,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+			{
+				deliveryGroup: 'deliveryGroup2',
+				id: 1003,
+				name: `ProductName3`,
+				options: '[]',
+				quantity: 8,
+				replacedSkuId: 0,
+				requestedDeliveryDate: '2024-12-13',
+				settings: {
+					maxQuantity: 10000,
+					minQuantity: 1,
+					multipleQuantity: 1,
+				},
+				shippingAddressId: 1000,
+				sku: `SKU3`,
+				skuId: 102,
+				thumbnail: '/o/commerce-media/default/?groupId=33472',
+			},
+		] as Array<IOrderItem>;
+
+		const mockFetch = jest
+			.fn()
+			.mockReturnValueOnce(() => {
+				return {
+					items: orderItems,
+				} as IOrderItemAPIResponse;
+			})
+			.mockReturnValue(() => {
+				return {
+					cartItems: orderItems,
+				} as IOrderItemAPIResponse;
+			});
+
+		fetchMock.get(
+			/headless-commerce-delivery-cart\/.*\/carts\/.*\/items\?.*/i,
+			mockFetch
+		);
+
+		fetchMock.patch(
+			/headless-commerce-delivery-cart\/.*\/carts\/.*\?.*/i,
+			mockFetch
+		);
+
+		const renderedComponent = render(
+			<MultiShipping accountId={10} orderId={10} />
+		);
+
+		const {loadingSpinner} = getLocators(orderItems, renderedComponent);
+
+		await waitFor(() => {
+			expect(loadingSpinner).not.toBeInTheDocument();
+		});
+
+		const {row0SelectCheckbox} = getLocators(orderItems, renderedComponent);
+
+		userEvent.click(row0SelectCheckbox);
+
+		const {bulkRemoveActionButton} = getLocators(
+			orderItems,
+			renderedComponent
+		);
+
+		expect(bulkRemoveActionButton).toBeEnabled();
+
+		userEvent.click(bulkRemoveActionButton);
+
+		expect(
+			isArrayEqual(
+				JSON.parse(fetchMock.calls().matched[1][1].body).cartItems,
+				JSON.parse(
+					'[{"deliveryGroup":"deliveryGroup2","id":1003,"options":"[]","quantity":8,"replacedSkuId":0,"requestedDeliveryDate":"2024-12-13","shippingAddressId":1000,"skuId":102}]'
+				)
+			)
+		).toBeTruthy();
+		expect(fetchMock.calls().matched[1][1].method).toBe('PATCH');
+	});
+});

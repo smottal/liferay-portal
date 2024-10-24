@@ -606,6 +606,11 @@ describe('OrderItemRow', () => {
 			});
 		});
 
+		expect(fetchMock.calls().matched[0][1].body).toBe(
+			'{"deliveryGroup":"DeliveryGroup1","options":"[]","quantity":10,"replacedSkuId":0,"requestedDeliveryDate":"","shippingAddressId":100,"skuId":1001,"skuUnitOfMeasure":{}}'
+		);
+		expect(fetchMock.calls().matched[0][1].method).toBe('PATCH');
+
 		await setFieldValue(deliveryGroup2Input, 8);
 
 		expect(quantityCell).toHaveTextContent(String(18));
@@ -632,6 +637,11 @@ describe('OrderItemRow', () => {
 				},
 			});
 		});
+
+		expect(fetchMock.calls().matched[1][1].body).toBe(
+			'{"deliveryGroup":"DeliveryGroup2","options":"[]","quantity":8,"replacedSkuId":0,"requestedDeliveryDate":"","shippingAddressId":100,"skuId":1001,"skuUnitOfMeasure":{}}'
+		);
+		expect(fetchMock.calls().matched[1][1].method).toBe('PATCH');
 	});
 
 	it('Must save a new delivery group', async () => {
@@ -763,6 +773,11 @@ describe('OrderItemRow', () => {
 			});
 		});
 
+		expect(fetchMock.calls().matched[0][1].body).toBe(
+			'{"deliveryGroup":"DeliveryGroup2","options":"[]","quantity":20,"replacedSkuId":0,"requestedDeliveryDate":"","shippingAddressId":100,"skuId":1001,"skuUnitOfMeasure":{}}'
+		);
+		expect(fetchMock.calls().matched[0][1].method).toBe('POST');
+
 		await setFieldValue(deliveryGroup2Input, 8);
 
 		expect(quantityCell).toHaveTextContent(String(12));
@@ -789,6 +804,11 @@ describe('OrderItemRow', () => {
 				},
 			});
 		});
+
+		expect(fetchMock.calls().matched[1][1].body).toBe(
+			'{"deliveryGroup":"DeliveryGroup2","options":"[]","quantity":8,"replacedSkuId":0,"requestedDeliveryDate":"","shippingAddressId":100,"skuId":1001,"skuUnitOfMeasure":{}}'
+		);
+		expect(fetchMock.calls().matched[1][1].method).toBe('PATCH');
 	});
 
 	it('Must delete a new delivery group', async () => {
@@ -896,6 +916,7 @@ describe('OrderItemRow', () => {
 		await setFieldValue(deliveryGroup2Input, 0);
 
 		expect(quantityCell).toHaveTextContent(String(0));
+		expect(fetchMock.calls().matched[0][1].method).toBe('DELETE');
 
 		await waitFor(() => {
 			expect(handleSubmit).toBeCalledWith({});

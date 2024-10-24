@@ -67,6 +67,16 @@ export function copyColumnOrderItem(
 		return orderItem;
 	}
 
+	if (
+		(deliveryGroups?.length || 0) <= 1 ||
+		!(orderItem.deliveryGroups || {})[deliveryGroups[0].id] ||
+		(orderItem.settings?.maxQuantity || 1) <
+			(orderItem.deliveryGroups || {})[deliveryGroups[0].id].quantity *
+				deliveryGroups?.length
+	) {
+		throw new Error('invalid quantity');
+	}
+
 	for (const deliveryGroup of deliveryGroups) {
 		if (orderItem.deliveryGroups[deliveryGroup.id]) {
 			orderItem.deliveryGroups[deliveryGroup.id].quantity =

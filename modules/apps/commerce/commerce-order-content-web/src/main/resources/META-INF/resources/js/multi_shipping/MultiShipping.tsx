@@ -108,7 +108,6 @@ const createRequestData = (
 			}
 		}
 		else {
-			console.error(orderItem.quantity);
 			if (orderItem.quantity > 0) {
 				data.push(
 					formatCartItem(
@@ -258,8 +257,6 @@ const MultiShipping = ({
 					return;
 				}
 				catch (error) {
-					console.error(error);
-
 					showError(error as IAPIResponseError);
 				}
 			}
@@ -286,8 +283,6 @@ const MultiShipping = ({
 				return;
 			}
 			catch (error) {
-				console.error(error);
-
 				showError(error as IAPIResponseError);
 			}
 		}
@@ -313,8 +308,6 @@ const MultiShipping = ({
 				await prepareData(response.items);
 			})
 			.catch((error: IAPIResponseError) => {
-				console.error(error);
-
 				showError(error);
 			})
 			.finally(() => {
@@ -409,8 +402,6 @@ const MultiShipping = ({
 				setCheckedOrderItemIds([]);
 			}
 			catch (error) {
-				console.error(error);
-
 				setFormattedOrderItems(originalFormattedOrderItems);
 
 				showError({
@@ -463,8 +454,6 @@ const MultiShipping = ({
 				}
 			}
 			catch (error) {
-				console.error(error);
-
 				showError(error as IAPIResponseError);
 			}
 		},
@@ -532,8 +521,6 @@ const MultiShipping = ({
 					);
 				}
 				catch (error) {
-					console.error(error);
-
 					setFormattedOrderItems(originalFormattedOrderItems);
 
 					showError(error as IAPIResponseError);
@@ -563,8 +550,6 @@ const MultiShipping = ({
 					);
 				}
 				catch (error) {
-					console.error(error);
-
 					showError(error as IAPIResponseError);
 				}
 			}
@@ -587,8 +572,6 @@ const MultiShipping = ({
 						);
 					}
 					catch (error) {
-						console.error(error);
-
 						showError(error as IAPIResponseError);
 
 						setDeliveryGroups([]);
