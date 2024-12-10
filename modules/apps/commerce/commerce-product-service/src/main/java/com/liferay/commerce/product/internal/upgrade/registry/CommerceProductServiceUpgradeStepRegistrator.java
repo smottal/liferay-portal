@@ -42,8 +42,12 @@ import com.liferay.commerce.product.internal.upgrade.v5_21_0.util.CPConfiguratio
 import com.liferay.commerce.product.internal.upgrade.v5_21_0.util.CPConfigurationListTable;
 import com.liferay.commerce.product.internal.upgrade.v5_22_0.CPSpecificationOptionUpgradeProcess;
 import com.liferay.commerce.product.internal.upgrade.v5_25_0.util.CPConfigurationListRelTable;
+import com.liferay.commerce.product.internal.upgrade.v5_25_1.CPConfigurationListEligibilityUpgradeProcess;
 import com.liferay.commerce.product.internal.upgrade.v5_4_0.CommercePermissionUpgradeProcess;
 import com.liferay.commerce.product.internal.upgrade.v5_5_0.util.CPInstanceUnitOfMeasureTable;
+import com.liferay.commerce.product.service.CPConfigurationListLocalService;
+import com.liferay.commerce.product.service.CPConfigurationListRelLocalService;
+import com.liferay.commerce.product.service.CommerceChannelRelLocalService;
 import com.liferay.counter.kernel.service.CounterLocalService;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.json.JSONFactory;
@@ -616,6 +620,13 @@ public class CommerceProductServiceUpgradeStepRegistrator
 		registry.register(
 			"5.24.0", "5.25.0", CPConfigurationListRelTable.create());
 
+		registry.register(
+			"5.25.0", "5.25.1",
+			new CPConfigurationListEligibilityUpgradeProcess(
+				_commerceChannelRelLocalService, _cpConfigurationListLocalService,
+				_cpConfigurationListRelLocalService, _portal
+			));
+
 		if (_log.isInfoEnabled()) {
 			_log.info("Commerce product upgrade step registrator finished");
 		}
@@ -623,6 +634,15 @@ public class CommerceProductServiceUpgradeStepRegistrator
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		CommerceProductServiceUpgradeStepRegistrator.class);
+
+	@Reference
+	private CommerceChannelRelLocalService _commerceChannelRelLocalService;
+
+	@Reference
+	private CPConfigurationListLocalService _cpConfigurationListLocalService;
+
+	@Reference
+	private CPConfigurationListRelLocalService _cpConfigurationListRelLocalService;
 
 	@Reference
 	private AccountEntryGroupSettings _accountEntryGroupSettings;
