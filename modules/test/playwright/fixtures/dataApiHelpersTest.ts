@@ -18,6 +18,8 @@ const dataApiHelpersTest = test.extend<{
 		const dataApiHelpers = new DataApiHelpers(page);
 
 		try {
+			await page.bringToFront();
+
 			await use(dataApiHelpers);
 		}
 		finally {
