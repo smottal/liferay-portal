@@ -45,6 +45,7 @@ import com.liferay.commerce.product.internal.upgrade.v5_25_0.util.CPConfiguratio
 import com.liferay.commerce.product.internal.upgrade.v5_25_1.CPConfigurationListEligibilityUpgradeProcess;
 import com.liferay.commerce.product.internal.upgrade.v5_4_0.CommercePermissionUpgradeProcess;
 import com.liferay.commerce.product.internal.upgrade.v5_5_0.util.CPInstanceUnitOfMeasureTable;
+import com.liferay.commerce.product.service.CPConfigurationEntryLocalService;
 import com.liferay.commerce.product.service.CPConfigurationListLocalService;
 import com.liferay.commerce.product.service.CPConfigurationListRelLocalService;
 import com.liferay.commerce.product.service.CommerceChannelRelLocalService;
@@ -623,9 +624,10 @@ public class CommerceProductServiceUpgradeStepRegistrator
 		registry.register(
 			"5.25.0", "5.25.1",
 			new CPConfigurationListEligibilityUpgradeProcess(
-				_commerceChannelRelLocalService, _cpConfigurationListLocalService,
-				_cpConfigurationListRelLocalService, _portal
-			));
+				_commerceChannelRelLocalService,
+				_cpConfigurationEntryLocalService,
+				_cpConfigurationListLocalService,
+				_cpConfigurationListRelLocalService, _portal));
 
 		if (_log.isInfoEnabled()) {
 			_log.info("Commerce product upgrade step registrator finished");
@@ -634,15 +636,6 @@ public class CommerceProductServiceUpgradeStepRegistrator
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		CommerceProductServiceUpgradeStepRegistrator.class);
-
-	@Reference
-	private CommerceChannelRelLocalService _commerceChannelRelLocalService;
-
-	@Reference
-	private CPConfigurationListLocalService _cpConfigurationListLocalService;
-
-	@Reference
-	private CPConfigurationListRelLocalService _cpConfigurationListRelLocalService;
 
 	@Reference
 	private AccountEntryGroupSettings _accountEntryGroupSettings;
@@ -660,6 +653,9 @@ public class CommerceProductServiceUpgradeStepRegistrator
 	private ClassNameLocalService _classNameLocalService;
 
 	@Reference
+	private CommerceChannelRelLocalService _commerceChannelRelLocalService;
+
+	@Reference
 	private CompanyLocalService _companyLocalService;
 
 	@Reference
@@ -670,6 +666,16 @@ public class CommerceProductServiceUpgradeStepRegistrator
 
 	@Reference
 	private CounterLocalService _counterLocalService;
+
+	@Reference
+	private CPConfigurationEntryLocalService _cpConfigurationEntryLocalService;
+
+	@Reference
+	private CPConfigurationListLocalService _cpConfigurationListLocalService;
+
+	@Reference
+	private CPConfigurationListRelLocalService
+		_cpConfigurationListRelLocalService;
 
 	@Reference
 	private GroupLocalService _groupLocalService;

@@ -5,33 +5,23 @@
 
 package com.liferay.commerce.product.internal.upgrade.v5_25_1;
 
-import com.liferay.account.model.AccountEntry;
 import com.liferay.account.model.AccountGroup;
-import com.liferay.account.settings.AccountEntryGroupSettings;
 import com.liferay.commerce.product.model.CPConfigurationEntry;
 import com.liferay.commerce.product.model.CPConfigurationList;
 import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.commerce.product.model.CommerceCatalog;
-import com.liferay.commerce.product.model.CommerceChannel;
+import com.liferay.commerce.product.service.CPConfigurationEntryLocalService;
 import com.liferay.commerce.product.service.CPConfigurationEntryLocalServiceUtil;
-import com.liferay.commerce.product.service.CPConfigurationEntryLocalServiceWrapper;
 import com.liferay.commerce.product.service.CPConfigurationListLocalService;
-import com.liferay.commerce.product.service.CPConfigurationListLocalServiceUtil;
 import com.liferay.commerce.product.service.CPConfigurationListRelLocalService;
-import com.liferay.commerce.product.service.CPConfigurationListRelLocalServiceUtil;
 import com.liferay.commerce.product.service.CommerceChannelRelLocalService;
-import com.liferay.commerce.product.service.CommerceChannelRelLocalServiceUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
-import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -39,7 +29,6 @@ import java.sql.SQLException;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -52,20 +41,18 @@ public class CPConfigurationListEligibilityUpgradeProcess
 
 	public CPConfigurationListEligibilityUpgradeProcess(
 		CommerceChannelRelLocalService commerceChannelRelLocalService,
+		CPConfigurationEntryLocalService cpConfigurationEntryLocalService,
 		CPConfigurationListLocalService cpConfigurationListLocalService,
 		CPConfigurationListRelLocalService cpConfigurationListRelLocalService,
 		Portal portal) {
 
 		_commerceChannelRelLocalService = commerceChannelRelLocalService;
+		_cpConfigurationEntryLocalService = cpConfigurationEntryLocalService;
 		_cpConfigurationListLocalService = cpConfigurationListLocalService;
-		_cpConfigurationListRelLocalService = cpConfigurationListRelLocalService;
+		_cpConfigurationListRelLocalService =
+			cpConfigurationListRelLocalService;
 		_portal = portal;
 	}
-
-	private final Portal _portal;
-	private final CommerceChannelRelLocalService _commerceChannelRelLocalService;
-	private final CPConfigurationListRelLocalService _cpConfigurationListRelLocalService;
-	private final CPConfigurationListLocalService _cpConfigurationListLocalService;
 
 	@Override
 	protected void doUpgrade() throws Exception {
@@ -79,27 +66,6 @@ public class CPConfigurationListEligibilityUpgradeProcess
 			CPDefinition.class.getName());
 
 		try (
-			PreparedStatement insertPreparedStatement =
-				AutoBatchPreparedStatementUtil.autoBatch(connection,
-					StringBundler.concat(
-						"insert into CPConfigurationEntry (mvccVersion, ",
-						"ctCollectionId, uuid_, externalReferenceCode, ",
-						"CPConfigurationEntryId, companyId, userId, username, ",
-						"createDate, modifiedDate, classNameId, classPK, ",
-						"CPConfigurationListId, CPTaxCategoryId, ",
-						"allowedOrderQuantities, backOrders, ",
-						"CPDefinitionInventoryEngine, depth, ",
-						"displayAvailability, displayStockQuantity, ",
-						"freeShipping, height, lowStockActivity, ",
-						"maxOrderQuantity, minOrderQuantity, ",
-						"minStockQuantity, multipleOrderQuantity, ",
-						"purchasable, shippable, shippingExtraPrice, ",
-						"shipSeparately, taxExempt, visible, weight, width, ",
-						"commerceAvailabilityEstimateId, groupId) values (?, ",
-						"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ",
-						"?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ",
-						"?, ?)"));
-
 			PreparedStatement selectPreparedStatement1 =
 				connection.prepareStatement(
 					"select Group_.companyId, Group_.groupId from " +
@@ -156,7 +122,8 @@ public class CPConfigurationListEligibilityUpgradeProcess
 				}
 
 				CPConfigurationEntry templateCPConfigurationEntry =
-					masterCPConfigurationList.fetchTemplateCPConfigurationEntry();
+					masterCPConfigurationList.
+						fetchTemplateCPConfigurationEntry();
 
 				if (templateCPConfigurationEntry == null) {
 					continue;
@@ -171,10 +138,10 @@ public class CPConfigurationListEligibilityUpgradeProcess
 
 				_addCPConfigurationEntries(
 					accountGroupClassNameId, cpConfigurationListClassNameId,
-					cpDefinitionClassNameId, insertPreparedStatement,
+					cpDefinitionClassNameId,
+					masterCPConfigurationList.getCPConfigurationListId(),
 					selectPreparedStatement2, selectPreparedStatement3,
-					selectPreparedStatement4,
-					templateCPConfigurationEntry);
+					selectPreparedStatement4);
 
 				_updateMasterCPConfigurationEntries(
 					cpDefinitionClassNameId, groupId, masterCPConfigurationList,
@@ -185,33 +152,41 @@ public class CPConfigurationListEligibilityUpgradeProcess
 
 	private void _addCPConfigurationEntries(
 			long accountGroupClassNameId, long cpConfigurationListClassNameId,
-			long cpDefinitionClassNameId,
-			PreparedStatement insertPreparedStatement,
+			long cpDefinitionClassNameId, long masterCPConfigurationListId,
 			PreparedStatement selectPreparedStatement1,
 			PreparedStatement selectPreparedStatement2,
-			PreparedStatement selectPreparedStatement3,
-			CPConfigurationEntry templateCPConfigurationEntry)
+			PreparedStatement selectPreparedStatement3)
 		throws Exception {
 
 		Set<Long> createdCPConfigurationEntries = new HashSet<>();
 		long currentClassPK = 0;
+		CPConfigurationEntry masterCPConfigurationEntry = null;
 
 		ResultSet resultSet1 = selectPreparedStatement1.executeQuery();
 
 		while (resultSet1.next()) {
-			insertPreparedStatement.clearBatch();
-
 			long classPK = resultSet1.getLong("classPK");
-			long resourceId = resultSet1.getLong("resourceId");
-			String type = resultSet1.getString("type_");
 
 			if (classPK != currentClassPK) {
 				createdCPConfigurationEntries = new HashSet<>();
 
 				currentClassPK = classPK;
+
+				masterCPConfigurationEntry =
+					CPConfigurationEntryLocalServiceUtil.
+						fetchCPConfigurationEntry(
+							cpDefinitionClassNameId, classPK,
+							masterCPConfigurationListId);
+
+				if (masterCPConfigurationEntry == null) {
+					continue;
+				}
 			}
 
+			long resourceId = resultSet1.getLong("resourceId");
 			ResultSet resultSet2;
+
+			String type = resultSet1.getString("type_");
 
 			if (type.equals("A")) {
 				selectPreparedStatement2.setLong(1, accountGroupClassNameId);
@@ -220,7 +195,8 @@ public class CPConfigurationListEligibilityUpgradeProcess
 				resultSet2 = selectPreparedStatement2.executeQuery();
 			}
 			else {
-				selectPreparedStatement3.setLong(1, cpConfigurationListClassNameId);
+				selectPreparedStatement3.setLong(
+					1, cpConfigurationListClassNameId);
 				selectPreparedStatement3.setLong(2, resourceId);
 
 				resultSet2 = selectPreparedStatement3.executeQuery();
@@ -238,85 +214,34 @@ public class CPConfigurationListEligibilityUpgradeProcess
 
 				createdCPConfigurationEntries.add(cpConfigurationListId);
 
-				Date date = new Date();
-				String uuid = PortalUUIDUtil.generate();
-
-				insertPreparedStatement.setLong(1, 0);
-				insertPreparedStatement.setLong(2, 0);
-				insertPreparedStatement.setString(3, uuid);
-				insertPreparedStatement.setString(4, uuid);
-				insertPreparedStatement.setLong(5, increment());
-				insertPreparedStatement.setLong(
-					6, templateCPConfigurationEntry.getCompanyId());
-				insertPreparedStatement.setLong(
-					7, templateCPConfigurationEntry.getUserId());
-				insertPreparedStatement.setString(
-					8, templateCPConfigurationEntry.getUserName());
-				insertPreparedStatement.setDate(
-					9, new java.sql.Date(date.getTime()));
-				insertPreparedStatement.setDate(
-					10, new java.sql.Date(date.getTime()));
-				insertPreparedStatement.setLong(11, cpDefinitionClassNameId);
-				insertPreparedStatement.setLong(12, classPK);
-				insertPreparedStatement.setLong(13, cpConfigurationListId);
-				insertPreparedStatement.setLong(
-					14, templateCPConfigurationEntry.getCPTaxCategoryId());
-				insertPreparedStatement.setString(
-					15,
-					templateCPConfigurationEntry.getAllowedOrderQuantities());
-				insertPreparedStatement.setBoolean(
-					16, templateCPConfigurationEntry.isBackOrders());
-				insertPreparedStatement.setString(
-					17,
-					templateCPConfigurationEntry.
-						getCPDefinitionInventoryEngine());
-				insertPreparedStatement.setDouble(
-					18, templateCPConfigurationEntry.getDepth());
-				insertPreparedStatement.setBoolean(
-					19, templateCPConfigurationEntry.isDisplayAvailability());
-				insertPreparedStatement.setBoolean(
-					20, templateCPConfigurationEntry.isDisplayStockQuantity());
-				insertPreparedStatement.setBoolean(
-					21, templateCPConfigurationEntry.isFreeShipping());
-				insertPreparedStatement.setDouble(
-					22, templateCPConfigurationEntry.getHeight());
-				insertPreparedStatement.setString(
-					23, templateCPConfigurationEntry.getLowStockActivity());
-				insertPreparedStatement.setBigDecimal(
-					24, templateCPConfigurationEntry.getMaxOrderQuantity());
-				insertPreparedStatement.setBigDecimal(
-					25, templateCPConfigurationEntry.getMinOrderQuantity());
-				insertPreparedStatement.setBigDecimal(
-					26, templateCPConfigurationEntry.getMinStockQuantity());
-				insertPreparedStatement.setBigDecimal(
-					27,
-					templateCPConfigurationEntry.getMultipleOrderQuantity());
-				insertPreparedStatement.setBoolean(
-					28, templateCPConfigurationEntry.isPurchasable());
-				insertPreparedStatement.setBoolean(
-					29, templateCPConfigurationEntry.isShippable());
-				insertPreparedStatement.setDouble(
-					30, templateCPConfigurationEntry.getShippingExtraPrice());
-				insertPreparedStatement.setBoolean(
-					31, templateCPConfigurationEntry.isShipSeparately());
-				insertPreparedStatement.setBoolean(
-					32, templateCPConfigurationEntry.isTaxExempt());
-				insertPreparedStatement.setBoolean(33, true);
-				insertPreparedStatement.setDouble(
-					34, templateCPConfigurationEntry.getWeight());
-				insertPreparedStatement.setDouble(
-					35, templateCPConfigurationEntry.getWidth());
-				insertPreparedStatement.setLong(
-					36,
-					templateCPConfigurationEntry.
-						getCommerceAvailabilityEstimateId());
-				insertPreparedStatement.setLong(
-					37, templateCPConfigurationEntry.getGroupId());
-
-				insertPreparedStatement.addBatch();
+				_cpConfigurationEntryLocalService.addCPConfigurationEntry(
+					null, masterCPConfigurationEntry.getUserId(),
+					masterCPConfigurationEntry.getGroupId(),
+					cpDefinitionClassNameId, classPK, cpConfigurationListId,
+					masterCPConfigurationEntry.getCPTaxCategoryId(),
+					masterCPConfigurationEntry.getAllowedOrderQuantities(),
+					masterCPConfigurationEntry.isBackOrders(),
+					masterCPConfigurationEntry.
+						getCommerceAvailabilityEstimateId(),
+					masterCPConfigurationEntry.getCPDefinitionInventoryEngine(),
+					masterCPConfigurationEntry.getDepth(),
+					masterCPConfigurationEntry.isDisplayAvailability(),
+					masterCPConfigurationEntry.isDisplayStockQuantity(),
+					masterCPConfigurationEntry.isFreeShipping(),
+					masterCPConfigurationEntry.getHeight(),
+					masterCPConfigurationEntry.getLowStockActivity(),
+					masterCPConfigurationEntry.getMaxOrderQuantity(),
+					masterCPConfigurationEntry.getMinOrderQuantity(),
+					masterCPConfigurationEntry.getMinStockQuantity(),
+					masterCPConfigurationEntry.getMultipleOrderQuantity(),
+					masterCPConfigurationEntry.isPurchasable(),
+					masterCPConfigurationEntry.isShippable(),
+					masterCPConfigurationEntry.getShippingExtraPrice(),
+					masterCPConfigurationEntry.isShipSeparately(),
+					masterCPConfigurationEntry.isTaxExempt(), true,
+					masterCPConfigurationEntry.getWeight(),
+					masterCPConfigurationEntry.getWidth());
 			}
-
-			insertPreparedStatement.executeBatch();
 		}
 	}
 
@@ -399,17 +324,23 @@ public class CPConfigurationListEligibilityUpgradeProcess
 				long resourceId = GetterUtil.getLong(type.substring(1));
 
 				if (type.startsWith("A")) {
-					_cpConfigurationListRelLocalService.addCPConfigurationListRel(cpConfigurationList.getUserId(),
-						AccountGroup.class.getName(), resourceId, cpConfigurationList.getCPConfigurationListId());
+					_cpConfigurationListRelLocalService.
+						addCPConfigurationListRel(
+							cpConfigurationList.getUserId(),
+							AccountGroup.class.getName(), resourceId,
+							cpConfigurationList.getCPConfigurationListId());
 				}
-				else if (type.startsWith("C")) {
+				else {
 					ServiceContext serviceContext = new ServiceContext();
 
-					serviceContext.setCompanyId(cpConfigurationList.getCompanyId());
+					serviceContext.setCompanyId(
+						cpConfigurationList.getCompanyId());
 					serviceContext.setUserId(cpConfigurationList.getUserId());
 
-					_commerceChannelRelLocalService.addCommerceChannelRel(CPConfigurationList.class.getName(),
-						cpConfigurationList.getCPConfigurationListId(), resourceId, serviceContext);
+					_commerceChannelRelLocalService.addCommerceChannelRel(
+						CPConfigurationList.class.getName(),
+						cpConfigurationList.getCPConfigurationListId(),
+						resourceId, serviceContext);
 				}
 			}
 		}
@@ -467,5 +398,15 @@ public class CPConfigurationListEligibilityUpgradeProcess
 
 		preparedStatement.executeUpdate();
 	}
+
+	private final CommerceChannelRelLocalService
+		_commerceChannelRelLocalService;
+	private final CPConfigurationEntryLocalService
+		_cpConfigurationEntryLocalService;
+	private final CPConfigurationListLocalService
+		_cpConfigurationListLocalService;
+	private final CPConfigurationListRelLocalService
+		_cpConfigurationListRelLocalService;
+	private final Portal _portal;
 
 }
