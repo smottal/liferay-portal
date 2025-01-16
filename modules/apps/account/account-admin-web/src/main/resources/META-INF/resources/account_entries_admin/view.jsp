@@ -30,6 +30,16 @@ ViewAccountEntriesManagementToolbarDisplayContext viewAccountEntriesManagementTo
 		PURCHASE permission: <%= PortletPermissionUtil.contains(permissionChecker, "com_liferay_marketplace_apps_GeneralPermissionsPortlet", "PURCHASE_PAID_APPS") %>
 	</div>
 
+	<div>
+		VIEW permission payment: <%= PortletPermissionUtil.contains(permissionChecker, "com_liferay_marketplace_apps_PaymentMethodsPortlet", ActionKeys.VIEW) %>
+	</div>
+	<div>
+		INSTALL permission payment: <%= PortletPermissionUtil.contains(permissionChecker, "com_liferay_marketplace_apps_PaymentMethodsPortlet", "INSTALL_FREE_APPS") %>
+	</div>
+	<div>
+		PURCHASE permission payment: <%= PortletPermissionUtil.contains(permissionChecker, "com_liferay_marketplace_apps_PaymentMethodsPortlet", "PURCHASE_PAID_APPS") %>
+	</div>
+
 	<aui:form method="post" name="fm">
 		<aui:input name="accountEntryIds" type="hidden" />
 
