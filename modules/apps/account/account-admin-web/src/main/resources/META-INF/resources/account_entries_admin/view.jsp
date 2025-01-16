@@ -19,6 +19,17 @@ ViewAccountEntriesManagementToolbarDisplayContext viewAccountEntriesManagementTo
 />
 
 <clay:container-fluid>
+
+	<div>
+		VIEW permission: <%= PortletPermissionUtil.contains(permissionChecker, "com_liferay_marketplace_apps_GeneralPermissionsPortlet", ActionKeys.VIEW) %>
+	</div>
+	<div>
+		INSTALL permission: <%= PortletPermissionUtil.contains(permissionChecker, "com_liferay_marketplace_apps_GeneralPermissionsPortlet", "INSTALL_FREE_APPS") %>
+	</div>
+	<div>
+		PURCHASE permission: <%= PortletPermissionUtil.contains(permissionChecker, "com_liferay_marketplace_apps_GeneralPermissionsPortlet", "PURCHASE_PAID_APPS") %>
+	</div>
+
 	<aui:form method="post" name="fm">
 		<aui:input name="accountEntryIds" type="hidden" />
 

@@ -11,6 +11,7 @@ import com.liferay.account.constants.AccountPortletKeys;
 import com.liferay.account.settings.AccountEntryGroupSettings;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
+import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Portal;
 
