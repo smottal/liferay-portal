@@ -213,6 +213,7 @@ public class RoleResourceImpl extends BaseRoleResourceImpl {
 				}
 
 				searchContext.setCompanyId(contextCompany.getCompanyId());
+				searchContext.setUserId(contextUser.getUserId());
 			},
 			null,
 			document -> {
