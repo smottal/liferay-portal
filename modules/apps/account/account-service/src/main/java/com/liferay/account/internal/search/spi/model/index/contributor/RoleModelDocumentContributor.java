@@ -3,16 +3,20 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-package com.liferay.roles.admin.internal.search.spi.model.index.contributor;
+package com.liferay.account.internal.search.spi.model.index.contributor;
 
+import com.liferay.account.model.AccountRole;
+import com.liferay.account.service.AccountRoleLocalService;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.search.Document;
-import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.search.spi.model.index.contributor.ModelDocumentContributor;
 
+import java.util.Objects;
+
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Stefano Motta
@@ -20,7 +24,7 @@ import org.osgi.service.component.annotations.Component;
 @Component(
 	property = {
 		"indexer.class.name=com.liferay.portal.kernel.model.Role",
-		"service.ranking:Integer=200"
+		"service.ranking:Integer=100"
 	},
 	service = ModelDocumentContributor.class
 )
@@ -30,21 +34,21 @@ public class RoleModelDocumentContributor
 	@Override
 	public void contribute(Document document, Role role) {
 		try {
-			document.addKeyword("accountEntryId", 0);
-			document.addKeyword(Field.COMPANY_ID, role.getCompanyId());
-			document.addDate(Field.CREATE_DATE, role.getCreateDate());
-			document.addText(Field.DESCRIPTION, role.getDescription());
+			if (!Objects.equals(
+					role.getClassName(), AccountRole.class.getName())) {
+
+				return;
+			}
+
+			AccountRole accountRole = _accountRoleLocalService.fetchAccountRole(
+				role.getClassPK());
+
+			if (accountRole == null) {
+				return;
+			}
+
 			document.addKeyword(
-				"externalReferenceCode", role.getExternalReferenceCode());
-			document.addLocalizedText(
-				"localized_description", role.getDescriptionMap());
-			document.addLocalizedText("localized_title", role.getTitleMap());
-			document.addDate(Field.MODIFIED_DATE, role.getModifiedDate());
-			document.addKeyword(Field.NAME, role.getName());
-			document.addKeyword("subtype", role.getSubtype());
-			document.addText(Field.TITLE, role.getTitle());
-			document.addNumber(Field.TYPE, role.getType());
-			document.addKeyword(Field.USER_ID, role.getUserId());
+				"accountEntryId", accountRole.getAccountEntryId());
 		}
 		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
@@ -56,5 +60,8 @@ public class RoleModelDocumentContributor
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		RoleModelDocumentContributor.class);
+
+	@Reference
+	private AccountRoleLocalService _accountRoleLocalService;
 
 }

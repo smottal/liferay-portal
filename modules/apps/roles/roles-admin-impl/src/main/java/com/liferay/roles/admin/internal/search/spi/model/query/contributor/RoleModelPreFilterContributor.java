@@ -10,6 +10,7 @@ import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
+import com.liferay.portal.kernel.search.filter.TermFilter;
 import com.liferay.portal.kernel.search.filter.TermsFilter;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -33,7 +34,20 @@ public class RoleModelPreFilterContributor
 		BooleanFilter contextBooleanFilter,
 		ModelSearchSettings modelSearchSettings, SearchContext searchContext) {
 
+		_filterByAccountEntryId(contextBooleanFilter, searchContext);
 		_filterByType(contextBooleanFilter, searchContext);
+	}
+
+	private void _filterByAccountEntryId(
+		BooleanFilter contextBooleanFilter, SearchContext searchContext) {
+
+		contextBooleanFilter.add(
+			new TermFilter(
+				"accountEntryId",
+				String.valueOf(
+					GetterUtil.getLong(
+						searchContext.getAttribute("accountEntryId")))),
+			BooleanClauseOccur.MUST);
 	}
 
 	private void _filterByType(
