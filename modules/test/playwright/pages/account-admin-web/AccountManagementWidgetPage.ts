@@ -6,6 +6,7 @@
 import {Locator, Page} from '@playwright/test';
 
 import {AccountsPage} from './AccountsPage';
+import {DataTablePage} from './DataTablePage';
 
 export class AccountManagementWidgetPage extends AccountsPage {
 	readonly accountCell: (accountName: string) => Locator;
@@ -23,8 +24,11 @@ export class AccountManagementWidgetPage extends AccountsPage {
 
 		// @ts-ignore
 
-		this.accountsTable = page.locator(
-			'#_com_liferay_account_admin_web_internal_portlet_AccountEntriesManagementPortlet_accountEntriesSearchContainer'
+		this.accountsTable = new DataTablePage(
+			page,
+			page.locator(
+				'#_com_liferay_account_admin_web_internal_portlet_AccountEntriesManagementPortlet_accountEntriesSearchContainer'
+			)
 		);
 		this.page = page;
 		this.searchInput = page.locator('input[placeholder="Search for"]');

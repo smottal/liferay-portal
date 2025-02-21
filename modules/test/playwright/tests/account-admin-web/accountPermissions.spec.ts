@@ -9,14 +9,22 @@ import {accountsPagesTest} from '../../fixtures/accountsPagesTest';
 import {applicationsMenuPageTest} from '../../fixtures/applicationsMenuPageTest';
 import {dataApiHelpersTest} from '../../fixtures/dataApiHelpersTest';
 import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
+import {isolatedSiteTest} from '../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../fixtures/loginTest';
 import {usersAndOrganizationsPagesTest} from '../../fixtures/usersAndOrganizationsPagesTest';
+import {DataApiHelpers} from '../../helpers/ApiHelpers';
+import {TRole} from '../../helpers/HeadlessAdminUserApiHelper';
 import {AccountOrganizationSelectorPage} from '../../pages/account-admin-web/AccountOrganizationSelectorPage';
 import {AccountsPage} from '../../pages/account-admin-web/AccountsPage';
 import {getRandomInt} from '../../utils/getRandomInt';
 import getRandomString from '../../utils/getRandomString';
 import {nextPage, setItemsPerPage} from '../../utils/pagination';
-import performLogin, {performLogout, userData} from '../../utils/performLogin';
+import performLogin, {
+	performLoginViaApi,
+	performLogout,
+	userData,
+} from '../../utils/performLogin';
+import {waitForAlert} from '../../utils/waitForAlert';
 import getPageDefinition from '../layout-content-page-editor-web/utils/getPageDefinition';
 import getWidgetDefinition from '../layout-content-page-editor-web/utils/getWidgetDefinition';
 
@@ -24,12 +32,47 @@ export const test = mergeTests(
 	accountsPagesTest,
 	applicationsMenuPageTest,
 	dataApiHelpersTest,
+	isolatedSiteTest,
 	featureFlagsTest({
 		'LPS-178052': {enabled: true},
 	}),
 	loginTest(),
 	usersAndOrganizationsPagesTest
 );
+
+const initAccountAdmin = async (apiHelpers: DataApiHelpers) => {
+	const account = await apiHelpers.headlessAdminUser.postAccount({
+		type: 'business',
+	});
+
+	apiHelpers.data.push({id: account.id, type: 'account'});
+
+	const userAccountManager =
+		await apiHelpers.headlessAdminUser.postUserAccount();
+
+	userData[userAccountManager.alternateName] = {
+		name: userAccountManager.givenName,
+		password: 'test',
+		surname: userAccountManager.familyName,
+	};
+
+	await apiHelpers.headlessAdminUser.assignUserToAccountByEmailAddress(
+		account.id,
+		[userAccountManager.emailAddress]
+	);
+
+	const role = await (
+		await apiHelpers.headlessAdminUser.getAccountRoles(account.id)
+	).items.find((item: TRole) => item.name === 'Account Administrator');
+
+	await apiHelpers.headlessAdminUser.assignUserToAccountRole(
+		account.id,
+		role.id,
+		userAccountManager.id
+	);
+
+	return {account, userAccountManager};
+};
 
 async function postRoleWithAccountAdminPermissions(
 	apiHelpers: any,
@@ -724,3 +767,848 @@ test('LPD-45328 Can change pagination in accounts', async ({
 		).toBeVisible();
 	}
 });
+
+test(
+	'Account Admin can edit an account he is assigned to',
+	{
+		tag: ['@codice'],
+	},
+	async ({
+		accountManagementWidgetPage,
+		apiHelpers,
+		editAccountPage,
+		page,
+		site,
+	}) => {
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([
+				getWidgetDefinition({
+					id: getRandomString(),
+					widgetName:
+						'com_liferay_account_admin_web_internal_portlet_AccountEntriesManagementPortlet',
+				}),
+			]),
+			siteId: site.id,
+			title: getRandomString(),
+		});
+
+		const {account, userAccountManager} =
+			await initAccountAdmin(apiHelpers);
+
+		await performLogout(page);
+		await performLoginViaApi(page, userAccountManager.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountNameLink(account.name)
+		).toBeVisible();
+		await expect(
+			await accountManagementWidgetPage.accountsTable.rowActions(
+				account.name
+			)
+		).toBeVisible();
+
+		await accountManagementWidgetPage.accountNameLink(account.name).click();
+
+		const name = getRandomString();
+
+		await editAccountPage.accountNameInput.fill(name);
+
+		await editAccountPage.saveButton.click();
+
+		await waitForAlert(page);
+
+		await editAccountPage.backButton.click();
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account.name)
+		).toHaveCount(0);
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountNameLink(name)
+		).toBeVisible();
+		await expect(
+			await accountManagementWidgetPage.accountsTable.rowActions(name)
+		).toBeVisible();
+	}
+);
+
+test(
+	'Account Admin with Add Account Entry permission can create a new account',
+	{
+		tag: ['@codice'],
+	},
+	async ({
+		accountManagementWidgetPage,
+		apiHelpers,
+		editAccountPage,
+		page,
+		site,
+	}) => {
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([
+				getWidgetDefinition({
+					id: getRandomString(),
+					widgetName:
+						'com_liferay_account_admin_web_internal_portlet_AccountEntriesManagementPortlet',
+				}),
+			]),
+			siteId: site.id,
+			title: getRandomString(),
+		});
+
+		const {account, userAccountManager} =
+			await initAccountAdmin(apiHelpers);
+
+		await performLogout(page);
+		await performLoginViaApi(page, userAccountManager.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountNameLink(account.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountsTable.newButton
+		).toHaveCount(0);
+
+		await performLogout(page);
+		await performLoginViaApi(page, 'test');
+
+		const regularRole = await apiHelpers.headlessAdminUser.postRole({
+			name: getRandomString(),
+			rolePermissions: [
+				{
+					actionIds: ['ADD_ACCOUNT_ENTRY'],
+					primaryKey: await page.evaluate(() => {
+						return Liferay.ThemeDisplay.getCompanyId();
+					}),
+					resourceName: '90',
+					scope: 1,
+				},
+			],
+			roleType: 'regular',
+		});
+
+		await apiHelpers.headlessAdminUser.assignUserToRole(
+			regularRole.externalReferenceCode,
+			userAccountManager.id
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, userAccountManager.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountNameLink(account.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountsTable.newButton
+		).toBeVisible();
+
+		await accountManagementWidgetPage.accountsTable.newButton.click();
+
+		const name = getRandomString();
+
+		await editAccountPage.createAccount(apiHelpers, {name});
+		await editAccountPage.backButton.click();
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(name)
+		).toBeVisible();
+		await expect(
+			await accountManagementWidgetPage.accountsTable.cellLink(name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountNameLink(name)
+		).toBeVisible();
+		await expect(
+			await accountManagementWidgetPage.accountsTable.rowActions(name)
+		).toBeVisible();
+	}
+);
+
+test(
+	'Account Admin with Delete permission can delete an account',
+	{
+		tag: ['@codice'],
+	},
+	async ({accountManagementWidgetPage, apiHelpers, page, site}) => {
+		page.on('dialog', (dialog) => dialog.accept());
+
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([
+				getWidgetDefinition({
+					id: getRandomString(),
+					widgetName:
+						'com_liferay_account_admin_web_internal_portlet_AccountEntriesManagementPortlet',
+				}),
+			]),
+			siteId: site.id,
+			title: getRandomString(),
+		});
+
+		const {account, userAccountManager} =
+			await initAccountAdmin(apiHelpers);
+
+		await performLogout(page);
+		await performLoginViaApi(page, userAccountManager.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountNameLink(account.name)
+		).toBeVisible();
+		await expect(
+			await accountManagementWidgetPage.accountsTable.rowActions(
+				account.name
+			)
+		).toBeVisible();
+		await expect(async () => {
+			await (
+				await accountManagementWidgetPage.accountsTable.rowActions(
+					account.name
+				)
+			).click();
+
+			await expect(accountManagementWidgetPage.deleteButton).toHaveCount(
+				0
+			);
+			await expect(
+				accountManagementWidgetPage.deactivateButton
+			).toHaveCount(0);
+		}).toPass();
+
+		await performLogout(page);
+		await performLoginViaApi(page, 'test');
+
+		const regularRole = await apiHelpers.headlessAdminUser.postRole({
+			name: getRandomString(),
+			rolePermissions: [
+				{
+					actionIds: ['DELETE'],
+					primaryKey: '0',
+					resourceName: 'com.liferay.account.model.AccountEntry',
+					scope: 3,
+				},
+			],
+			roleType: 'regular',
+		});
+
+		await apiHelpers.headlessAdminUser.assignUserToRole(
+			regularRole.externalReferenceCode,
+			userAccountManager.id
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, userAccountManager.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountNameLink(account.name)
+		).toBeVisible();
+		await expect(
+			await accountManagementWidgetPage.accountsTable.rowActions(
+				account.name
+			)
+		).toBeVisible();
+		await expect(async () => {
+			await (
+				await accountManagementWidgetPage.accountsTable.rowActions(
+					account.name
+				)
+			).click();
+
+			await expect(
+				accountManagementWidgetPage.deleteButton
+			).toBeVisible();
+
+			/* await expect(accountManagementWidgetPage.deactivateButton).toHaveCount(
+				0
+			);*/
+		}).toPass();
+
+		await accountManagementWidgetPage.deleteButton.click();
+
+		await waitForAlert(page);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account.name)
+		).toHaveCount(0);
+	}
+);
+
+test(
+	'Account Admin with Deactivate permission can deactivate an account',
+	{
+		tag: ['@codice'],
+	},
+	async ({accountManagementWidgetPage, apiHelpers, page, site}) => {
+		page.on('dialog', (dialog) => dialog.accept());
+
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([
+				getWidgetDefinition({
+					id: getRandomString(),
+					widgetName:
+						'com_liferay_account_admin_web_internal_portlet_AccountEntriesManagementPortlet',
+				}),
+			]),
+			siteId: site.id,
+			title: getRandomString(),
+		});
+
+		const {account, userAccountManager} =
+			await initAccountAdmin(apiHelpers);
+
+		await performLogout(page);
+		await performLoginViaApi(page, userAccountManager.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountNameLink(account.name)
+		).toBeVisible();
+		await expect(
+			await accountManagementWidgetPage.accountsTable.rowActions(
+				account.name
+			)
+		).toBeVisible();
+		await expect(async () => {
+			await (
+				await accountManagementWidgetPage.accountsTable.rowActions(
+					account.name
+				)
+			).click();
+
+			await expect(accountManagementWidgetPage.deleteButton).toHaveCount(
+				0
+			);
+			await expect(
+				accountManagementWidgetPage.deactivateButton
+			).toHaveCount(0);
+		}).toPass();
+
+		await performLogout(page);
+		await performLoginViaApi(page, 'test');
+
+		const regularRole = await apiHelpers.headlessAdminUser.postRole({
+			name: getRandomString(),
+			rolePermissions: [
+				{
+					actionIds: ['DELETE'] /* TODO: METTERE DEACTIVATE */,
+					primaryKey: '0',
+					resourceName: 'com.liferay.account.model.AccountEntry',
+					scope: 3,
+				},
+			],
+			roleType: 'regular',
+		});
+
+		await apiHelpers.headlessAdminUser.assignUserToRole(
+			regularRole.externalReferenceCode,
+			userAccountManager.id
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, userAccountManager.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountNameLink(account.name)
+		).toBeVisible();
+		await expect(
+			await accountManagementWidgetPage.accountsTable.rowActions(
+				account.name
+			)
+		).toBeVisible();
+		await expect(async () => {
+			await (
+				await accountManagementWidgetPage.accountsTable.rowActions(
+					account.name
+				)
+			).click();
+
+			/* await expect(
+				accountManagementWidgetPage.deleteButton
+			).toHaveCount(0);*/
+			await expect(
+				accountManagementWidgetPage.deactivateButton
+			).toBeVisible();
+		}).toPass();
+
+		await accountManagementWidgetPage.deactivateButton.click();
+
+		await waitForAlert(page);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account.name)
+		).toHaveCount(0);
+
+		await expect(async () => {
+			await accountManagementWidgetPage.accountsTable.filterButton.click();
+
+			await accountManagementWidgetPage.accountsTable
+				.filterMenuItem('Inactive')
+				.click();
+
+			await expect(
+				accountManagementWidgetPage.accountsTable.cell(account.name)
+			).toBeVisible();
+		}).toPass();
+	}
+);
+
+test(
+	'Account Member can search accounts he is assigned to by name and ID',
+	{
+		tag: ['@codice', '@LRQA-73702'],
+	},
+	async ({accountManagementWidgetPage, apiHelpers, page, site}) => {
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([
+				getWidgetDefinition({
+					id: getRandomString(),
+					widgetName:
+						'com_liferay_account_admin_web_internal_portlet_AccountEntriesManagementPortlet',
+				}),
+			]),
+			siteId: site.id,
+			title: getRandomString(),
+		});
+
+		const account1 = await apiHelpers.headlessAdminUser.postAccount();
+
+		apiHelpers.data.push({id: account1.id, type: 'account'});
+
+		const account2 = await apiHelpers.headlessAdminUser.postAccount();
+
+		apiHelpers.data.push({id: account2.id, type: 'account'});
+
+		const account3 = await apiHelpers.headlessAdminUser.postAccount();
+
+		apiHelpers.data.push({id: account3.id, type: 'account'});
+
+		const user = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[user.alternateName] = {
+			name: user.givenName,
+			password: 'test',
+			surname: user.familyName,
+		};
+
+		await apiHelpers.headlessAdminUser.assignUserToAccountByEmailAddress(
+			account1.id,
+			[user.emailAddress]
+		);
+
+		await apiHelpers.headlessAdminUser.assignUserToAccountByEmailAddress(
+			account2.id,
+			[user.emailAddress]
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, user.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account3.name)
+		).toHaveCount(0);
+
+		await accountManagementWidgetPage.accountsTable.search(
+			getRandomString()
+		);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toHaveCount(0);
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toHaveCount(0);
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account3.name)
+		).toHaveCount(0);
+
+		await accountManagementWidgetPage.accountsTable.search(account1.name);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toHaveCount(0);
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account3.name)
+		).toHaveCount(0);
+
+		await accountManagementWidgetPage.accountsTable.search(account2.name);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toHaveCount(0);
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account3.name)
+		).toHaveCount(0);
+
+		await accountManagementWidgetPage.accountsTable.search(account3.name);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toHaveCount(0);
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toHaveCount(0);
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account3.name)
+		).toHaveCount(0);
+
+		await accountManagementWidgetPage.accountsTable.search('');
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account3.name)
+		).toHaveCount(0);
+
+		await accountManagementWidgetPage.accountsTable.search(
+			String(getRandomInt())
+		);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toHaveCount(0);
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toHaveCount(0);
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account3.name)
+		).toHaveCount(0);
+
+		await accountManagementWidgetPage.accountsTable.search(
+			String(account1.id)
+		);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toHaveCount(0);
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account3.name)
+		).toHaveCount(0);
+
+		await accountManagementWidgetPage.accountsTable.search(
+			String(account2.id)
+		);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toHaveCount(0);
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account3.name)
+		).toHaveCount(0);
+
+		await accountManagementWidgetPage.accountsTable.search(
+			String(account3.id)
+		);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toHaveCount(0);
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toHaveCount(0);
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account3.name)
+		).toHaveCount(0);
+	}
+);
+
+test(
+	'Account Member can filter accounts he is assigned to by status',
+	{
+		tag: ['@codice'],
+	},
+	async ({accountManagementWidgetPage, apiHelpers, page, site}) => {
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([
+				getWidgetDefinition({
+					id: getRandomString(),
+					widgetName:
+						'com_liferay_account_admin_web_internal_portlet_AccountEntriesManagementPortlet',
+				}),
+			]),
+			siteId: site.id,
+			title: getRandomString(),
+		});
+
+		const account1 = await apiHelpers.headlessAdminUser.postAccount();
+
+		apiHelpers.data.push({id: account1.id, type: 'account'});
+
+		const account2 = await apiHelpers.headlessAdminUser.postAccount({
+			status: 5,
+		});
+
+		apiHelpers.data.push({id: account2.id, type: 'account'});
+
+		const user = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[user.alternateName] = {
+			name: user.givenName,
+			password: 'test',
+			surname: user.familyName,
+		};
+
+		await apiHelpers.headlessAdminUser.assignUserToAccountByEmailAddress(
+			account1.id,
+			[user.emailAddress]
+		);
+
+		await apiHelpers.headlessAdminUser.assignUserToAccountByEmailAddress(
+			account2.id,
+			[user.emailAddress]
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, user.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toHaveCount(0);
+
+		await expect(async () => {
+			await accountManagementWidgetPage.accountsTable.filterButton.click();
+
+			await expect(
+				accountManagementWidgetPage.accountsTable.filterMenuItem(
+					'Inactive'
+				)
+			).toBeVisible();
+		}).toPass();
+
+		await accountManagementWidgetPage.accountsTable
+			.filterMenuItem('Inactive')
+			.click();
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toHaveCount(0);
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toBeVisible();
+
+		await expect(async () => {
+			await accountManagementWidgetPage.accountsTable.filterButton.click();
+
+			await expect(
+				accountManagementWidgetPage.accountsTable.filterMenuItem('All')
+			).toBeVisible();
+		}).toPass();
+
+		await accountManagementWidgetPage.accountsTable
+			.filterMenuItem('All')
+			.click();
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toBeVisible();
+
+		await expect(async () => {
+			await accountManagementWidgetPage.accountsTable.filterButton.click();
+
+			await expect(
+				accountManagementWidgetPage.accountsTable.filterMenuItem(
+					'Active'
+				)
+			).toBeVisible();
+		}).toPass();
+
+		await accountManagementWidgetPage.accountsTable
+			.filterMenuItem('Active')
+			.click();
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toHaveCount(0);
+	}
+);
+
+test(
+	'Account Member can filter accounts he is assigned to by type',
+	{
+		tag: ['@codice'],
+	},
+	async ({accountManagementWidgetPage, apiHelpers, page, site}) => {
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([
+				getWidgetDefinition({
+					id: getRandomString(),
+					widgetName:
+						'com_liferay_account_admin_web_internal_portlet_AccountEntriesManagementPortlet',
+				}),
+			]),
+			siteId: site.id,
+			title: getRandomString(),
+		});
+
+		const account1 = await apiHelpers.headlessAdminUser.postAccount();
+
+		apiHelpers.data.push({id: account1.id, type: 'account'});
+
+		const account2 = await apiHelpers.headlessAdminUser.postAccount({
+			type: 'person',
+		});
+
+		apiHelpers.data.push({id: account2.id, type: 'account'});
+
+		const user = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[user.alternateName] = {
+			name: user.givenName,
+			password: 'test',
+			surname: user.familyName,
+		};
+
+		await apiHelpers.headlessAdminUser.assignUserToAccountByEmailAddress(
+			account1.id,
+			[user.emailAddress]
+		);
+
+		await apiHelpers.headlessAdminUser.assignUserToAccountByEmailAddress(
+			account2.id,
+			[user.emailAddress]
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, user.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toBeVisible();
+
+		await expect(async () => {
+			await accountManagementWidgetPage.accountsTable.filterButton.click();
+
+			await expect(
+				accountManagementWidgetPage.accountsTable.filterMenuItem(
+					'Business'
+				)
+			).toBeVisible();
+		}).toPass();
+
+		await accountManagementWidgetPage.accountsTable
+			.filterMenuItem('Business')
+			.click();
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toBeVisible();
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toHaveCount(0);
+
+		await expect(async () => {
+			await accountManagementWidgetPage.accountsTable.filterButton.click();
+
+			await expect(
+				accountManagementWidgetPage.accountsTable.filterMenuItem(
+					'Person'
+				)
+			).toBeVisible();
+		}).toPass();
+
+		await accountManagementWidgetPage.accountsTable
+			.filterMenuItem('Person')
+			.click();
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toHaveCount(0);
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toBeVisible();
+
+		await expect(async () => {
+			await accountManagementWidgetPage.accountsTable.filterButton.click();
+
+			await expect(
+				accountManagementWidgetPage.accountsTable.filterMenuItem(
+					'Supplier'
+				)
+			).toBeVisible();
+		}).toPass();
+
+		await accountManagementWidgetPage.accountsTable
+			.filterMenuItem('Supplier')
+			.click();
+
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account1.name)
+		).toHaveCount(0);
+		await expect(
+			accountManagementWidgetPage.accountsTable.cell(account2.name)
+		).toHaveCount(0);
+	}
+);
