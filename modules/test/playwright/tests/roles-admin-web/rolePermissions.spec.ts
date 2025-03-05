@@ -9,6 +9,7 @@ import {dataApiHelpersTest} from '../../fixtures/dataApiHelpersTest';
 import {loginTest} from '../../fixtures/loginTest';
 import {rolesPagesTest} from '../../fixtures/rolesPagesTest';
 import {usersAndOrganizationsPagesTest} from '../../fixtures/usersAndOrganizationsPagesTest';
+import {HomePage} from '../../pages/portal-web/HomePage';
 import getRandomString from '../../utils/getRandomString';
 import {
 	performLoginViaApi,
@@ -336,5 +337,109 @@ test(
 				String(userRole.id)
 			);
 		}
+	}
+);
+
+test(
+	'A user can only view the portlets he has permissions from applications menu',
+	{tag: ['@codice', '@LPS-157219']},
+	async ({apiHelpers, page}) => {
+		const user = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[user.alternateName] = {
+			name: user.givenName,
+			password: 'test',
+			surname: user.familyName,
+		};
+
+		const companyId = await page.evaluate(() => {
+			return Liferay.ThemeDisplay.getCompanyId();
+		});
+
+		const role = await apiHelpers.headlessAdminUser.postRole({
+			name: getRandomString(),
+			rolePermissions: [
+				{
+					actionIds: ['VIEW_CONTROL_PANEL'],
+					primaryKey: companyId,
+					resourceName: '90',
+					scope: 1,
+				},
+				{
+					actionIds: ['ACCESS_IN_CONTROL_PANEL'],
+					primaryKey: companyId,
+					resourceName:
+						'com_liferay_site_admin_web_portlet_SiteAdminPortlet',
+					scope: 1,
+				},
+				{
+					actionIds: ['ACCESS_IN_CONTROL_PANEL'],
+					primaryKey: companyId,
+					resourceName:
+						'com_liferay_layout_set_prototype_web_portlet_LayoutSetPrototypePortlet',
+					scope: 1,
+				},
+				{
+					actionIds: ['UPDATE'],
+					primaryKey: companyId,
+					resourceName:
+						'com.liferay.portal.kernel.model.LayoutSetPrototype',
+					scope: 1,
+				},
+			],
+			roleType: 'regular',
+		});
+
+		await apiHelpers.headlessAdminUser.assignUserToRole(
+			role.externalReferenceCode,
+			user.id
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, user.alternateName);
+
+		const homePage = new HomePage(page);
+
+		await homePage.openApplicationMenu();
+
+		await expect(
+			page.getByRole('tab', {
+				name: 'Applications',
+			})
+		).toHaveCount(0);
+		await expect(
+			page.getByRole('tab', {
+				name: 'Commerce',
+			})
+		).toHaveCount(0);
+		await expect(
+			page.getByRole('tab', {
+				name: 'Control Panel',
+			})
+		).toBeVisible();
+		await expect(
+			page.getByRole('menuitem', {
+				exact: true,
+				name: 'Users and Organizations',
+			})
+		).toHaveCount(0);
+		await expect(
+			page.getByRole('menuitem', {
+				exact: true,
+				name: 'App Manager',
+			})
+		).toHaveCount(0);
+		await expect(
+			page.getByRole('menuitem', {
+				exact: true,
+				name: 'Sites',
+			})
+		).toBeVisible();
+		await expect(
+			page.getByRole('menuitem', {
+				exact: true,
+				name: 'Site Templates',
+			})
+		).toBeVisible();
 	}
 );

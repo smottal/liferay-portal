@@ -1492,3 +1492,103 @@ test(
 		}).toPass();
 	}
 );
+
+test(
+	'Can add Site Administration permissions for specific site',
+	{tag: ['@codice', '@LPS-133818']},
+	async ({
+		apiHelpers,
+		page,
+		roleDefinePermissionsPage,
+		rolePage,
+		rolesPage,
+		site,
+	}) => {
+		const role = await apiHelpers.headlessAdminUser.postRole({
+			name: getRandomString(),
+			roleType: 'regular',
+		});
+
+		await rolesPage.goto();
+
+		const menuItemName = 'Documents and Media';
+		const permissionName =
+			'Access in Site and Asset Library Administration';
+
+		await (await rolesPage.rolesTable.cellLink(role.name)).click();
+		await rolePage.definePermissionsLink.click();
+		await roleDefinePermissionsPage.searchInput.click();
+		await roleDefinePermissionsPage.searchInput.fill(menuItemName);
+
+		await expect(
+			roleDefinePermissionsPage.menuItem(menuItemName)
+		).toBeVisible();
+
+		await roleDefinePermissionsPage.menuItem(menuItemName).click();
+		await page.waitForLoadState('domcontentloaded');
+
+		await expect(
+			roleDefinePermissionsPage.permissionScopeLabel(permissionName)
+		).toBeVisible();
+
+		await roleDefinePermissionsPage
+			.permissionScopeChangeButton(permissionName)
+			.click();
+
+		await expect(async () => {
+			await roleDefinePermissionsPage.siteSelectorMySitesLink.click();
+			await roleDefinePermissionsPage
+				.siteSelectorSiteCard(site.name)
+				.click();
+
+			await expect(
+				roleDefinePermissionsPage.permissionScopeSiteLabel(
+					permissionName,
+					site.name
+				)
+			).toBeVisible({timeout: 3000});
+		}).toPass();
+
+		await roleDefinePermissionsPage
+			.permissionCheckbox(permissionName)
+			.check();
+		await roleDefinePermissionsPage.saveButton.click();
+
+		await waitForAlert(page, 'Success:The role permissions were updated.');
+
+		await expect(
+			roleDefinePermissionsPage.summaryPermissionCell(
+				`Documents and Media: ${permissionName}`
+			)
+		).toBeVisible();
+		await expect(
+			roleDefinePermissionsPage.summaryPermissionScopeCell(
+				`Documents and Media: ${permissionName}`,
+				site.name
+			)
+		).toBeVisible();
+		await expect(
+			roleDefinePermissionsPage.summaryPermissionCell(
+				'Documents and Media > Documents: View'
+			)
+		).toBeVisible();
+		await expect(
+			roleDefinePermissionsPage.summaryPermissionScopeCell(
+				'Documents and Media > Documents: View',
+				site.name
+			)
+		).toBeVisible();
+
+		await expect(
+			roleDefinePermissionsPage.summaryPermissionCell(
+				'Site Settings > Site: View Site and Asset Library Administration Menu'
+			)
+		).toBeVisible();
+		await expect(
+			roleDefinePermissionsPage.summaryPermissionScopeCell(
+				'Site Settings > Site: View Site and Asset Library Administration Menu',
+				site.name
+			)
+		).toBeVisible();
+	}
+);

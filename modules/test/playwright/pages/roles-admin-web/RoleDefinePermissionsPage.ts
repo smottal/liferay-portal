@@ -34,6 +34,7 @@ export class RoleDefinePermissionsPage {
 	readonly searchInput: Locator;
 	readonly selectAllCheckbox: (resourceName: string) => Locator;
 	readonly siteSelectorFrame: FrameLocator;
+	readonly siteSelectorMySitesLink: Locator;
 	readonly siteSelectorSiteCard: (siteName: string) => Locator;
 	readonly subMenuItem: (name: string, subMenuItemName: string) => Locator;
 	readonly summaryPermissionCell: (permissionName: string) => Locator;
@@ -113,6 +114,10 @@ export class RoleDefinePermissionsPage {
 				.and(page.getByRole('checkbox'));
 		this.siteSelectorFrame = page.frameLocator(
 			'iframe[title="Select Site"]'
+		);
+		this.siteSelectorMySitesLink = this.siteSelectorFrame.getByRole(
+			'link',
+			{name: 'My Sites'}
 		);
 		this.siteSelectorSiteCard = (siteName) =>
 			this.siteSelectorFrame.getByRole('link', {
