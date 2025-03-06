@@ -21,8 +21,7 @@ import {
 	userData,
 } from '../../utils/performLogin';
 import {waitForAlert} from '../../utils/waitForAlert';
-import getPageDefinition from '../layout-content-page-editor-web/utils/getPageDefinition';
-import getWidgetDefinition from '../layout-content-page-editor-web/utils/getWidgetDefinition';
+import {setupBookmark} from './utils/bookmarks';
 
 export const test = mergeTests(
 	dataApiHelpersTest,
@@ -1611,45 +1610,6 @@ test(
 		rolesPage,
 		site: site1,
 	}) => {
-		const setupBookmark = async (bookmarkName: string, site: Site) => {
-			await bookmarksPage.goto(site.friendlyUrlPath);
-			await bookmarksPage.bookmarksTable.newButton.click();
-			await bookmarksPage.bookmarksMenuItem.click();
-
-			await bookmarksPage.nameInput.fill(bookmarkName);
-			await bookmarksPage.urlInput.fill('https://www.liferay.com');
-			await bookmarksPage.permissionsButton.click();
-			await bookmarksPage.viewableBySelect.selectOption('Owner');
-
-			await bookmarksPage.saveButton.click();
-
-			await waitForAlert(page);
-
-			await expect(
-				bookmarksPage.bookmarkItem(bookmarkName)
-			).toBeVisible();
-
-			const layout = await apiHelpers.headlessDelivery.createSitePage({
-				pageDefinition: getPageDefinition([
-					getWidgetDefinition({
-						id: getRandomString(),
-						widgetName:
-							'com_liferay_bookmarks_web_portlet_BookmarksPortlet',
-					}),
-				]),
-				siteId: site.id,
-				title: getRandomString(),
-			});
-
-			await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
-
-			await expect(
-				bookmarksPage.bookmarkItem(bookmarkName)
-			).toBeVisible();
-
-			return {layout, site};
-		};
-
 		const role = await apiHelpers.headlessAdminUser.postRole({
 			name: getRandomString(),
 			roleType: 'regular',
@@ -1707,7 +1667,13 @@ test(
 
 		const bookmarkName1 = getRandomString();
 
-		const {layout: layout1} = await setupBookmark(bookmarkName1, site1);
+		const {layout: layout1} = await setupBookmark(
+			apiHelpers,
+			bookmarkName1,
+			bookmarksPage,
+			page,
+			site1
+		);
 
 		const site2 = await apiHelpers.headlessSite.createSite({
 			name: getRandomString(),
@@ -1717,7 +1683,13 @@ test(
 
 		const bookmarkName2 = getRandomString();
 
-		const {layout: layout2} = await setupBookmark(bookmarkName2, site2);
+		const {layout: layout2} = await setupBookmark(
+			apiHelpers,
+			bookmarkName2,
+			bookmarksPage,
+			page,
+			site2
+		);
 
 		const user = await apiHelpers.headlessAdminUser.postUserAccount();
 

@@ -24,6 +24,7 @@ import {
 import {waitForAlert} from '../../utils/waitForAlert';
 import getPageDefinition from '../layout-content-page-editor-web/utils/getPageDefinition';
 import getWidgetDefinition from '../layout-content-page-editor-web/utils/getWidgetDefinition';
+import {setupBookmark} from './utils/bookmarks';
 
 export const test = mergeTests(
 	accountsPagesTest,
@@ -796,5 +797,190 @@ test(
 		await expect(teamsPage.teamsTable.cell(teamName)).toHaveCount(0);
 
 		await apiHelpers.jsonWebServicesTeam.deleteTeam(team.teamId);
+	}
+);
+
+test(
+	'Site role bookmarks inline permissions',
+	{tag: ['@codice']},
+	async ({apiHelpers, bookmarksPage, page, site}) => {
+		const role = await apiHelpers.headlessAdminUser.postRole({
+			name: getRandomString(),
+			rolePermissions: [
+				{
+					actionIds: ['VIEW'],
+					primaryKey: '0',
+					resourceName: 'com.liferay.bookmarks.model.BookmarksEntry',
+					scope: 3,
+				},
+			],
+			roleType: 'site',
+		});
+
+		const bookmarkName = getRandomString();
+
+		const {layout} = await setupBookmark(
+			apiHelpers,
+			bookmarkName,
+			bookmarksPage,
+			page,
+			site
+		);
+
+		const user = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[user.alternateName] = {
+			name: user.givenName,
+			password: 'test',
+			surname: user.familyName,
+		};
+
+		await apiHelpers.jsonWebServicesUser.assignUsersToSite(
+			site.id,
+			user.id
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, user.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(bookmarksPage.bookmarkItem(bookmarkName)).toHaveCount(0);
+
+		await performLogout(page);
+		await performLoginViaApi(page, 'test');
+
+		await apiHelpers.headlessAdminUser.assignUserToSite(
+			role.id,
+			site.id,
+			user.id
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, user.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(bookmarksPage.bookmarkItem(bookmarkName)).toBeVisible();
+	}
+);
+
+test(
+	'Team permissions',
+	{tag: ['@codice']},
+	async ({apiHelpers, page, site, teamsPage}) => {
+		const user1 = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[user1.alternateName] = {
+			name: user1.givenName,
+			password: 'test',
+			surname: user1.familyName,
+		};
+
+		await apiHelpers.jsonWebServicesUser.assignUsersToSite(
+			site.id,
+			user1.id
+		);
+
+		const user2 = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[user2.alternateName] = {
+			name: user2.givenName,
+			password: 'test',
+			surname: user2.familyName,
+		};
+
+		await apiHelpers.jsonWebServicesUser.assignUsersToSite(
+			site.id,
+			user2.id
+		);
+
+		await teamsPage.goTo(site.friendlyUrlPath);
+
+		const teamName = getRandomString();
+
+		await teamsPage.newTeamButton.click();
+		await teamsPage.nameInput.fill(teamName);
+		await teamsPage.saveButton.click();
+
+		await waitForAlert(page);
+
+		await expect(teamsPage.teamsTable.cell(teamName)).toBeVisible();
+
+		const team = await apiHelpers.jsonWebServicesTeam.getTeam(
+			site.id,
+			teamName
+		);
+
+		await apiHelpers.jsonWebServicesUser.addTeamUsers(team.teamId, [
+			user2.id,
+		]);
+
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([
+				getWidgetDefinition({
+					id: getRandomString(),
+					widgetName:
+						'com_liferay_journal_content_web_portlet_JournalContentPortlet',
+				}),
+			]),
+			siteId: site.id,
+			title: getRandomString(),
+		});
+
+		const companyId = await page.evaluate(() => {
+			return Liferay.ThemeDisplay.getCompanyId();
+		});
+
+		const guestRole = await apiHelpers.headlessAdminUser.getRoleByName(
+			'Guest',
+			'rolePermissions'
+		);
+
+		await apiHelpers.jsonWebServicesResourcePermissionApiHelper.setIndividualResourcePermissions(
+			[],
+			companyId,
+			'0',
+			'com.liferay.portal.kernel.model.Layout',
+			String(layout.id),
+			String(guestRole.id)
+		);
+
+		const siteMemberRole = await apiHelpers.headlessAdminUser.getRoleByName(
+			'Site Member',
+			'rolePermissions'
+		);
+
+		await apiHelpers.jsonWebServicesResourcePermissionApiHelper.setIndividualResourcePermissions(
+			[],
+			companyId,
+			'0',
+			'com.liferay.portal.kernel.model.Layout',
+			String(layout.id),
+			String(siteMemberRole.id)
+		);
+
+		await apiHelpers.jsonWebServicesResourcePermissionApiHelper.setIndividualResourcePermissions(
+			['VIEW'],
+			companyId,
+			String(team.groupId),
+			'com.liferay.portal.kernel.model.Layout',
+			String(layout.id),
+			String(Number(team.teamId) + 1)
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, user1.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(page.getByRole('heading', {name: '404'})).toBeVisible();
+
+		await performLogout(page);
+		await performLoginViaApi(page, user2.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(page.getByRole('heading', {name: '404'})).toHaveCount(0);
 	}
 );
