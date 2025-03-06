@@ -6,6 +6,7 @@
 import {expect, mergeTests} from '@playwright/test';
 
 import {dataApiHelpersTest} from '../../fixtures/dataApiHelpersTest';
+import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
 import {isolatedSiteTest} from '../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../fixtures/loginTest';
 import {rolesPagesTest} from '../../fixtures/rolesPagesTest';
@@ -20,9 +21,14 @@ import {
 	userData,
 } from '../../utils/performLogin';
 import {waitForAlert} from '../../utils/waitForAlert';
+import getPageDefinition from '../layout-content-page-editor-web/utils/getPageDefinition';
+import getWidgetDefinition from '../layout-content-page-editor-web/utils/getWidgetDefinition';
 
 export const test = mergeTests(
 	dataApiHelpersTest,
+	featureFlagsTest({
+		'LPS-178052': {enabled: true},
+	}),
 	isolatedSiteTest,
 	loginTest(),
 	rolesPagesTest,
@@ -1590,5 +1596,174 @@ test(
 				site.name
 			)
 		).toBeVisible();
+	}
+);
+
+test(
+	'Group scope permission check',
+	{tag: ['@codice']},
+	async ({
+		apiHelpers,
+		bookmarksPage,
+		page,
+		roleDefinePermissionsPage,
+		rolePage,
+		rolesPage,
+		site: site1,
+	}) => {
+		const setupBookmark = async (bookmarkName: string, site: Site) => {
+			await bookmarksPage.goto(site.friendlyUrlPath);
+			await bookmarksPage.bookmarksTable.newButton.click();
+			await bookmarksPage.bookmarksMenuItem.click();
+
+			await bookmarksPage.nameInput.fill(bookmarkName);
+			await bookmarksPage.urlInput.fill('https://www.liferay.com');
+			await bookmarksPage.permissionsButton.click();
+			await bookmarksPage.viewableBySelect.selectOption('Owner');
+
+			await bookmarksPage.saveButton.click();
+
+			await waitForAlert(page);
+
+			await expect(
+				bookmarksPage.bookmarkItem(bookmarkName)
+			).toBeVisible();
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([
+					getWidgetDefinition({
+						id: getRandomString(),
+						widgetName:
+							'com_liferay_bookmarks_web_portlet_BookmarksPortlet',
+					}),
+				]),
+				siteId: site.id,
+				title: getRandomString(),
+			});
+
+			await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+			await expect(
+				bookmarksPage.bookmarkItem(bookmarkName)
+			).toBeVisible();
+
+			return {layout, site};
+		};
+
+		const role = await apiHelpers.headlessAdminUser.postRole({
+			name: getRandomString(),
+			roleType: 'regular',
+		});
+
+		await rolesPage.goto();
+
+		const menuItemName = 'Bookmarks';
+		const permissionName = 'View';
+
+		await (await rolesPage.rolesTable.cellLink(role.name)).click();
+		await rolePage.definePermissionsLink.click();
+		await roleDefinePermissionsPage.searchInput.click();
+		await roleDefinePermissionsPage.searchInput.fill(menuItemName);
+
+		await expect(
+			roleDefinePermissionsPage.menuItem(menuItemName)
+		).toBeVisible();
+
+		await roleDefinePermissionsPage.menuItem(menuItemName).click();
+		await page.waitForLoadState('domcontentloaded');
+
+		await expect(
+			roleDefinePermissionsPage
+				.permissionScopeLabel(permissionName)
+				.last()
+		).toBeVisible();
+
+		await roleDefinePermissionsPage
+			.permissionScopeChangeButton(permissionName)
+			.last()
+			.click();
+
+		await expect(async () => {
+			await roleDefinePermissionsPage.siteSelectorMySitesLink.click();
+			await roleDefinePermissionsPage
+				.siteSelectorSiteCard(site1.name)
+				.click();
+
+			await expect(
+				roleDefinePermissionsPage.permissionScopeSiteLabel(
+					permissionName,
+					site1.name
+				)
+			).toBeVisible({timeout: 3000});
+		}).toPass();
+
+		await roleDefinePermissionsPage
+			.permissionCheckbox(permissionName)
+			.last()
+			.check();
+		await roleDefinePermissionsPage.saveButton.click();
+
+		await waitForAlert(page, 'Success:The role permissions were updated.');
+
+		const bookmarkName1 = getRandomString();
+
+		const {layout: layout1} = await setupBookmark(bookmarkName1, site1);
+
+		const site2 = await apiHelpers.headlessSite.createSite({
+			name: getRandomString(),
+		});
+
+		apiHelpers.data.push({id: site2.id, type: 'site'});
+
+		const bookmarkName2 = getRandomString();
+
+		const {layout: layout2} = await setupBookmark(bookmarkName2, site2);
+
+		const user = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[user.alternateName] = {
+			name: user.givenName,
+			password: 'test',
+			surname: user.familyName,
+		};
+
+		await apiHelpers.jsonWebServicesUser.assignUsersToSite(
+			site1.id,
+			user.id
+		);
+		await apiHelpers.jsonWebServicesUser.assignUsersToSite(
+			site2.id,
+			user.id
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, user.alternateName);
+
+		await page.goto(`/web/${site1.name}/${layout1.friendlyUrlPath}`);
+
+		await expect(bookmarksPage.bookmarkItem(bookmarkName1)).toHaveCount(0);
+
+		await page.goto(`/web/${site2.name}/${layout2.friendlyUrlPath}`);
+
+		await expect(bookmarksPage.bookmarkItem(bookmarkName2)).toHaveCount(0);
+
+		await performLogout(page);
+		await performLoginViaApi(page, 'test');
+
+		await apiHelpers.headlessAdminUser.assignUserToRole(
+			role.externalReferenceCode,
+			user.id
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, user.alternateName);
+
+		await page.goto(`/web/${site1.name}/${layout1.friendlyUrlPath}`);
+
+		await expect(bookmarksPage.bookmarkItem(bookmarkName1)).toBeVisible();
+
+		await page.goto(`/web/${site2.name}/${layout2.friendlyUrlPath}`);
+
+		await expect(bookmarksPage.bookmarkItem(bookmarkName2)).toHaveCount(0);
 	}
 );

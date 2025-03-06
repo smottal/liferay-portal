@@ -14,8 +14,10 @@ import {RoleSiteSelectorPage} from '../pages/roles-admin-web/RoleSiteSelectorPag
 import {RoleUserGroupSelectorPage} from '../pages/roles-admin-web/RoleUserGroupSelectorPage';
 import {RoleUserSelectorPage} from '../pages/roles-admin-web/RoleUserSelectorPage';
 import {RolesPage} from '../pages/roles-admin-web/RolesPage';
+import {BookmarksPage} from '../pages/roles-admin-web/bookmarks/BookmarksPage';
 
 const rolesPagesTest = test.extend<{
+	bookmarksPage: BookmarksPage;
 	roleAssigneesPage: RoleAssigneesPage;
 	roleDefinePermissionsPage: RoleDefinePermissionsPage;
 	roleOrganizationSelectorPage: RoleOrganizationSelectorPage;
@@ -26,6 +28,9 @@ const rolesPagesTest = test.extend<{
 	roleUserSelectorPage: RoleUserSelectorPage;
 	rolesPage: RolesPage;
 }>({
+	bookmarksPage: async ({page}, use) => {
+		await use(new BookmarksPage(page));
+	},
 	roleAssigneesPage: async ({page}, use) => {
 		await use(new RoleAssigneesPage(page));
 	},
