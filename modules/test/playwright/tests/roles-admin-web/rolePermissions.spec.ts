@@ -5,8 +5,13 @@
 
 import {expect, mergeTests} from '@playwright/test';
 
+import {accountsPagesTest} from '../../fixtures/accountsPagesTest';
 import {dataApiHelpersTest} from '../../fixtures/dataApiHelpersTest';
+import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
+import {isolatedSiteTest} from '../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../fixtures/loginTest';
+import {pageEditorPagesTest} from '../../fixtures/pageEditorPagesTest';
+import {portletConfigurationPermissionsPageTest} from '../../fixtures/portletConfigurationPermissionsPagesTest';
 import {rolesPagesTest} from '../../fixtures/rolesPagesTest';
 import {usersAndOrganizationsPagesTest} from '../../fixtures/usersAndOrganizationsPagesTest';
 import {HomePage} from '../../pages/portal-web/HomePage';
@@ -17,10 +22,19 @@ import {
 	userData,
 } from '../../utils/performLogin';
 import {waitForAlert} from '../../utils/waitForAlert';
+import getPageDefinition from '../layout-content-page-editor-web/utils/getPageDefinition';
+import getWidgetDefinition from '../layout-content-page-editor-web/utils/getWidgetDefinition';
 
 export const test = mergeTests(
+	accountsPagesTest,
 	dataApiHelpersTest,
+	featureFlagsTest({
+		'LPS-178052': {enabled: true},
+	}),
+	isolatedSiteTest,
 	loginTest(),
+	pageEditorPagesTest,
+	portletConfigurationPermissionsPageTest,
 	rolesPagesTest,
 	usersAndOrganizationsPagesTest
 );
@@ -441,5 +455,346 @@ test(
 				name: 'Site Templates',
 			})
 		).toBeVisible();
+	}
+);
+
+test(
+	'The default site role should not be inherited by Guest site',
+	{tag: ['@codice', '@LPS-148855']},
+	async ({accountsPage, apiHelpers, page, site}) => {
+		const account = await apiHelpers.headlessAdminUser.postAccount();
+
+		apiHelpers.data.push({id: account.id, type: 'account'});
+
+		const companyId = await page.evaluate(() => {
+			return Liferay.ThemeDisplay.getCompanyId();
+		});
+
+		const role = await apiHelpers.headlessAdminUser.postRole({
+			name: getRandomString(),
+			roleType: 'regular',
+		});
+
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([
+				getWidgetDefinition({
+					id: getRandomString(),
+					widgetName:
+						'com_liferay_account_admin_web_internal_portlet_AccountEntriesManagementPortlet',
+				}),
+			]),
+			siteId: site.id,
+			title: getRandomString(),
+		});
+
+		const guestGroup = await apiHelpers.jsonWebServicesGroup.getGroupByKey(
+			companyId,
+			'Guest'
+		);
+
+		await apiHelpers.jsonWebServicesGroup.assignRoleToGroup(
+			String(role.id),
+			[site.id, guestGroup.groupId]
+		);
+
+		await apiHelpers.jsonWebServicesResourcePermissionApiHelper.setIndividualResourcePermissions(
+			['VIEW'],
+			companyId,
+			'0',
+			'com.liferay.account.model.AccountEntry',
+			String(account.id),
+			String(role.id)
+		);
+
+		const user = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[user.alternateName] = {
+			name: user.givenName,
+			password: 'test',
+			surname: user.familyName,
+		};
+
+		await performLogout(page);
+		await performLoginViaApi(page, user.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(accountsPage.accountsTable.cell(account.name)).toHaveCount(
+			0
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, 'test');
+
+		await apiHelpers.jsonWebServicesUser.assignUsersToSite(
+			site.id,
+			user.id
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, user.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(
+			accountsPage.accountsTable.cell(account.name)
+		).toBeVisible();
+
+		await performLogout(page);
+		await performLoginViaApi(page, 'test');
+
+		const guestRole = await apiHelpers.headlessAdminUser.getRoleByName(
+			'Guest',
+			'rolePermissions'
+		);
+
+		await apiHelpers.jsonWebServicesResourcePermissionApiHelper.setIndividualResourcePermissions(
+			[],
+			companyId,
+			'0',
+			'com.liferay.account.model.AccountEntry',
+			String(account.id),
+			String(guestRole.id)
+		);
+
+		await performLogout(page);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(accountsPage.accountsTable.cell(account.name)).toHaveCount(
+			0
+		);
+	}
+);
+
+test(
+	'Edit team permissions',
+	{tag: ['@codice']},
+	async ({
+		apiHelpers,
+		page,
+		portletConfigurationPermissionsPage,
+		site,
+		teamsPage,
+	}) => {
+		test.setTimeout(120000);
+
+		const companyId = await page.evaluate(() => {
+			return Liferay.ThemeDisplay.getCompanyId();
+		});
+
+		const role = await apiHelpers.headlessAdminUser.postRole({
+			name: getRandomString(),
+			rolePermissions: [
+				{
+					actionIds: [
+						'ACCESS_IN_CONTROL_PANEL',
+						'ADD_TO_PAGE',
+						'CONFIGURATION',
+						'PERMISSIONS',
+						'PREFERENCES',
+						'VIEW',
+					],
+					primaryKey: '0',
+					resourceName:
+						'com_liferay_site_memberships_web_portlet_SiteMembershipsPortlet',
+					scope: 3,
+				},
+				{
+					actionIds: [
+						'ADD_COMMUNITY',
+						'ADD_LAYOUT',
+						'ADD_LAYOUT_BRANCH',
+						'ADD_LAYOUT_SET_BRANCH',
+						'ADD_LAYOUT_UTILITY_PAGE_ENTRY',
+						'ASSIGN_DEFAULT_LAYOUT_UTILITY_PAGE_ENTRY',
+						'ASSIGN_MEMBERS',
+						'ASSIGN_USER_ROLES',
+						'CONFIGURE_PORTLETS',
+						'DELETE',
+						'EXPORT_IMPORT_LAYOUTS',
+						'EXPORT_IMPORT_PORTLET_INFO',
+						'MANAGE_ANNOUNCEMENTS',
+						'MANAGE_ARCHIVED_SETUPS',
+						'MANAGE_LAYOUTS',
+						'MANAGE_STAGING',
+						'MANAGE_SUBGROUPS',
+						'MANAGE_TEAMS',
+						'PERMISSIONS',
+						'PREVIEW_IN_DEVICE',
+						'PUBLISH_PORTLET_INFO',
+						'PUBLISH_STAGING',
+						'UPDATE',
+						'VIEW',
+						'VIEW_MEMBERS',
+						'VIEW_SITE_ADMINISTRATION',
+						'VIEW_STAGING',
+					],
+					primaryKey: '0',
+					resourceName: 'com.liferay.portal.kernel.model.Group',
+					scope: 3,
+				},
+				{
+					actionIds: [
+						'ASSIGN_MEMBERS',
+						'DELETE',
+						'PERMISSIONS',
+						'UPDATE',
+						'VIEW',
+					],
+					primaryKey: '0',
+					resourceName: 'com.liferay.portal.kernel.model.Team',
+					scope: 3,
+				},
+				{
+					actionIds: [
+						'ADD_TO_PAGE',
+						'CONFIGURATION',
+						'PERMISSIONS',
+						'PREFERENCES',
+						'VIEW',
+					],
+					primaryKey: '0',
+					resourceName:
+						'com_liferay_journal_content_web_portlet_JournalContentPortlet',
+					scope: 3,
+				},
+			],
+			roleType: 'site',
+		});
+
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([
+				getWidgetDefinition({
+					id: getRandomString(),
+					widgetName:
+						'com_liferay_journal_content_web_portlet_JournalContentPortlet',
+				}),
+			]),
+			siteId: site.id,
+			title: getRandomString(),
+		});
+
+		const user = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[user.alternateName] = {
+			name: user.givenName,
+			password: 'test',
+			surname: user.familyName,
+		};
+
+		await apiHelpers.jsonWebServicesUser.assignUsersToSite(
+			site.id,
+			user.id
+		);
+		await apiHelpers.headlessAdminUser.assignUserToSite(
+			role.id,
+			site.id,
+			user.id
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, user.alternateName);
+
+		await teamsPage.goTo(site.friendlyUrlPath);
+
+		const teamName = getRandomString();
+
+		await teamsPage.newTeamButton.click();
+		await teamsPage.nameInput.fill(teamName);
+		await teamsPage.saveButton.click();
+
+		await waitForAlert(page);
+
+		await expect(teamsPage.teamsTable.cell(teamName)).toBeVisible();
+
+		const team = await apiHelpers.jsonWebServicesTeam.getTeam(
+			site.id,
+			teamName
+		);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await page.getByRole('link', {name: 'Edit'}).click();
+
+		await expect(async () => {
+			const portlet = page.locator(
+				"div[id*='p_p_id_com_liferay_journal_content_web_portlet_JournalContentPortlet_']"
+			);
+
+			await portlet.click();
+			await page
+				.locator('#wrapper')
+				.getByRole('button', {name: 'Options'})
+				.click();
+			await page.getByRole('menuitem', {name: 'Permissions'}).click();
+
+			await expect(
+				portletConfigurationPermissionsPage.permissionsFrame.getByRole(
+					'cell',
+					{name: teamName}
+				)
+			).toBeVisible();
+		}).toPass();
+
+		await performLogout(page);
+		await performLoginViaApi(page, 'test');
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await page.getByRole('link', {name: 'Edit'}).click();
+
+		await expect(async () => {
+			const portlet = page.locator(
+				"div[id*='p_p_id_com_liferay_journal_content_web_portlet_JournalContentPortlet_']"
+			);
+
+			await portlet.click();
+			await page
+				.locator('#wrapper')
+				.getByRole('button', {name: 'Options'})
+				.click();
+			await page.getByRole('menuitem', {name: 'Permissions'}).click();
+
+			await expect(
+				portletConfigurationPermissionsPage.permissionsFrame.getByRole(
+					'cell',
+					{name: teamName}
+				)
+			).toBeVisible();
+		}).toPass();
+
+		await apiHelpers.jsonWebServicesResourcePermissionApiHelper.setIndividualResourcePermissions(
+			['ASSIGN_MEMBERS', 'DELETE', 'PERMISSIONS', 'UPDATE', 'VIEW'],
+			companyId,
+			'0',
+			'com.liferay.portal.kernel.model.Team',
+			String(team.teamId),
+			String(role.id)
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, user.alternateName);
+
+		await teamsPage.goTo(site.friendlyUrlPath);
+
+		const newTeamName = getRandomString();
+
+		await expect(async () => {
+			await (await teamsPage.teamsTable.rowActions(teamName)).click();
+
+			await expect(teamsPage.editLink).toBeVisible({timeout: 300});
+		}).toPass();
+
+		await teamsPage.editLink.click();
+		await teamsPage.nameInput.fill(newTeamName);
+		await teamsPage.saveButton.click();
+
+		await waitForAlert(page);
+
+		await expect(teamsPage.teamsTable.cell(newTeamName)).toBeVisible();
+		await expect(teamsPage.teamsTable.cell(teamName)).toHaveCount(0);
+
+		await apiHelpers.jsonWebServicesTeam.deleteTeam(team.teamId);
 	}
 );
