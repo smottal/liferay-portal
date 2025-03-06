@@ -866,7 +866,7 @@ test(
 );
 
 test(
-	'Team permissions',
+	'Team permissions site',
 	{tag: ['@codice']},
 	async ({apiHelpers, page, site, teamsPage}) => {
 		const user1 = await apiHelpers.headlessAdminUser.postUserAccount();
@@ -978,6 +978,198 @@ test(
 
 		await performLogout(page);
 		await performLoginViaApi(page, user2.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(page.getByRole('heading', {name: '404'})).toHaveCount(0);
+	}
+);
+
+test(
+	'View asset via site role',
+	{tag: ['@codice']},
+	async ({apiHelpers, blogsPage, page, site}) => {
+		const user1 = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[user1.alternateName] = {
+			name: user1.givenName,
+			password: 'test',
+			surname: user1.familyName,
+		};
+
+		await apiHelpers.jsonWebServicesUser.assignUsersToSite(
+			site.id,
+			user1.id
+		);
+
+		const user2 = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[user2.alternateName] = {
+			name: user2.givenName,
+			password: 'test',
+			surname: user2.familyName,
+		};
+
+		await apiHelpers.jsonWebServicesUser.assignUsersToSite(
+			site.id,
+			user2.id
+		);
+
+		const blog = await apiHelpers.headlessDelivery.postBlog(site.id, {
+			headline: getRandomString(),
+		});
+
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([
+				getWidgetDefinition({
+					id: getRandomString(),
+					widgetName: 'com_liferay_blogs_web_portlet_BlogsPortlet',
+				}),
+			]),
+			siteId: site.id,
+			title: getRandomString(),
+		});
+
+		const companyId = await page.evaluate(() => {
+			return Liferay.ThemeDisplay.getCompanyId();
+		});
+
+		const role = await apiHelpers.headlessAdminUser.postRole({
+			name: getRandomString(),
+			rolePermissions: [
+				{
+					actionIds: ['VIEW'],
+					primaryKey: '0',
+					resourceName: 'com.liferay.blogs.model.BlogsEntry',
+					scope: 3,
+				},
+			],
+			roleType: 'site',
+		});
+
+		await apiHelpers.headlessAdminUser.assignUserToSite(
+			role.id,
+			site.id,
+			user1.id
+		);
+
+		const guestRole = await apiHelpers.headlessAdminUser.getRoleByName(
+			'Guest',
+			'rolePermissions'
+		);
+
+		await apiHelpers.jsonWebServicesResourcePermissionApiHelper.setIndividualResourcePermissions(
+			[],
+			companyId,
+			'0',
+			'com.liferay.blogs.model.BlogsEntry',
+			String(blog.id),
+			String(guestRole.id)
+		);
+
+		const siteMemberRole = await apiHelpers.headlessAdminUser.getRoleByName(
+			'Site Member',
+			'rolePermissions'
+		);
+
+		await apiHelpers.jsonWebServicesResourcePermissionApiHelper.setIndividualResourcePermissions(
+			[],
+			companyId,
+			'0',
+			'com.liferay.blogs.model.BlogsEntry',
+			String(blog.id),
+			String(siteMemberRole.id)
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, user1.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(blogsPage.blogTitle(blog.headline)).toBeVisible();
+		await expect(blogsPage.noEntriesMessage).toHaveCount(0);
+
+		await performLogout(page);
+		await performLoginViaApi(page, user2.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(blogsPage.blogTitle(blog.headline)).toHaveCount(0);
+		await expect(blogsPage.noEntriesMessage).toBeVisible();
+	}
+);
+
+test(
+	'View private page site member',
+	{tag: ['@codice']},
+	async ({apiHelpers, page, site, siteMembershipsPage}) => {
+		const user = await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[user.alternateName] = {
+			name: user.givenName,
+			password: 'test',
+			surname: user.familyName,
+		};
+
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			siteId: site.id,
+			title: getRandomString(),
+		});
+
+		const guestRole = await apiHelpers.headlessAdminUser.getRoleByName(
+			'Guest',
+			'rolePermissions'
+		);
+
+		await apiHelpers.jsonWebServicesResourcePermissionApiHelper.setIndividualResourcePermissions(
+			[],
+			await page.evaluate(() => {
+				return Liferay.ThemeDisplay.getCompanyId();
+			}),
+			'0',
+			'com.liferay.portal.kernel.model.Layout',
+			String(layout.id),
+			String(guestRole.id)
+		);
+
+		await performLogout(page);
+		await performLoginViaApi(page, user.alternateName);
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		await expect(page.getByRole('heading', {name: '404'})).toBeVisible();
+
+		await performLogout(page);
+		await performLoginViaApi(page, 'test');
+
+		const userGroup = await apiHelpers.headlessAdminUser.postUserGroup();
+
+		await apiHelpers.headlessAdminUser.assignUsersToUserGroup(
+			userGroup.id,
+			[user.id]
+		);
+
+		await siteMembershipsPage.goto(site.friendlyUrlPath);
+		await siteMembershipsPage.userGroupsLink.click();
+		await siteMembershipsPage.newUserGroupButton.click();
+
+		await siteMembershipsPage.assignUserGroupTable.changeView('Table');
+
+		await expect(
+			siteMembershipsPage.assignUserGroupTable.cell(userGroup.name)
+		).toBeVisible();
+
+		await (
+			await siteMembershipsPage.assignUserGroupTable.rowCheckbox(
+				userGroup.name
+			)
+		).check();
+		await siteMembershipsPage.userGroupSelectDoneButton.click();
+
+		await waitForAlert(page);
+
+		await performLogout(page);
+		await performLoginViaApi(page, user.alternateName);
 
 		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
 
