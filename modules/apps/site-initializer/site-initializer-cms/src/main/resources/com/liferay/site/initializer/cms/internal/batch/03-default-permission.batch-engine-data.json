@@ -1,0 +1,97 @@
+{
+	"configuration": {
+		"className": "com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition",
+		"multiCompany": true,
+		"parameters": {
+			"containsHeaders": "true",
+			"createStrategy": "UPSERT",
+			"featureFlag": "LPD-17564",
+			"importStrategy": "ON_ERROR_FAIL",
+			"updateStrategy": "UPDATE"
+		},
+		"taskItemDelegateName": "DEFAULT"
+	},
+	"items": [
+		{
+			"className": "com.liferay.object.model.ObjectDefinition#S5T4",
+			"enableCategorization": false,
+			"enableComments": false,
+			"enableFriendlyURLCustomization": false,
+			"enableIndexSearch": false,
+			"enableLocalization": false,
+			"enableObjectEntryDraft": false,
+			"enableObjectEntryHistory": false,
+			"enableObjectEntryVersioning": false,
+			"externalReferenceCode": "L_OBJECT_FOLDER_DEFAULT_PERMISSIONS",
+			"label": {
+				"en_US": "Default Permission"
+			},
+			"modifiable": false,
+			"name": "DefaultPermission",
+			"objectActions": [
+			],
+			"objectDefinitionSettings": [
+				{
+					"name": "acceptAllGroups",
+					"value": "true"
+				}
+			],
+			"objectFields": [
+				{
+					"DBType": "String",
+					"businessType": "Text",
+					"defaultValue": "null",
+					"externalReferenceCode": "OBJECT_FOLDER_EXTERNAL_REFERENCE_CODE",
+					"indexed": false,
+					"indexedAsKeyword": false,
+					"indexedLanguageId": "en_US",
+					"label": {
+						"en_US": "Object Folder External Reference Code"
+					},
+					"localized": false,
+					"name": "objectFolderExternalReferenceCode",
+					"readOnly": "false",
+					"readOnlyConditionExpression": "",
+					"required": true,
+					"state": false,
+					"system": true,
+					"type": "String",
+					"unique": false
+				},
+				{
+					"DBType": "Clob",
+					"businessType": "LongText",
+					"defaultValue": "null",
+					"externalReferenceCode": "PERMISSIONS",
+					"indexed": false,
+					"indexedAsKeyword": false,
+					"indexedLanguageId": "en_US",
+					"label": {
+						"en_US": "Permissions"
+					},
+					"localized": false,
+					"name": "permissions",
+					"readOnly": "false",
+					"readOnlyConditionExpression": "",
+					"required": true,
+					"state": false,
+					"system": true,
+					"type": "Clob",
+					"unique": false
+				}
+			],
+			"objectFolderExternalReferenceCode": "L_CMS_CONTENT_STRUCTURES",
+			"panelCategoryKey": "",
+			"parameterRequired": false,
+			"pluralLabel": {
+				"en_US": "Default Permissions"
+			},
+			"portlet": false,
+			"scope": "depot",
+			"status": {
+				"code": 0
+			},
+			"system": true
+		}
+	]
+}

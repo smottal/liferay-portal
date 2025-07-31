@@ -13,16 +13,23 @@ import com.liferay.object.action.engine.ObjectActionEngine;
 import com.liferay.object.constants.ObjectActionTriggerConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.entry.util.ObjectEntryThreadLocal;
+import com.liferay.object.exception.ObjectEntryFolderNameException;
 import com.liferay.object.internal.entry.util.ObjectEntryUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
+import com.liferay.object.model.ObjectEntryFolder;
+import com.liferay.object.model.ObjectEntryTable;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectFieldTable;
+import com.liferay.object.model.ObjectFolder;
 import com.liferay.object.model.ObjectRelationshipTable;
 import com.liferay.object.model.ObjectViewFilterColumn;
 import com.liferay.object.model.ObjectViewFilterColumnTable;
 import com.liferay.object.model.listener.RelevantObjectEntryModelListener;
+import com.liferay.object.rest.manager.v1_0.DefaultObjectEntryManager;
+import com.liferay.object.rest.manager.v1_0.util.ObjectEntryManagerUtil;
 import com.liferay.object.service.ObjectDefinitionLocalService;
+import com.liferay.object.service.ObjectEntryFolderLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectValidationRuleLocalService;
@@ -30,6 +37,7 @@ import com.liferay.object.service.ObjectViewFilterColumnLocalService;
 import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
 import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
 import com.liferay.petra.function.UnsafeConsumer;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -40,6 +48,7 @@ import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -80,12 +89,61 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 	public void onAfterCreate(ObjectEntry objectEntry)
 		throws ModelListenerException {
 
+		_setPermissions(objectEntry);
+
 		_route(EventTypes.ADD, null, objectEntry);
 
 		_runRelevantObjectEntryModelListeners(
 			objectEntry,
 			relevantObjectEntryModelListener ->
 				relevantObjectEntryModelListener.onAfterCreate(objectEntry));
+	}
+
+	private void _setPermissions(ObjectEntry objectEntry) {
+		try {
+			ObjectDefinition objectDefinition = _objectDefinitionLocalService.getObjectDefinition(objectEntry.getObjectDefinitionId());
+
+			// add some check if it's a CMS objectDefinition
+
+			long objectEntryFolderId = objectEntry.getObjectEntryFolderId();
+
+			if (objectEntryFolderId == 0) {
+				return;
+			}
+
+			ObjectEntryFolder objectEntryFolder = _objectEntryFolderLocalService.fetchObjectEntryFolder(objectEntryFolderId);
+
+			if (objectEntryFolder == null) {
+				return;
+			}
+
+			ObjectDefinition defaultPermissionsObjectDefinition = _objectDefinitionLocalService.fetchObjectDefinitionByExternalReferenceCode("L_OBJECT_FOLDER_DEFAULT_PERMISSIONS", objectEntry.getCompanyId());
+
+			if (defaultPermissionsObjectDefinition == null) {
+				return;
+			}
+
+			ObjectEntry defaultPermissionsObjectEntry = _objectEntryLocalService.fetchObjectEntry(objectEntryFolder.getExternalReferenceCode(), defaultPermissionsObjectDefinition.getObjectDefinitionId());
+
+			if (defaultPermissionsObjectEntry == null) {
+				return;
+			}
+
+			Map<String, Serializable> values = defaultPermissionsObjectEntry.getValues();
+
+			JSONObject permissions = _jsonFactory.createJSONObject(String.valueOf(values.getOrDefault("permissions", "{}")));
+
+			System.out.println(permissions);
+
+			permissions.getJSONArray(objectDefinition.getExternalReferenceCode());
+
+			// put here the set of the permissions
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
+			}
+		}
 	}
 
 	@Override
@@ -556,5 +614,8 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 
 	@Reference
 	private UserLocalService _userLocalService;
+
+	@Reference
+	private ObjectEntryFolderLocalService _objectEntryFolderLocalService;
 
 }
