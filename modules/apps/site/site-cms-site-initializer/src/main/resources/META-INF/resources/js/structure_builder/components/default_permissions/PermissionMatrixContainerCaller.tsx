@@ -3,13 +3,15 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import React from 'react';
+import ClayButton from '@clayui/button';
+import React, {useState} from 'react';
 
-import PermissionMatrixContainer, {
+import {
 	IActionsType,
 	IRoleType,
 	IValuesType,
 } from './PermissionMatrixContainer';
+import PermissionModal from './PermissionModal';
 
 export default function PermissionMatrixContainerCaller({
 	actions = {
@@ -32,11 +34,20 @@ export default function PermissionMatrixContainerCaller({
 	roles: IRoleType[];
 	values?: IValuesType;
 }) {
+	const [open, setOpen] = useState(false);
+
 	return (
-		<PermissionMatrixContainer
-			actions={actions}
-			roles={roles}
-			values={values}
-		/>
+		<>
+			<ClayButton onClick={() => setOpen(true)}>Apri</ClayButton>
+
+			{open && (
+				<PermissionModal
+					actions={actions}
+					onCloseModal={() => setOpen(false)}
+					roles={roles}
+					values={values}
+				/>
+			)}
+		</>
 	);
 }

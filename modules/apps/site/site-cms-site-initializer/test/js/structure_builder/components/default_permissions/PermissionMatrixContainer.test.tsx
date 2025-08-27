@@ -10,12 +10,14 @@ import React from 'react';
 import PermissionMatrixContainer, {
 	IActionsType,
 	IRoleType,
+	ITypeType,
 	IValuesType,
 } from '../../../../../src/main/resources/META-INF/resources/js/structure_builder/components/default_permissions/PermissionMatrixContainer';
 
 const renderComponent = async (props: {
 	actions: IActionsType;
 	roles: IRoleType[];
+	types?: ITypeType[];
 	values?: IValuesType;
 }) => {
 	return render(<PermissionMatrixContainer {...props} />);
@@ -344,6 +346,57 @@ describe('Permission Matrix Container', () => {
 			expect(
 				screen.getByTestId(`row-checkbox-owner_VIEW3`)
 			).not.toBeChecked();
+		});
+	});
+
+	it('Dynamic tabs', async () => {
+		const props = {
+			actions: {
+				L_CONTENT: ['UPDATE1', 'VIEW1'],
+				L_FILE: ['UPDATE2', 'VIEW2'],
+				L_FOLDER: ['UPDATE3', 'VIEW3'],
+			},
+			roles: [{key: 'admin', name: 'Administrator'}],
+			types: [
+				{key: 'L_CONTENT', label: 'content'},
+				{key: 'L_FILE', label: 'file'},
+			],
+			values: {
+				L_CONTENT: {admin: ['VIEW1']},
+				L_FILE: {admin: ['VIEW2']},
+				L_FOLDER: {admin: ['UPDATE3', 'VIEW3']},
+			},
+		};
+
+		renderComponent(props);
+
+		expect(
+			screen.queryByRole('tab', {name: /folder/i})
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole('tab', {name: /content/i})
+		).toBeInTheDocument();
+		expect(screen.queryByRole('tab', {name: /file/i})).toBeInTheDocument();
+
+		await waitFor(() => {
+			expect(
+				screen.queryByTestId(`row-checkbox-admin_UPDATE3`)
+			).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId(`row-checkbox-admin_VIEW3`)
+			).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId(`row-checkbox-admin_UPDATE1`)
+			).toBeInTheDocument();
+			expect(
+				screen.queryByTestId(`row-checkbox-admin_UPDATE1`)
+			).not.toBeChecked();
+			expect(
+				screen.queryByTestId(`row-checkbox-admin_VIEW1`)
+			).toBeChecked();
+			expect(
+				screen.queryByTestId(`row-checkbox-admin_VIEW1`)
+			).toBeChecked();
 		});
 	});
 });

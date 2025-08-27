@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import {ClayButtonWithIcon} from '@clayui/button';
 import {ClayCheckbox, ClayInput} from '@clayui/form';
 import ClayManagementToolbar from '@clayui/management-toolbar';
 import {ClayPaginationBarWithBasicItems} from '@clayui/pagination-bar';
@@ -85,7 +86,7 @@ export default function PermissionMatrix({
 						<ClayInput.GroupItem>
 							<ClayInput
 								aria-label="search"
-								className="form-control"
+								className="form-control input-group-inset input-group-inset-after"
 								data-testid="input-search"
 								onChange={({target: {value}}) => {
 									setSearch(value);
@@ -93,89 +94,103 @@ export default function PermissionMatrix({
 								type="text"
 								value={search}
 							/>
+
+							<ClayInput.GroupInsetItem after tag="span">
+								<ClayButtonWithIcon
+									aria-label="Search"
+									displayType="unstyled"
+									symbol="search"
+									type="button"
+								/>
+							</ClayInput.GroupInsetItem>
 						</ClayInput.GroupItem>
 					</ClayInput.Group>
 				</ClayManagementToolbar.Search>
 			</ClayManagementToolbar>
 
-			<ClayTable responsive={true}>
-				<ClayTable.Head>
-					<>
-						<ClayTable.Cell id="0_0">
-							<></>
-						</ClayTable.Cell>
+			<div className="border-top pb-3 pl-4 pr-4 pt-4">
+				<ClayTable responsive={true}>
+					<ClayTable.Head>
+						<>
+							<ClayTable.Cell id="0_0">
+								<></>
+							</ClayTable.Cell>
 
-						{actions.map((action) => {
-							return (
-								<ClayTable.Cell
-									align="center"
-									data-testid={`head-cell-${action}`}
-									key={`0_${action}`}
-								>
-									{Liferay.Language.get(action)}
-								</ClayTable.Cell>
-							);
-						})}
-					</>
-				</ClayTable.Head>
+							{actions.map((action) => {
+								return (
+									<ClayTable.Cell
+										align="center"
+										data-testid={`head-cell-${action}`}
+										key={`0_${action}`}
+									>
+										{Liferay.Language.get(action)}
+									</ClayTable.Cell>
+								);
+							})}
+						</>
+					</ClayTable.Head>
 
-				<ClayTable.Body>
-					{filteredRoles
-						.slice(
-							(pagination.currentPage - 1) * pagination.pageSize,
-							pagination.currentPage * pagination.pageSize
-						)
-						.map((role) => {
-							return (
-								<ClayTable.Row key={role.key}>
-									<>
-										<ClayTable.Cell
-											data-testid={`row-cell-${role.key}`}
-											key={`${role.key}_0`}
-										>
-											{role.name}
-										</ClayTable.Cell>
+					<ClayTable.Body>
+						{filteredRoles
+							.slice(
+								(pagination.currentPage - 1) *
+									pagination.pageSize,
+								pagination.currentPage * pagination.pageSize
+							)
+							.map((role) => {
+								return (
+									<ClayTable.Row key={role.key}>
+										<>
+											<ClayTable.Cell
+												data-testid={`row-cell-${role.key}`}
+												key={`${role.key}_0`}
+											>
+												{role.name}
+											</ClayTable.Cell>
 
-										{actions.map((action) => {
-											return (
-												<ClayTable.Cell
-													align="center"
-													data-testid={`row-cell-${role.key}_${action}`}
-													key={`${role.key}_${action}`}
-												>
-													<ClayCheckbox
-														checked={
-															data[
-																`${role.key}_${action}`
-															]
-														}
-														data-testid={`row-checkbox-${role.key}_${action}`}
-														inline
+											{actions.map((action) => {
+												return (
+													<ClayTable.Cell
+														align="center"
+														data-testid={`row-cell-${role.key}_${action}`}
 														key={`${role.key}_${action}`}
-														onChange={handleChange}
-														value={`${role.key}_${action}`}
-													/>
-												</ClayTable.Cell>
-											);
-										})}
-									</>
-								</ClayTable.Row>
-							);
-						})}
-				</ClayTable.Body>
-			</ClayTable>
+													>
+														<ClayCheckbox
+															checked={
+																data[
+																	`${role.key}_${action}`
+																]
+															}
+															data-testid={`row-checkbox-${role.key}_${action}`}
+															inline
+															key={`${role.key}_${action}`}
+															onChange={
+																handleChange
+															}
+															value={`${role.key}_${action}`}
+														/>
+													</ClayTable.Cell>
+												);
+											})}
+										</>
+									</ClayTable.Row>
+								);
+							})}
+					</ClayTable.Body>
+				</ClayTable>
 
-			<div className="data-set-pagination-wrapper">
-				<ClayPaginationBarWithBasicItems
-					activeDelta={pagination.pageSize}
-					deltas={[20, 40, 60].map((size) => ({
-						label: size,
-					}))}
-					ellipsisBuffer={3}
-					onActiveChange={handlePaginationPageChange}
-					onDeltaChange={handlePaginationDeltaChange}
-					totalItems={filteredRoles.length}
-				/>
+				<div className="data-set-pagination-wrapper">
+					<ClayPaginationBarWithBasicItems
+						activeDelta={pagination.pageSize}
+						deltas={[20, 40, 60].map((size) => ({
+							label: size,
+						}))}
+						ellipsisBuffer={3}
+						onActiveChange={handlePaginationPageChange}
+						onDeltaChange={handlePaginationDeltaChange}
+						totalItems={filteredRoles.length}
+					/>
+				</div>
 			</div>
 		</>
 	);

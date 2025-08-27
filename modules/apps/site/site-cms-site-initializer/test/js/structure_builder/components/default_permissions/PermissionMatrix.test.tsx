@@ -104,12 +104,12 @@ describe('Permission Matrix', () => {
 
 		renderComponent(props);
 
-		const searchInput = screen.getByLabelText(/search/i);
+		const inputSearch = screen.getByTestId('input-search');
 
-		await userEvent.clear(searchInput);
-		await userEvent.type(searchInput, 'o');
+		await userEvent.clear(inputSearch);
+		await userEvent.type(inputSearch, 'o');
 
-		fireEvent.blur(searchInput);
+		fireEvent.blur(inputSearch);
 
 		await waitFor(() => {
 			expect(screen.queryByTestId(`row-cell-admin`)).toBeInTheDocument();
@@ -119,10 +119,10 @@ describe('Permission Matrix', () => {
 			expect(screen.queryByTestId(`row-cell-owner`)).toBeInTheDocument();
 		});
 
-		await userEvent.clear(searchInput);
-		await userEvent.type(searchInput, 'ow');
+		await userEvent.clear(inputSearch);
+		await userEvent.type(inputSearch, 'ow');
 
-		fireEvent.blur(searchInput);
+		fireEvent.blur(inputSearch);
 
 		await waitFor(() => {
 			expect(
@@ -134,9 +134,9 @@ describe('Permission Matrix', () => {
 			expect(screen.queryByTestId(`row-cell-owner`)).toBeInTheDocument();
 		});
 
-		await userEvent.clear(searchInput);
+		await userEvent.clear(inputSearch);
 
-		fireEvent.blur(searchInput);
+		fireEvent.blur(inputSearch);
 
 		await waitFor(() => {
 			expect(screen.queryByTestId(`row-cell-admin`)).toBeInTheDocument();
