@@ -155,20 +155,55 @@ describe('Permission Matrix', () => {
 			roles: [
 				{key: 'admin', name: 'Administrator'},
 				{key: 'guest', name: 'Guest'},
-				{key: 'owner', name: 'Owner'},
 			],
 		};
 
 		renderComponent(props);
 
 		const adminUpdateCheckbox = screen.getByTestId(`row-checkbox-admin_UPDATE`);
+		const adminViewCheckbox = screen.getByTestId(`row-checkbox-admin_VIEW`);
+		const guestUpdateCheckbox = screen.getByTestId(`row-checkbox-guest_UPDATE`);
+		const guestViewCheckbox = screen.getByTestId(`row-checkbox-guest_VIEW`);
 
 		expect(adminUpdateCheckbox).not.toBeChecked();
+		expect(adminViewCheckbox).not.toBeChecked();
+		expect(guestUpdateCheckbox).not.toBeChecked();
+		expect(guestViewCheckbox).not.toBeChecked();
 
 		adminUpdateCheckbox.click();
 
-		expect(adminUpdateCheckbox).toBeChecked();
-		expect(onChangeFn).toBeCalledTimes(1);
-		expect(onChangeFn).toBeCalledWith({"admin_UPDATE": true});
+		await waitFor(() => {
+			expect(adminUpdateCheckbox).toBeChecked();
+			expect(adminViewCheckbox).not.toBeChecked();
+			expect(guestUpdateCheckbox).not.toBeChecked();
+			expect(guestViewCheckbox).not.toBeChecked();
+			expect(onChangeFn).toHaveBeenCalled();
+			expect(onChangeFn).toHaveBeenLastCalledWith({"admin_UPDATE": true});
+		});
+
+		guestUpdateCheckbox.click();
+
+		await waitFor(() => {
+			expect(adminUpdateCheckbox).toBeChecked();
+			expect(adminViewCheckbox).not.toBeChecked();
+			expect(guestUpdateCheckbox).toBeChecked();
+			expect(guestViewCheckbox).not.toBeChecked();
+			expect(onChangeFn).toHaveBeenCalled();
+			expect(onChangeFn).toHaveBeenLastCalledWith({"admin_UPDATE": true, "guest_UPDATE": true});
+		});
+
+		adminViewCheckbox.click();
+
+		await waitFor(() => {
+			expect(adminUpdateCheckbox).toBeChecked();
+			expect(adminViewCheckbox).toBeChecked();
+			expect(guestUpdateCheckbox).toBeChecked();
+			expect(guestViewCheckbox).not.toBeChecked();
+			expect(onChangeFn).toHaveBeenCalled();
+			expect(onChangeFn).toHaveBeenLastCalledWith(
+				{"admin_UPDATE": true, "guest_UPDATE": true});
+		});
+
+		expect(onChangeFn).toBeCalledTimes(3);
 	});
 });
