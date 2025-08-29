@@ -10,12 +10,13 @@ import React from 'react';
 
 import PermissionMatrix from '../../../../../src/main/resources/META-INF/resources/js/structure_builder/components/default_permissions/PermissionMatrix';
 import {
-	IActionsType,
+	IActionsType, IDataType,
 	IRoleType,
 } from '../../../../../src/main/resources/META-INF/resources/js/structure_builder/components/default_permissions/PermissionMatrixContainer';
 
 const renderComponent = async (props: {
 	actions: string[];
+	onChange?: (data: IDataType) => void;
 	roles: IRoleType[];
 	values?: IActionsType;
 }) => {
@@ -143,5 +144,31 @@ describe('Permission Matrix', () => {
 			expect(screen.queryByTestId(`row-cell-guest`)).toBeInTheDocument();
 			expect(screen.queryByTestId(`row-cell-owner`)).toBeInTheDocument();
 		});
+	});
+
+	it('Handle correctly the onChange parameter', async () => {
+		const onChangeFn = jest.fn();
+
+		const props = {
+			actions: ['UPDATE', 'VIEW'],
+			onChange: onChangeFn,
+			roles: [
+				{key: 'admin', name: 'Administrator'},
+				{key: 'guest', name: 'Guest'},
+				{key: 'owner', name: 'Owner'},
+			],
+		};
+
+		renderComponent(props);
+
+		const adminUpdateCheckbox = screen.getByTestId(`row-checkbox-admin_UPDATE`);
+
+		expect(adminUpdateCheckbox).not.toBeChecked();
+
+		adminUpdateCheckbox.click();
+
+		expect(adminUpdateCheckbox).toBeChecked();
+		expect(onChangeFn).toBeCalledTimes(1);
+		expect(onChangeFn).toBeCalledWith({"admin_UPDATE": true});
 	});
 });

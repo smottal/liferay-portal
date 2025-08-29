@@ -10,18 +10,16 @@ import {ClayPaginationBarWithBasicItems} from '@clayui/pagination-bar';
 import ClayTable from '@clayui/table';
 import React, {ChangeEvent, useCallback, useEffect, useState} from 'react';
 
-import {IActionsType, IRoleType} from './PermissionMatrixContainer';
-
-interface IDataType {
-	[key: string]: boolean;
-}
+import {IActionsType, IDataType, IRoleType} from './PermissionMatrixContainer';
 
 export default function PermissionMatrix({
 	actions,
+	onChange,
 	roles,
 	values,
 }: {
 	actions: string[];
+	onChange?: (data: IDataType) => void;
 	roles: IRoleType[];
 	values?: IActionsType;
 }) {
@@ -56,12 +54,14 @@ export default function PermissionMatrix({
 	const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
 		const key = event.currentTarget.value;
 
-		setData((prevState) => {
-			return {
-				...prevState,
-				[key]: !prevState[key],
-			};
-		});
+		const newData = {...data, [key]: !data[key]};
+
+		if (onChange) {
+			onChange(newData);
+		}
+		else {
+			setData(newData);
+		}
 	};
 
 	const handlePaginationDeltaChange = useCallback((value: any) => {

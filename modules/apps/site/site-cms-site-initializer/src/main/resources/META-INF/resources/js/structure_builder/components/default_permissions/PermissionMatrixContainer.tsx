@@ -13,6 +13,10 @@ export interface IActionsType {
 	[key: string]: string[];
 }
 
+export interface IDataType {
+	[key: string]: boolean;
+}
+
 export interface IRoleType {
 	key: string;
 	name: string;
@@ -50,19 +54,41 @@ export default function PermissionMatrixContainer({
 	const [data, setData] = useState<IValuesType>(values || {});
 	const [tabs, setTabs] = useState<ITypeType[]>(DEFAULT_TYPES);
 
-	const handleTabChange = useCallback(
-		(index: number) => {
-			setActiveIndex(index);
+	const handlePermissionsChange = useCallback(
+		(data: IDataType) => {
+			const temp: IActionsType = {};
 
-			setActiveActions(actions[tabs[index].key]);
-			setActiveValues((values || {})[tabs[index].key]);
+			for (const [key, value] of Object.entries(data)) {
+				if (!value) {
+					continue;
+				}
+
+				const lastIndex = key.lastIndexOf('_');
+
+				const roleKey = key.slice(0, lastIndex);
+				const action = key.slice(lastIndex + 1);
+
+				const existingData = temp[roleKey] || [];
+
+				existingData.push(action);
+
+				temp[roleKey] = existingData;
+			}
+
+			setData((prevState) => {
+				return {
+					...prevState,
+					[tabs[activeIndex].key]: temp,
+				};
+			});
 		},
-		[actions, tabs, values]
+		[activeIndex, tabs]
 	);
 
 	useEffect(() => {
-		handleTabChange(0);
-	}, [handleTabChange]);
+		setActiveActions(actions[tabs[activeIndex].key]);
+		setActiveValues((data || {})[tabs[activeIndex].key]);
+	}, [actions, data, activeIndex, tabs]);
 
 	useEffect(() => {
 		setTabs(types || DEFAULT_TYPES);
@@ -86,7 +112,7 @@ export default function PermissionMatrixContainer({
 								onClick={(event) => {
 									event.preventDefault();
 
-									handleTabChange(index);
+									setActiveIndex(index);
 								}}
 								role="tab"
 							>
@@ -100,6 +126,7 @@ export default function PermissionMatrixContainer({
 			<div className="border-bottom">
 				<PermissionMatrix
 					actions={activeActions}
+					onChange={handlePermissionsChange}
 					roles={roles}
 					values={activeValues}
 				/>
