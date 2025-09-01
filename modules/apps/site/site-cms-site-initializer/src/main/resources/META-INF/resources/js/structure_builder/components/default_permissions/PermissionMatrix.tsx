@@ -56,11 +56,10 @@ export default function PermissionMatrix({
 
 		const newData = {...data, [key]: !data[key]};
 
+		setData(newData);
+
 		if (onChange) {
 			onChange(newData);
-		}
-		else {
-			setData(newData);
 		}
 	};
 

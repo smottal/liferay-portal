@@ -10,7 +10,8 @@ import React from 'react';
 
 import PermissionMatrix from '../../../../../src/main/resources/META-INF/resources/js/structure_builder/components/default_permissions/PermissionMatrix';
 import {
-	IActionsType, IDataType,
+	IActionsType,
+	IDataType,
 	IRoleType,
 } from '../../../../../src/main/resources/META-INF/resources/js/structure_builder/components/default_permissions/PermissionMatrixContainer';
 
@@ -147,7 +148,11 @@ describe('Permission Matrix', () => {
 	});
 
 	it('Handle correctly the onChange parameter', async () => {
-		const onChangeFn = jest.fn();
+		let data = {};
+
+		const onChangeFn = jest.fn((callbackData) => {
+			data = callbackData;
+		});
 
 		const props = {
 			actions: ['UPDATE', 'VIEW'],
@@ -160,9 +165,13 @@ describe('Permission Matrix', () => {
 
 		renderComponent(props);
 
-		const adminUpdateCheckbox = screen.getByTestId(`row-checkbox-admin_UPDATE`);
+		const adminUpdateCheckbox = screen.getByTestId(
+			`row-checkbox-admin_UPDATE`
+		);
 		const adminViewCheckbox = screen.getByTestId(`row-checkbox-admin_VIEW`);
-		const guestUpdateCheckbox = screen.getByTestId(`row-checkbox-guest_UPDATE`);
+		const guestUpdateCheckbox = screen.getByTestId(
+			`row-checkbox-guest_UPDATE`
+		);
 		const guestViewCheckbox = screen.getByTestId(`row-checkbox-guest_VIEW`);
 
 		expect(adminUpdateCheckbox).not.toBeChecked();
@@ -177,8 +186,12 @@ describe('Permission Matrix', () => {
 			expect(adminViewCheckbox).not.toBeChecked();
 			expect(guestUpdateCheckbox).not.toBeChecked();
 			expect(guestViewCheckbox).not.toBeChecked();
-			expect(onChangeFn).toHaveBeenCalled();
-			expect(onChangeFn).toHaveBeenLastCalledWith({"admin_UPDATE": true});
+			expect(onChangeFn).toHaveBeenCalledTimes(1);
+
+			expect(data).toHaveProperty('admin_UPDATE', true);
+			expect(data).not.toHaveProperty('admin_VIEW');
+			expect(data).not.toHaveProperty('guest_UPDATE');
+			expect(data).not.toHaveProperty('guest_VIEW');
 		});
 
 		guestUpdateCheckbox.click();
@@ -188,8 +201,12 @@ describe('Permission Matrix', () => {
 			expect(adminViewCheckbox).not.toBeChecked();
 			expect(guestUpdateCheckbox).toBeChecked();
 			expect(guestViewCheckbox).not.toBeChecked();
-			expect(onChangeFn).toHaveBeenCalled();
-			expect(onChangeFn).toHaveBeenLastCalledWith({"admin_UPDATE": true, "guest_UPDATE": true});
+			expect(onChangeFn).toHaveBeenCalledTimes(2);
+
+			expect(data).toHaveProperty('admin_UPDATE', true);
+			expect(data).not.toHaveProperty('admin_VIEW');
+			expect(data).toHaveProperty('guest_UPDATE', true);
+			expect(data).not.toContain('guest_VIEW');
 		});
 
 		adminViewCheckbox.click();
@@ -199,11 +216,12 @@ describe('Permission Matrix', () => {
 			expect(adminViewCheckbox).toBeChecked();
 			expect(guestUpdateCheckbox).toBeChecked();
 			expect(guestViewCheckbox).not.toBeChecked();
-			expect(onChangeFn).toHaveBeenCalled();
-			expect(onChangeFn).toHaveBeenLastCalledWith(
-				{"admin_UPDATE": true, "guest_UPDATE": true});
-		});
+			expect(onChangeFn).toHaveBeenCalledTimes(3);
 
-		expect(onChangeFn).toBeCalledTimes(3);
+			expect(data).toHaveProperty('admin_UPDATE', true);
+			expect(data).toHaveProperty('admin_VIEW', true);
+			expect(data).toHaveProperty('guest_UPDATE', true);
+			expect(data).not.toHaveProperty('guest_VIEW');
+		});
 	});
 });
