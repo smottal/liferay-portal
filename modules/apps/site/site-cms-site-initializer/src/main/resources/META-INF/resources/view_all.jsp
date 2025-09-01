@@ -37,4 +37,10 @@ ViewAllSectionDisplayContext viewAllSectionDisplayContext = (ViewAllSectionDispl
 			style="fluid"
 		/>
 	</div>
+
+	<div>
+		<react:component
+			module="{PermissionMatrixContainerCaller} from site-cms-site-initializer"
+		/>
+	</div>
 </div>

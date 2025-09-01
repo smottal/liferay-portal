@@ -53,4 +53,9 @@ export {default as TaskStatusManager} from './main_view/task_status/TaskStatusMa
 // Structure Builder
 
 export {default as StructureBuilder} from './structure_builder/components/StructureBuilder';
+
+//
+
+export {default as PermissionMatrixContainerCaller} from './structure_builder/components/default_permissions/PermissionMatrixContainerCaller';
+
 export {default as PicklistBuilder} from './structure_builder/components/picklist_builder/PicklistBuilder';
