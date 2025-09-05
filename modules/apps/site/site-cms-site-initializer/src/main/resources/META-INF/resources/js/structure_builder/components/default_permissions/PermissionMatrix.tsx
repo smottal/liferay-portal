@@ -122,7 +122,7 @@ export default function PermissionMatrix({
 										data-testid={`head-cell-${action}`}
 										key={`0_${action}`}
 									>
-										{Liferay.Language.get(action)}
+										{Liferay.Language.get(`action.${action}`)}
 									</ClayTable.Cell>
 								);
 							})}

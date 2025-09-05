@@ -12,6 +12,9 @@ import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenuBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
+import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.model.ObjectEntryFolder;
+import com.liferay.object.service.ObjectDefinitionLocalServiceUtil;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -21,6 +24,7 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -64,7 +68,17 @@ public class ViewAllSpacesDisplayContext {
 					_themeDisplay.getUserId(), QueryUtil.ALL_POS,
 					QueryUtil.ALL_POS),
 				DepotEntryPin::getDepotEntryId, Long.class)
-		).build();
+		).put("prova", () -> {
+			ObjectDefinition basicDocumentObjectDefinition =
+				ObjectDefinitionLocalServiceUtil.
+					getObjectDefinitionByExternalReferenceCode(
+						"L_CMS_BASIC_DOCUMENT", _themeDisplay.getCompanyId());
+
+			//getResourceName()
+
+			//return ResourceActionsUtil.getResourceActions(basicDocumentObjectDefinition.getClassName());
+			return ResourceActionsUtil.getResourceActions(ObjectEntryFolder.class.getName());
+		}).build();
 	}
 
 	public String getAPIURL() {

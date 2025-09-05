@@ -103,7 +103,7 @@ export default function AllSpacesFDSPropsTransformer({
 					contentComponent: () =>
 						PermissionModal({
 							actions: {
-								L_CONTENT: ['UPDATE', 'VIEW'],
+								L_CONTENT: additionalProps.prova || [],
 								L_FILE: ['UPDATE', 'VIEW', 'VIEW2'],
 								L_FOLDER: ['UPDATE', 'VIEW', 'UPDATE2', 'VIEW2', 'UPDATE3', 'VIEW3'],
 							},
