@@ -23,6 +23,8 @@ import SpaceRenderer from './cell_renderers/SpaceRenderer';
 import TypeRenderer from './cell_renderers/TypeRenderer';
 import addOnClickToCreationMenuItems from './utils/addOnClickToCreationMenuItems';
 import transformViewsItemsProps from './utils/transformViewsItemProps';
+import PermissionModal
+	from "../../structure_builder/components/default_permissions/PermissionModal";
 
 const ACTIONS = {
 	createAsset: createAssetAction,
@@ -116,6 +118,16 @@ export default function FilesFDSPropsTransformer({
 						),
 				};
 			}
+			else if (action?.data?.id === 'default-permissions') {
+				return {
+					...action,
+					isVisible: (item: any) =>
+						Boolean(
+							item?.entryClassName ===
+							OBJECT_ENTRY_FOLDER_CLASS_NAME
+						),
+				};
+			}
 			else if (
 				action?.data?.id === 'export-for-translation' ||
 				action?.data?.id === 'import-translation'
@@ -151,7 +163,39 @@ export default function FilesFDSPropsTransformer({
 			action: any;
 			itemData: any;
 		}) => {
-			if (action?.data?.id === 'view-file') {
+			if (
+				action?.data?.id === 'default-permissions'
+			) {
+				event?.preventDefault();
+
+				console.error(itemData);
+
+				openModal({
+					containerProps: {
+						className: '',
+					},
+					contentComponent: () =>
+						PermissionModal({
+							actions: {
+								L_CONTENT: ['UPDATE', 'VIEW'],
+								L_FILE: ['UPDATE', 'VIEW', 'VIEW2'],
+								L_FOLDER: ['UPDATE', 'VIEW', 'UPDATE2', 'VIEW2', 'UPDATE3', 'VIEW3'],
+							},
+							roles: [
+								{key: 'admin', name: 'Administrator'},
+								{key: 'guest', name: 'Guest'},
+								{key: 'owner', name: 'Owner'},
+							],
+							values: {
+								L_CONTENT: {admin: ['VIEW']},
+								L_FILE: {admin: ['UPDATE', 'VIEW'], guest: ['VIEW'], owner: ['VIEW']},
+								L_FOLDER: {admin: ['UPDATE', 'VIEW'], owner: ['VIEW']},
+							},
+						}),
+					size: 'full-screen',
+				});
+			}
+			else if (action?.data?.id === 'view-file') {
 				openModal({
 					containerProps: {
 						className: '',

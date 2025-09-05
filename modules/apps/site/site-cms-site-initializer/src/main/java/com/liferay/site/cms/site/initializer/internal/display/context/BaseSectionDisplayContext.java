@@ -423,6 +423,9 @@ public abstract class BaseSectionDisplayContext {
 				language.get(httpServletRequest, "permissions"), "get", null,
 				"modal-permissions"),
 			new FDSActionDropdownItem(
+				StringPool.BLANK, "view", "default-permissions",
+				LanguageUtil.get(httpServletRequest, "default-permissions"), null, null, null),
+			new FDSActionDropdownItem(
 				language.get(
 					httpServletRequest,
 					"are-you-sure-you-want-to-delete-this-entry"),

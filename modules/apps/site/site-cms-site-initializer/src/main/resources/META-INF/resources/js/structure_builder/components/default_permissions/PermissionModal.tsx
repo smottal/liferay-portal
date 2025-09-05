@@ -16,29 +16,23 @@ import PermissionMatrixContainer, {
 
 export default function PermissionModal({
 	actions,
-	onCloseModal,
 	roles,
 	values,
 }: {
 	actions: IActionsType;
-	onCloseModal?: () => void;
 	roles: IRoleType[];
 	values?: IValuesType;
 }) {
-	const {observer, onClose} = useModal({
-		onClose: () => {
-			if (onCloseModal) {
-				onCloseModal();
-			}
-		},
-	});
+	const closeHandler = () => {
+		console.error('close');
+	}
 
 	const saveHandler = () => {
-		onClose();
+		console.error('save');
 	};
 
 	return (
-		<ClayModal observer={observer} size="full-screen">
+		<>
 			<ClayModal.Header>
 				{sub(
 					Liferay.Language.get('edit-x'),
@@ -57,7 +51,7 @@ export default function PermissionModal({
 			<ClayModal.Footer
 				last={
 					<ClayButton.Group spaced>
-						<ClayButton displayType="secondary" onClick={onClose}>
+						<ClayButton displayType="secondary" onClick={closeHandler}>
 							{Liferay.Language.get('cancel')}
 						</ClayButton>
 
@@ -67,6 +61,6 @@ export default function PermissionModal({
 					</ClayButton.Group>
 				}
 			/>
-		</ClayModal>
+		</>
 	);
 }

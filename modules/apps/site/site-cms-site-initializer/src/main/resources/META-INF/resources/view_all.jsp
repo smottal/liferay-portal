@@ -38,9 +38,4 @@ ViewAllSectionDisplayContext viewAllSectionDisplayContext = (ViewAllSectionDispl
 		/>
 	</div>
 
-	<div>
-		<react:component
-			module="{PermissionMatrixContainerCaller} from site-cms-site-initializer"
-		/>
-	</div>
 </div>

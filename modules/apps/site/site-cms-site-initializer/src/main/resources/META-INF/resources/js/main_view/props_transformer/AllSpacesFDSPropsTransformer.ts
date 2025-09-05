@@ -11,6 +11,9 @@ import manageMembersAction, {
 import manageSitesAction, {ManageSitesData} from './actions/manageSitesAction';
 import SpaceRenderer from './cell_renderers/SpaceRenderer';
 import addOnClickToCreationMenuItems from './utils/addOnClickToCreationMenuItems';
+import {openModal} from "frontend-js-components-web";
+import PermissionModal
+	from "../../structure_builder/components/default_permissions/PermissionModal";
 
 const ACTIONS = {};
 
@@ -86,7 +89,39 @@ export default function AllSpacesFDSPropsTransformer({
 				window.location.reload();
 			}
 
-			if (action.data.id === 'view-members') {
+			if (
+				action.data.id === 'default-permissions'
+			) {
+				event?.preventDefault();
+
+				console.error(itemData);
+
+				openModal({
+					containerProps: {
+						className: '',
+					},
+					contentComponent: () =>
+						PermissionModal({
+							actions: {
+								L_CONTENT: ['UPDATE', 'VIEW'],
+								L_FILE: ['UPDATE', 'VIEW', 'VIEW2'],
+								L_FOLDER: ['UPDATE', 'VIEW', 'UPDATE2', 'VIEW2', 'UPDATE3', 'VIEW3'],
+							},
+							roles: [
+								{key: 'admin', name: 'Administrator'},
+								{key: 'guest', name: 'Guest'},
+								{key: 'owner', name: 'Owner'},
+							],
+							values: {
+								L_CONTENT: {admin: ['VIEW']},
+								L_FILE: {admin: ['UPDATE', 'VIEW'], guest: ['VIEW'], owner: ['VIEW']},
+								L_FOLDER: {admin: ['UPDATE', 'VIEW'], owner: ['VIEW']},
+							},
+						}),
+					size: 'full-screen',
+				});
+			}
+			else if (action.data.id === 'view-members') {
 				const hasAssignMembersPermission =
 					action.data.permissionKey === 'assign-members';
 				const assetLibraryCreatorUserId = itemData.creatorUserId;

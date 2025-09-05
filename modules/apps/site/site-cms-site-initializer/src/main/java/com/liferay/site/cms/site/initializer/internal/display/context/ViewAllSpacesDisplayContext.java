@@ -14,6 +14,7 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenuBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -167,6 +168,9 @@ public class ViewAllSpacesDisplayContext {
 				"password-policies", "permissions",
 				_language.get(_httpServletRequest, "permissions"), "get", null,
 				"modal-permissions"),
+			new FDSActionDropdownItem(
+				StringPool.BLANK, "view", "default-permissions",
+				LanguageUtil.get(_httpServletRequest, "default-permissions"), null, null, null),
 			new FDSActionDropdownItem(
 				_language.get(
 					_httpServletRequest,
