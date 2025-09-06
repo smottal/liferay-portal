@@ -18,11 +18,11 @@ import PermissionMatrixContainer, {
 	IValuesType,
 } from './PermissionMatrixContainer';
 
-//TODO: passare il loading per disabilitare le checkbox e la ricerca
-//TODO: code refactor
-//TODO: ruoli
-//TODO: test
-//TODO: prima colonna fissa
+// TODO: passare il loading per disabilitare le checkbox e la ricerca
+// TODO: code refactor
+// TODO: ruoli
+// TODO: test
+// TODO: prima colonna fissa
 
 export default function PermissionModal({
 	actions,
@@ -53,9 +53,9 @@ export default function PermissionModal({
 
 		if (currentCMSDefaultPermissionObjectEntry) {
 			CMSDefaultPermissionService.updateCMSDefaultPermission({
+				defaultPermissions: JSON.stringify(currentValues),
 				externalReferenceCode:
 					currentCMSDefaultPermissionObjectEntry.externalReferenceCode,
-				defaultPermissions: JSON.stringify(currentValues),
 			})
 				.then(() => {
 					openToast({
@@ -67,7 +67,7 @@ export default function PermissionModal({
 
 					closeModal();
 				})
-				.catch((error) => {
+				.catch(() => {
 					openToast({
 						message: Liferay.Language.get(
 							'an-unexpected-system-error-occurred'
@@ -95,7 +95,7 @@ export default function PermissionModal({
 
 					closeModal();
 				})
-				.catch((error) => {
+				.catch(() => {
 					openToast({
 						message: Liferay.Language.get(
 							'an-unexpected-system-error-occurred'

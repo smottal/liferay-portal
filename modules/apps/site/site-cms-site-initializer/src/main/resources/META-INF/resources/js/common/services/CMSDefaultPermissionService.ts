@@ -3,15 +3,14 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {UserGroup} from '../types/UserAccount';
 import ApiHelper from './ApiHelper';
 
 export type CMSDefaultPermission = {
-	externalReferenceCode: string;
-	id: number;
-	defaultPermissions: string;
 	classExternalReferenceCode: string;
 	className: string;
+	defaultPermissions: string;
+	externalReferenceCode: string;
+	id: number;
 };
 
 async function addCMSDefaultPermission({
@@ -57,8 +56,8 @@ async function updateCMSDefaultPermission({
 	defaultPermissions,
 	externalReferenceCode,
 }: {
-	externalReferenceCode: string;
 	defaultPermissions: string;
+	externalReferenceCode: string;
 }) {
 	return await ApiHelper.patch(
 		{
