@@ -37,5 +37,4 @@ ViewAllSectionDisplayContext viewAllSectionDisplayContext = (ViewAllSectionDispl
 			style="fluid"
 		/>
 	</div>
-
 </div>

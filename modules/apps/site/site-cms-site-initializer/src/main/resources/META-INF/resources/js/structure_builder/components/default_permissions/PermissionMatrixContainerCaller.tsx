@@ -7,7 +7,7 @@ import ClayButton from '@clayui/button';
 import React, {useState} from 'react';
 
 import {
-	IActionsType,
+	IActionsType2,
 	IRoleType,
 	IValuesType,
 } from './PermissionMatrixContainer';
@@ -15,9 +15,23 @@ import PermissionModal from './PermissionModal';
 
 export default function PermissionMatrixContainerCaller({
 	actions = {
-		L_CONTENT: ['UPDATE', 'VIEW'],
-		L_FILE: ['UPDATE', 'VIEW', 'VIEW2'],
-		L_FOLDER: ['UPDATE', 'VIEW', 'UPDATE2', 'VIEW2', 'UPDATE3', 'VIEW3'],
+		L_CONTENT: [
+			{key: 'UPDATE', label: 'Update'},
+			{key: 'VIEW', label: 'View'},
+		],
+		L_FILE: [
+			{key: 'UPDATE', label: 'Update'},
+			{key: 'VIEW', label: 'View'},
+			{key: 'VIEW2', label: 'View2'},
+		],
+		L_FOLDER: [
+			{key: 'UPDATE', label: 'Update'},
+			{key: 'VIEW', label: 'View'},
+			{key: 'UPDATE2', label: 'Update2'},
+			{key: 'VIEW2', label: 'View2'},
+			{key: 'UPDATE3', label: 'Update3'},
+			{key: 'VIEW3', label: 'View3'},
+		],
 	},
 	roles = [
 		{key: 'admin', name: 'Administrator'},
@@ -30,7 +44,7 @@ export default function PermissionMatrixContainerCaller({
 		L_FOLDER: {admin: ['UPDATE', 'VIEW'], owner: ['VIEW']},
 	},
 }: {
-	actions: IActionsType;
+	actions: IActionsType2;
 	roles: IRoleType[];
 	values?: IValuesType;
 }) {
@@ -43,7 +57,6 @@ export default function PermissionMatrixContainerCaller({
 			{open && (
 				<PermissionModal
 					actions={actions}
-					onCloseModal={() => setOpen(false)}
 					roles={roles}
 					values={values}
 				/>

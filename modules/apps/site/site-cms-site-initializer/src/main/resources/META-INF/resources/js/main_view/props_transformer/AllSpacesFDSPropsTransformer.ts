@@ -4,16 +4,15 @@
  */
 
 import {IInternalRenderer} from '@liferay/frontend-data-set-web';
+import {openModal} from 'frontend-js-components-web';
 
+import PermissionModal from '../../structure_builder/components/default_permissions/PermissionModal';
 import manageMembersAction, {
 	ManageMembersData,
 } from './actions/manageMembersAction';
 import manageSitesAction, {ManageSitesData} from './actions/manageSitesAction';
 import SpaceRenderer from './cell_renderers/SpaceRenderer';
 import addOnClickToCreationMenuItems from './utils/addOnClickToCreationMenuItems';
-import {openModal} from "frontend-js-components-web";
-import PermissionModal
-	from "../../structure_builder/components/default_permissions/PermissionModal";
 
 const ACTIONS = {};
 
@@ -80,6 +79,7 @@ export default function AllSpacesFDSPropsTransformer({
 			};
 			itemData: {
 				creatorUserId: string;
+				externalReferenceCode: string;
 				id: string;
 				siteId: string;
 			};
@@ -89,9 +89,7 @@ export default function AllSpacesFDSPropsTransformer({
 				window.location.reload();
 			}
 
-			if (
-				action.data.id === 'default-permissions'
-			) {
+			if (action.data.id === 'default-permissions') {
 				event?.preventDefault();
 
 				console.error(itemData);
@@ -100,23 +98,26 @@ export default function AllSpacesFDSPropsTransformer({
 					containerProps: {
 						className: '',
 					},
-					contentComponent: () =>
+					contentComponent: ({
+						closeModal,
+					}: {
+						closeModal: () => void;
+					}) =>
 						PermissionModal({
-							actions: {
-								L_CONTENT: additionalProps.prova || [],
-								L_FILE: ['UPDATE', 'VIEW', 'VIEW2'],
-								L_FOLDER: ['UPDATE', 'VIEW', 'UPDATE2', 'VIEW2', 'UPDATE3', 'VIEW3'],
-							},
+							...(additionalProps.defaultPermissionAdditionalProps ||
+								{}),
+							classExternalReferenceCode:
+								itemData.externalReferenceCode,
+							className: 'com.liferay.depot.model.DepotEntry',
+							closeModal,
 							roles: [
-								{key: 'admin', name: 'Administrator'},
+								{
+									key: 'CMS Administrator',
+									name: 'CMS Administrator',
+								},
 								{key: 'guest', name: 'Guest'},
 								{key: 'owner', name: 'Owner'},
 							],
-							values: {
-								L_CONTENT: {admin: ['VIEW']},
-								L_FILE: {admin: ['UPDATE', 'VIEW'], guest: ['VIEW'], owner: ['VIEW']},
-								L_FOLDER: {admin: ['UPDATE', 'VIEW'], owner: ['VIEW']},
-							},
 						}),
 					size: 'full-screen',
 				});

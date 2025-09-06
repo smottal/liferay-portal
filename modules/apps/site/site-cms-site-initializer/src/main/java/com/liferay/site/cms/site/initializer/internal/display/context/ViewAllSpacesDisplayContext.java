@@ -12,6 +12,7 @@ import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenuBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
+import com.liferay.object.constants.ObjectEntryFolderConstants;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntryFolder;
 import com.liferay.object.service.ObjectDefinitionLocalServiceUtil;
@@ -62,23 +63,16 @@ public class ViewAllSpacesDisplayContext {
 
 	public Map<String, Object> getAdditionalProps() {
 		return HashMapBuilder.<String, Object>put(
+			"defaultPermissionAdditionalProps",
+			_getDefaultPermissionAdditionalProps()
+		).put(
 			"pinnedAssetLibraryIds",
 			TransformUtil.transformToArray(
 				_depotEntryPinLocalService.getUserDepotEntryPins(
 					_themeDisplay.getUserId(), QueryUtil.ALL_POS,
 					QueryUtil.ALL_POS),
 				DepotEntryPin::getDepotEntryId, Long.class)
-		).put("prova", () -> {
-			ObjectDefinition basicDocumentObjectDefinition =
-				ObjectDefinitionLocalServiceUtil.
-					getObjectDefinitionByExternalReferenceCode(
-						"L_CMS_BASIC_DOCUMENT", _themeDisplay.getCompanyId());
-
-			//getResourceName()
-
-			//return ResourceActionsUtil.getResourceActions(basicDocumentObjectDefinition.getClassName());
-			return ResourceActionsUtil.getResourceActions(ObjectEntryFolder.class.getName());
-		}).build();
+		).build();
 	}
 
 	public String getAPIURL() {
@@ -184,7 +178,8 @@ public class ViewAllSpacesDisplayContext {
 				"modal-permissions"),
 			new FDSActionDropdownItem(
 				StringPool.BLANK, "view", "default-permissions",
-				LanguageUtil.get(_httpServletRequest, "default-permissions"), null, null, null),
+				LanguageUtil.get(_httpServletRequest, "default-permissions"),
+				null, null, null),
 			new FDSActionDropdownItem(
 				_language.get(
 					_httpServletRequest,
@@ -192,6 +187,73 @@ public class ViewAllSpacesDisplayContext {
 				null, "trash", "delete",
 				_language.get(_httpServletRequest, "delete"), "delete",
 				"delete", "headless"));
+	}
+
+	private Map<String, Object> _getDefaultPermissionAdditionalProps() {
+		return HashMapBuilder.<String, Object>put(
+			"actions",
+			() -> HashMapBuilder.put(
+				ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_CONTENTS,
+				() -> {
+					ObjectDefinition objectDefinition =
+						ObjectDefinitionLocalServiceUtil.
+							getObjectDefinitionByExternalReferenceCode(
+								"L_CMS_BASIC_WEB_CONTENT",
+								_themeDisplay.getCompanyId());
+
+					return TransformUtil.transformToArray(
+						ResourceActionsUtil.getResourceActions(
+							objectDefinition.getClassName()),
+						resourceAction -> HashMapBuilder.put(
+							"key", resourceAction
+						).put(
+							"label",
+							ResourceActionsUtil.getAction(
+								_httpServletRequest, resourceAction)
+						).build(),
+						Map.class);
+				}
+			).put(
+				ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_FILES,
+				() -> {
+					ObjectDefinition objectDefinition =
+						ObjectDefinitionLocalServiceUtil.
+							getObjectDefinitionByExternalReferenceCode(
+								"L_CMS_BASIC_DOCUMENT",
+								_themeDisplay.getCompanyId());
+
+					return TransformUtil.transformToArray(
+						ResourceActionsUtil.getResourceActions(
+							objectDefinition.getClassName()),
+						resourceAction -> HashMapBuilder.put(
+							"key", resourceAction
+						).put(
+							"label",
+							ResourceActionsUtil.getAction(
+								_httpServletRequest, resourceAction)
+						).build(),
+						Map.class);
+				}
+			).put(
+				"OBJECT_ENTRY_FOLDER",
+				() -> TransformUtil.transformToArray(
+					ResourceActionsUtil.getResourceActions(
+						ObjectEntryFolder.class.getName()),
+					resourceAction -> HashMapBuilder.put(
+						"key", resourceAction
+					).put(
+						"label",
+						ResourceActionsUtil.getAction(
+							_httpServletRequest, resourceAction)
+					).build(),
+					Map.class)
+			).build()
+		).put(
+			"roles",
+			() -> {
+				return null;
+			}
+		).build();
 	}
 
 	private final DepotEntryPinLocalService _depotEntryPinLocalService;

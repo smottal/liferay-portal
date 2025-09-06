@@ -424,7 +424,8 @@ public abstract class BaseSectionDisplayContext {
 				"modal-permissions"),
 			new FDSActionDropdownItem(
 				StringPool.BLANK, "view", "default-permissions",
-				LanguageUtil.get(httpServletRequest, "default-permissions"), null, null, null),
+				LanguageUtil.get(httpServletRequest, "default-permissions"),
+				null, null, null),
 			new FDSActionDropdownItem(
 				language.get(
 					httpServletRequest,

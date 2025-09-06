@@ -10,7 +10,12 @@ import {ClayPaginationBarWithBasicItems} from '@clayui/pagination-bar';
 import ClayTable from '@clayui/table';
 import React, {ChangeEvent, useCallback, useEffect, useState} from 'react';
 
-import {IActionsType, IDataType, IRoleType} from './PermissionMatrixContainer';
+import {
+	IActionsType,
+	IDataType,
+	IRoleType,
+	ITypeType,
+} from './PermissionMatrixContainer';
 
 export default function PermissionMatrix({
 	actions,
@@ -18,7 +23,7 @@ export default function PermissionMatrix({
 	roles,
 	values,
 }: {
-	actions: string[];
+	actions: ITypeType[];
 	onChange?: (data: IDataType) => void;
 	roles: IRoleType[];
 	values?: IActionsType;
@@ -36,7 +41,7 @@ export default function PermissionMatrix({
 
 		for (const [role, actions] of Object.entries(values || {})) {
 			actions.map((action) => {
-				formattedData[`${role}_${action}`] = true;
+				formattedData[`${role}#${action}`] = true;
 			});
 		}
 
@@ -119,10 +124,11 @@ export default function PermissionMatrix({
 								return (
 									<ClayTable.Cell
 										align="center"
-										data-testid={`head-cell-${action}`}
-										key={`0_${action}`}
+										className="text-nowrap"
+										data-testid={`head-cell-${action.key}`}
+										key={`0_${action.key}`}
 									>
-										{Liferay.Language.get(`action.${action}`)}
+										{action.label}
 									</ClayTable.Cell>
 								);
 							})}
@@ -141,6 +147,7 @@ export default function PermissionMatrix({
 									<ClayTable.Row key={role.key}>
 										<>
 											<ClayTable.Cell
+												className="text-nowrap"
 												data-testid={`row-cell-${role.key}`}
 												key={`${role.key}_0`}
 											>
@@ -151,22 +158,22 @@ export default function PermissionMatrix({
 												return (
 													<ClayTable.Cell
 														align="center"
-														data-testid={`row-cell-${role.key}_${action}`}
-														key={`${role.key}_${action}`}
+														data-testid={`row-cell-${role.key}_${action.key}`}
+														key={`${role.key}_${action.key}`}
 													>
 														<ClayCheckbox
 															checked={
 																data[
-																	`${role.key}_${action}`
+																	`${role.key}#${action.key}`
 																]
 															}
-															data-testid={`row-checkbox-${role.key}_${action}`}
+															data-testid={`row-checkbox-${role.key}_${action.key}`}
 															inline
-															key={`${role.key}_${action}`}
+															key={`${role.key}_${action.key}`}
 															onChange={
 																handleChange
 															}
-															value={`${role.key}_${action}`}
+															value={`${role.key}#${action.key}`}
 														/>
 													</ClayTable.Cell>
 												);

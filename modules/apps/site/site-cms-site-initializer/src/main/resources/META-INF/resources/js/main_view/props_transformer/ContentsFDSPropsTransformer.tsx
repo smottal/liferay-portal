@@ -8,6 +8,7 @@ import {openModal} from 'frontend-js-components-web';
 import React from 'react';
 
 import formatActionURL from '../../common/utils/formatActionURL';
+import PermissionModal from '../../structure_builder/components/default_permissions/PermissionModal';
 import {ISearchAssetObjectEntry} from '../../structure_builder/types/AssetType';
 import AssetTypeInfoPanel from '../info_panel/AssetTypeInfoPanelContent';
 import createAssetAction from './actions/createAssetAction';
@@ -21,8 +22,6 @@ import SpaceRenderer from './cell_renderers/SpaceRenderer';
 import TypeRenderer from './cell_renderers/TypeRenderer';
 import addOnClickToCreationMenuItems from './utils/addOnClickToCreationMenuItems';
 import transformViewsItemsProps from './utils/transformViewsItemProps';
-import PermissionModal
-	from "../../structure_builder/components/default_permissions/PermissionModal";
 
 const ACTIONS = {
 	createAsset: createAssetAction,
@@ -119,7 +118,7 @@ export default function ContentFDSPropsTransformer({
 					isVisible: (item: any) =>
 						Boolean(
 							item?.entryClassName ===
-							OBJECT_ENTRY_FOLDER_CLASS_NAME
+								OBJECT_ENTRY_FOLDER_CLASS_NAME
 						),
 				};
 			}
@@ -141,9 +140,7 @@ export default function ContentFDSPropsTransformer({
 			event: Event;
 			itemData: any;
 		}) => {
-			if (
-				action?.data?.id === 'default-permissions'
-			) {
+			if (action?.data?.id === 'default-permissions') {
 				event?.preventDefault();
 
 				console.error(itemData);
@@ -157,7 +154,14 @@ export default function ContentFDSPropsTransformer({
 							actions: {
 								L_CONTENT: ['UPDATE', 'VIEW'],
 								L_FILE: ['UPDATE', 'VIEW', 'VIEW2'],
-								L_FOLDER: ['UPDATE', 'VIEW', 'UPDATE2', 'VIEW2', 'UPDATE3', 'VIEW3'],
+								L_FOLDER: [
+									'UPDATE',
+									'VIEW',
+									'UPDATE2',
+									'VIEW2',
+									'UPDATE3',
+									'VIEW3',
+								],
 							},
 							roles: [
 								{key: 'admin', name: 'Administrator'},
@@ -166,13 +170,21 @@ export default function ContentFDSPropsTransformer({
 							],
 							values: {
 								L_CONTENT: {admin: ['VIEW']},
-								L_FILE: {admin: ['UPDATE', 'VIEW'], guest: ['VIEW'], owner: ['VIEW']},
-								L_FOLDER: {admin: ['UPDATE', 'VIEW'], owner: ['VIEW']},
+								L_FILE: {
+									admin: ['UPDATE', 'VIEW'],
+									guest: ['VIEW'],
+									owner: ['VIEW'],
+								},
+								L_FOLDER: {
+									admin: ['UPDATE', 'VIEW'],
+									owner: ['VIEW'],
+								},
 							},
 						}),
 					size: 'full-screen',
 				});
-			} else if (action?.data?.id === 'share') {
+			}
+			else if (action?.data?.id === 'share') {
 				const {autocompleteURL, collaboratorURLs} = additionalProps;
 
 				shareAction({

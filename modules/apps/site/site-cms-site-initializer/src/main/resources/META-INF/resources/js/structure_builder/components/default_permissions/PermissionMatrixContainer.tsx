@@ -13,6 +13,10 @@ export interface IActionsType {
 	[key: string]: string[];
 }
 
+export interface IActionsType2 {
+	[key: string]: ITypeType[];
+}
+
 export interface IDataType {
 	[key: string]: boolean;
 }
@@ -32,38 +36,40 @@ export interface IValuesType {
 }
 
 const DEFAULT_TYPES = [
-	{key: 'L_FOLDER', label: 'folder'},
-	{key: 'L_CONTENT', label: 'content'},
-	{key: 'L_FILE', label: 'file'},
+	{key: 'OBJECT_ENTRY_FOLDER', label: 'folder'},
+	{key: 'L_CONTENTS', label: 'content'},
+	{key: 'L_FILES', label: 'file'},
 ];
 
 export default function PermissionMatrixContainer({
 	actions,
+	onChange,
 	roles,
 	types,
 	values,
 }: {
-	actions: IActionsType;
+	actions: IActionsType2;
+	onChange?: (data: IValuesType) => void;
 	roles: IRoleType[];
 	types?: ITypeType[];
 	values?: IValuesType;
 }) {
 	const [activeIndex, setActiveIndex] = useState(0);
-	const [activeActions, setActiveActions] = useState<string[]>([]);
+	const [activeActions, setActiveActions] = useState<ITypeType[]>([]);
 	const [activeValues, setActiveValues] = useState({});
 	const [data, setData] = useState<IValuesType>(values || {});
 	const [tabs, setTabs] = useState<ITypeType[]>(DEFAULT_TYPES);
 
 	const handlePermissionsChange = useCallback(
-		(data: IDataType) => {
+		(ccc: IDataType) => {
 			const temp: IActionsType = {};
 
-			for (const [key, value] of Object.entries(data)) {
+			for (const [key, value] of Object.entries(ccc)) {
 				if (!value) {
 					continue;
 				}
 
-				const lastIndex = key.lastIndexOf('_');
+				const lastIndex = key.lastIndexOf('#');
 
 				const roleKey = key.slice(0, lastIndex);
 				const action = key.slice(lastIndex + 1);
@@ -75,14 +81,18 @@ export default function PermissionMatrixContainer({
 				temp[roleKey] = existingData;
 			}
 
-			setData((prevState) => {
-				return {
-					...prevState,
-					[tabs[activeIndex].key]: temp,
-				};
-			});
+			const newData = {
+				...data,
+				[tabs[activeIndex].key]: temp,
+			};
+
+			setData(newData);
+
+			if (onChange) {
+				onChange(newData);
+			}
 		},
-		[activeIndex, tabs]
+		[activeIndex, tabs, onChange, data]
 	);
 
 	useEffect(() => {
