@@ -24,6 +24,7 @@ export interface IDataType {
 export interface IRoleType {
 	key: string;
 	name: string;
+	type?: string;
 }
 
 export interface ITypeType {
@@ -36,9 +37,9 @@ export interface IValuesType {
 }
 
 const DEFAULT_TYPES = [
-	{key: 'OBJECT_ENTRY_FOLDER', label: 'folder'},
-	{key: 'L_CONTENTS', label: 'content'},
-	{key: 'L_FILES', label: 'file'},
+	{key: 'OBJECT_ENTRY_FOLDER', label: Liferay.Language.get('folder')},
+	{key: 'L_CONTENTS', label: Liferay.Language.get('content')},
+	{key: 'L_FILES', label: Liferay.Language.get('file')},
 ];
 
 export default function PermissionMatrixContainer({
@@ -126,7 +127,7 @@ export default function PermissionMatrixContainer({
 								}}
 								role="tab"
 							>
-								{Liferay.Language.get(tab.label)}
+								{tab.label}
 							</ClayLink>
 						</ClayNavigationBar.Item>
 					);

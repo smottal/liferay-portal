@@ -4,11 +4,14 @@
  */
 
 import {ClayButtonWithIcon} from '@clayui/button';
+import ClayIcon from '@clayui/icon';
 import {ClayCheckbox, ClayInput} from '@clayui/form';
 import ClayManagementToolbar from '@clayui/management-toolbar';
 import {ClayPaginationBarWithBasicItems} from '@clayui/pagination-bar';
 import ClayTable from '@clayui/table';
 import React, {ChangeEvent, useCallback, useEffect, useState} from 'react';
+import {ClayTooltipProvider} from '@clayui/tooltip';
+
 
 import {
 	IActionsType,
@@ -116,7 +119,7 @@ export default function PermissionMatrix({
 				<ClayTable responsive={true}>
 					<ClayTable.Head>
 						<>
-							<ClayTable.Cell id="0_0">
+							<ClayTable.Cell className="role-name-column" id="0_0">
 								<></>
 							</ClayTable.Cell>
 
@@ -147,10 +150,16 @@ export default function PermissionMatrix({
 									<ClayTable.Row key={role.key}>
 										<>
 											<ClayTable.Cell
-												className="text-nowrap"
+												className="role-name-column text-nowrap"
 												data-testid={`row-cell-${role.key}`}
 												key={`${role.key}_0`}
 											>
+												<ClayTooltipProvider>
+													<span className='mr-2' title={role.type === '1' ? Liferay.Language.get('regular-role') : Liferay.Language.get('site-role')}>
+														<ClayIcon symbol={role.type === '1' ? 'user' : 'globe'} />
+													</span>
+												</ClayTooltipProvider>
+
 												{role.name}
 											</ClayTable.Cell>
 

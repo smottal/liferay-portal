@@ -23,14 +23,18 @@ import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.GroupConstants;
+import com.liferay.portal.kernel.model.Role;
+import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
+import com.liferay.portal.kernel.service.RoleLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.site.cms.site.initializer.internal.util.ActionUtil;
 
@@ -38,8 +42,11 @@ import jakarta.portlet.ActionRequest;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Marco Leo
@@ -251,7 +258,32 @@ public class ViewAllSpacesDisplayContext {
 		).put(
 			"roles",
 			() -> {
-				return null;
+				Set<String> excludedRoleNamesSet = new HashSet<String>() {
+					{
+						add(RoleConstants.ADMINISTRATOR);
+						add(RoleConstants.SITE_ADMINISTRATOR);
+						add(RoleConstants.SITE_OWNER);
+					}
+				};
+
+				return TransformUtil.transformToArray(
+					RoleLocalServiceUtil.getGroupRolesAndTeamRoles(
+						_themeDisplay.getCompanyId(), null, ListUtil.fromCollection(
+							excludedRoleNamesSet), null, null,
+						new int[]{
+							RoleConstants.TYPE_REGULAR, RoleConstants.TYPE_SITE
+						}, 0, 0,
+						QueryUtil.ALL_POS, QueryUtil.ALL_POS),
+					role -> HashMapBuilder.put(
+						"key", role.getName()
+					).put(
+						"name",
+						role.getTitle(_themeDisplay.getLocale())
+					).put(
+						"type",
+						String.valueOf(role.getType())
+					).build(),
+					Map.class);
 			}
 		).build();
 	}
