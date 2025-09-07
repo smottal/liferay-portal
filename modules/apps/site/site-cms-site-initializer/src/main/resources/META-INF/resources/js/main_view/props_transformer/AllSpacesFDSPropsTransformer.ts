@@ -90,10 +90,6 @@ export default function AllSpacesFDSPropsTransformer({
 			}
 
 			if (action.data.id === 'default-permissions') {
-				event?.preventDefault();
-
-				console.error(itemData);
-
 				openModal({
 					containerProps: {
 						className: '',
@@ -110,14 +106,6 @@ export default function AllSpacesFDSPropsTransformer({
 								itemData.externalReferenceCode,
 							className: 'com.liferay.depot.model.DepotEntry',
 							closeModal,
-							/*roles: [
-								{
-									key: 'CMS Administrator',
-									name: 'CMS Administrator',
-								},
-								{key: 'guest', name: 'Guest'},
-								{key: 'owner', name: 'Owner'},
-							],*/
 						}),
 					size: 'full-screen',
 				});

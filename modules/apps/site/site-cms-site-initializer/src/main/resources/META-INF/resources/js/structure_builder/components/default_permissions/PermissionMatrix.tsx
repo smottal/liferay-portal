@@ -4,14 +4,13 @@
  */
 
 import {ClayButtonWithIcon} from '@clayui/button';
-import ClayIcon from '@clayui/icon';
 import {ClayCheckbox, ClayInput} from '@clayui/form';
+import ClayIcon from '@clayui/icon';
 import ClayManagementToolbar from '@clayui/management-toolbar';
 import {ClayPaginationBarWithBasicItems} from '@clayui/pagination-bar';
 import ClayTable from '@clayui/table';
-import React, {ChangeEvent, useCallback, useEffect, useState} from 'react';
 import {ClayTooltipProvider} from '@clayui/tooltip';
-
+import React, {ChangeEvent, useCallback, useEffect, useState} from 'react';
 
 import {
 	IActionsType,
@@ -22,11 +21,13 @@ import {
 
 export default function PermissionMatrix({
 	actions,
+	disabled,
 	onChange,
 	roles,
 	values,
 }: {
 	actions: ITypeType[];
+	disabled?: boolean;
 	onChange?: (data: IDataType) => void;
 	roles: IRoleType[];
 	values?: IActionsType;
@@ -95,6 +96,7 @@ export default function PermissionMatrix({
 								aria-label="search"
 								className="form-control input-group-inset input-group-inset-after"
 								data-testid="input-search"
+								disabled={disabled}
 								onChange={({target: {value}}) => {
 									setSearch(value);
 								}}
@@ -105,6 +107,7 @@ export default function PermissionMatrix({
 							<ClayInput.GroupInsetItem after tag="span">
 								<ClayButtonWithIcon
 									aria-label="Search"
+									disabled={disabled}
 									displayType="unstyled"
 									symbol="search"
 									type="button"
@@ -119,7 +122,10 @@ export default function PermissionMatrix({
 				<ClayTable responsive={true}>
 					<ClayTable.Head>
 						<>
-							<ClayTable.Cell className="role-name-column" id="0_0">
+							<ClayTable.Cell
+								className="role-name-column"
+								id="0_0"
+							>
 								<></>
 							</ClayTable.Cell>
 
@@ -155,8 +161,27 @@ export default function PermissionMatrix({
 												key={`${role.key}_0`}
 											>
 												<ClayTooltipProvider>
-													<span className='mr-2' title={role.type === '1' ? Liferay.Language.get('regular-role') : Liferay.Language.get('site-role')}>
-														<ClayIcon symbol={role.type === '1' ? 'user' : 'globe'} />
+													<span
+														className="mr-2"
+														title={
+															role.type === '1'
+																? Liferay.Language.get(
+																		'regular-role'
+																	)
+																: Liferay.Language.get(
+																		'site-role'
+																	)
+														}
+													>
+														<ClayIcon
+															data-testid={`row-cell-icon-${role.key}`}
+															symbol={
+																role.type ===
+																'1'
+																	? 'user'
+																	: 'globe'
+															}
+														/>
 													</span>
 												</ClayTooltipProvider>
 
@@ -177,6 +202,7 @@ export default function PermissionMatrix({
 																]
 															}
 															data-testid={`row-checkbox-${role.key}_${action.key}`}
+															disabled={disabled}
 															inline
 															key={`${role.key}_${action.key}`}
 															onChange={

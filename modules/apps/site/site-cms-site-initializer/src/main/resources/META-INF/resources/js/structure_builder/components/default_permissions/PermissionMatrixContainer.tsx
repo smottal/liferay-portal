@@ -24,7 +24,7 @@ export interface IDataType {
 export interface IRoleType {
 	key: string;
 	name: string;
-	type?: string;
+	type: string;
 }
 
 export interface ITypeType {
@@ -44,12 +44,14 @@ const DEFAULT_TYPES = [
 
 export default function PermissionMatrixContainer({
 	actions,
+	disabled,
 	onChange,
 	roles,
 	types,
 	values,
 }: {
 	actions: IActionsType2;
+	disabled?: boolean;
 	onChange?: (data: IValuesType) => void;
 	roles: IRoleType[];
 	types?: ITypeType[];
@@ -123,6 +125,10 @@ export default function PermissionMatrixContainer({
 								onClick={(event) => {
 									event.preventDefault();
 
+									if (disabled) {
+										return;
+									}
+
 									setActiveIndex(index);
 								}}
 								role="tab"
@@ -137,6 +143,7 @@ export default function PermissionMatrixContainer({
 			<div className="border-bottom">
 				<PermissionMatrix
 					actions={activeActions}
+					disabled={disabled}
 					onChange={handlePermissionsChange}
 					roles={roles}
 					values={activeValues}

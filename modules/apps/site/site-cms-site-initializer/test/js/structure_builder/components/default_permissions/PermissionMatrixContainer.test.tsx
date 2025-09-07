@@ -8,14 +8,16 @@ import {render, screen, waitFor} from '@testing-library/react';
 import React from 'react';
 
 import PermissionMatrixContainer, {
-	IActionsType,
+	IActionsType2,
 	IRoleType,
 	ITypeType,
 	IValuesType,
 } from '../../../../../src/main/resources/META-INF/resources/js/structure_builder/components/default_permissions/PermissionMatrixContainer';
 
 const renderComponent = async (props: {
-	actions: IActionsType;
+	actions: IActionsType2;
+	disabled?: boolean;
+	onChange?: (data: IValuesType) => void;
 	roles: IRoleType[];
 	types?: ITypeType[];
 	values?: IValuesType;
@@ -27,45 +29,68 @@ describe('Permission Matrix Container', () => {
 	it('Show tabs', async () => {
 		const props = {
 			actions: {
-				L_CONTENT: ['UPDATE', 'VIEW'],
-				L_FILE: ['UPDATE', 'VIEW', 'VIEW2'],
-				L_FOLDER: [
-					'UPDATE',
-					'VIEW',
-					'UPDATE2',
-					'VIEW2',
-					'UPDATE3',
-					'VIEW3',
+				L_CONTENTS: [
+					{key: 'UPDATE', label: 'Update'},
+					{key: 'VIEW', label: 'View'},
+				],
+				L_FILES: [
+					{key: 'UPDATE', label: 'Update'},
+					{key: 'VIEW', label: 'View'},
+					{key: 'VIEW2', label: 'View2'},
+				],
+				OBJECT_ENTRY_FOLDER: [
+					{key: 'UPDATE', label: 'Update'},
+					{key: 'VIEW', label: 'View'},
+					{key: 'UPDATE2', label: 'Update2'},
+					{key: 'VIEW2', label: 'View2'},
+					{key: 'UPDATE3', label: 'Update3'},
+					{key: 'VIEW3', label: 'View3'},
 				],
 			},
 			roles: [
-				{key: 'admin', name: 'Administrator'},
-				{key: 'guest', name: 'Guest'},
+				{key: 'admin', name: 'Administrator', type: '1'},
+				{key: 'guest', name: 'Guest', type: '1'},
 			],
 		};
 
 		renderComponent(props);
 
 		expect(screen.getByRole('tab', {name: /folder/i})).toBeInTheDocument();
+		expect(screen.getByRole('tab', {name: /folder/i})).toHaveClass(
+			'active'
+		);
 		expect(screen.getByRole('tab', {name: /content/i})).toBeInTheDocument();
+		expect(screen.getByRole('tab', {name: /content/i})).not.toHaveClass(
+			'active'
+		);
 		expect(screen.getByRole('tab', {name: /file/i})).toBeInTheDocument();
+		expect(screen.getByRole('tab', {name: /file/i})).not.toHaveClass(
+			'active'
+		);
 	});
 
 	it('Switch matrix on tab change', async () => {
 		const props = {
 			actions: {
-				L_CONTENT: ['UPDATE', 'VIEW'],
-				L_FILE: ['UPDATE', 'VIEW', 'VIEW2'],
-				L_FOLDER: [
-					'UPDATE',
-					'UPDATE2',
-					'UPDATE3',
-					'VIEW',
-					'VIEW2',
-					'VIEW3',
+				L_CONTENTS: [
+					{key: 'UPDATE', label: 'Update'},
+					{key: 'VIEW', label: 'View'},
+				],
+				L_FILES: [
+					{key: 'UPDATE', label: 'Update'},
+					{key: 'VIEW', label: 'View'},
+					{key: 'VIEW2', label: 'View2'},
+				],
+				OBJECT_ENTRY_FOLDER: [
+					{key: 'UPDATE', label: 'Update'},
+					{key: 'VIEW', label: 'View'},
+					{key: 'UPDATE2', label: 'Update2'},
+					{key: 'VIEW2', label: 'View2'},
+					{key: 'UPDATE3', label: 'Update3'},
+					{key: 'VIEW3', label: 'View3'},
 				],
 			},
-			roles: [{key: 'admin', name: 'Administrator'}],
+			roles: [{key: 'admin', name: 'Administrator', type: '1'}],
 		};
 
 		renderComponent(props);
@@ -94,6 +119,16 @@ describe('Permission Matrix Container', () => {
 		screen.getByRole('tab', {name: /content/i}).click();
 
 		await waitFor(() => {
+			expect(screen.getByRole('tab', {name: /content/i})).toHaveClass(
+				'active'
+			);
+			expect(screen.getByRole('tab', {name: /file/i})).not.toHaveClass(
+				'active'
+			);
+			expect(screen.getByRole('tab', {name: /folder/i})).not.toHaveClass(
+				'active'
+			);
+
 			expect(
 				screen.queryByTestId(`row-checkbox-admin_UPDATE`)
 			).toBeInTheDocument();
@@ -117,6 +152,16 @@ describe('Permission Matrix Container', () => {
 		screen.getByRole('tab', {name: /file/i}).click();
 
 		await waitFor(() => {
+			expect(screen.getByRole('tab', {name: /content/i})).not.toHaveClass(
+				'active'
+			);
+			expect(screen.getByRole('tab', {name: /file/i})).toHaveClass(
+				'active'
+			);
+			expect(screen.getByRole('tab', {name: /folder/i})).not.toHaveClass(
+				'active'
+			);
+
 			expect(
 				screen.queryByTestId(`row-checkbox-admin_UPDATE`)
 			).toBeInTheDocument();
@@ -140,6 +185,16 @@ describe('Permission Matrix Container', () => {
 		screen.getByRole('tab', {name: /folder/i}).click();
 
 		await waitFor(() => {
+			expect(screen.getByRole('tab', {name: /content/i})).not.toHaveClass(
+				'active'
+			);
+			expect(screen.getByRole('tab', {name: /file/i})).not.toHaveClass(
+				'active'
+			);
+			expect(screen.getByRole('tab', {name: /folder/i})).toHaveClass(
+				'active'
+			);
+
 			expect(
 				screen.queryByTestId(`row-checkbox-admin_UPDATE`)
 			).toBeInTheDocument();
@@ -164,30 +219,40 @@ describe('Permission Matrix Container', () => {
 	it('Preload matrix on tab change', async () => {
 		const props = {
 			actions: {
-				L_CONTENT: ['UPDATE', 'VIEW'],
-				L_FILE: ['UPDATE', 'VIEW', 'VIEW2'],
-				L_FOLDER: [
-					'UPDATE',
-					'UPDATE2',
-					'UPDATE3',
-					'VIEW',
-					'VIEW2',
-					'VIEW3',
+				L_CONTENTS: [
+					{key: 'UPDATE', label: 'Update'},
+					{key: 'VIEW', label: 'View'},
+				],
+				L_FILES: [
+					{key: 'UPDATE', label: 'Update'},
+					{key: 'VIEW', label: 'View'},
+					{key: 'VIEW2', label: 'View2'},
+				],
+				OBJECT_ENTRY_FOLDER: [
+					{key: 'UPDATE', label: 'Update'},
+					{key: 'VIEW', label: 'View'},
+					{key: 'UPDATE2', label: 'Update2'},
+					{key: 'VIEW2', label: 'View2'},
+					{key: 'UPDATE3', label: 'Update3'},
+					{key: 'VIEW3', label: 'View3'},
 				],
 			},
 			roles: [
-				{key: 'admin', name: 'Administrator'},
-				{key: 'guest', name: 'Guest'},
-				{key: 'owner', name: 'Owner'},
+				{key: 'admin', name: 'Administrator', type: '1'},
+				{key: 'guest', name: 'Guest', type: '1'},
+				{key: 'owner', name: 'Owner', type: '1'},
 			],
 			values: {
-				L_CONTENT: {admin: ['VIEW']},
-				L_FILE: {
+				L_CONTENTS: {admin: ['VIEW']},
+				L_FILES: {
 					admin: ['UPDATE', 'VIEW'],
 					guest: ['VIEW'],
 					owner: ['VIEW'],
 				},
-				L_FOLDER: {admin: ['UPDATE', 'VIEW'], owner: ['VIEW']},
+				OBJECT_ENTRY_FOLDER: {
+					admin: ['UPDATE', 'VIEW'],
+					owner: ['VIEW'],
+				},
 			},
 		};
 
@@ -352,19 +417,28 @@ describe('Permission Matrix Container', () => {
 	it('Dynamic tabs', async () => {
 		const props = {
 			actions: {
-				L_CONTENT: ['UPDATE1', 'VIEW1'],
-				L_FILE: ['UPDATE2', 'VIEW2'],
-				L_FOLDER: ['UPDATE3', 'VIEW3'],
+				L_CONTENTS: [
+					{key: 'UPDATE1', label: 'Update1'},
+					{key: 'VIEW1', label: 'View1'},
+				],
+				L_FILES: [
+					{key: 'UPDATE2', label: 'Update2'},
+					{key: 'VIEW2', label: 'View2'},
+				],
+				OBJECT_ENTRY_FOLDER: [
+					{key: 'UPDATE3', label: 'Update3'},
+					{key: 'VIEW3', label: 'View3'},
+				],
 			},
-			roles: [{key: 'admin', name: 'Administrator'}],
+			roles: [{key: 'admin', name: 'Administrator', type: '1'}],
 			types: [
-				{key: 'L_CONTENT', label: 'content'},
-				{key: 'L_FILE', label: 'file'},
+				{key: 'L_CONTENTS', label: 'content'},
+				{key: 'L_FILES', label: 'file'},
 			],
 			values: {
-				L_CONTENT: {admin: ['VIEW1']},
-				L_FILE: {admin: ['VIEW2']},
-				L_FOLDER: {admin: ['UPDATE3', 'VIEW3']},
+				L_CONTENTS: {admin: ['VIEW1']},
+				L_FILES: {admin: ['VIEW2']},
+				OBJECT_ENTRY_FOLDER: {admin: ['UPDATE3', 'VIEW3']},
 			},
 		};
 
@@ -398,5 +472,158 @@ describe('Permission Matrix Container', () => {
 				screen.queryByTestId(`row-checkbox-admin_VIEW1`)
 			).toBeChecked();
 		});
+	});
+
+	it('Handle correctly the onChange parameter', async () => {
+		let data = {};
+
+		const onChangeFn = jest.fn((callbackData) => {
+			data = callbackData;
+		});
+
+		const props = {
+			actions: {
+				L_CONTENTS: [
+					{key: 'UPDATE', label: 'Update'},
+					{key: 'VIEW', label: 'View'},
+				],
+				L_FILES: [
+					{key: 'UPDATE', label: 'Update'},
+					{key: 'VIEW', label: 'View'},
+					{key: 'VIEW2', label: 'View2'},
+				],
+				OBJECT_ENTRY_FOLDER: [
+					{key: 'UPDATE', label: 'Update'},
+					{key: 'VIEW', label: 'View'},
+					{key: 'UPDATE2', label: 'Update2'},
+					{key: 'VIEW2', label: 'View2'},
+					{key: 'UPDATE3', label: 'Update3'},
+					{key: 'VIEW3', label: 'View3'},
+				],
+			},
+			onChange: onChangeFn,
+			roles: [
+				{key: 'admin', name: 'Administrator', type: '1'},
+				{key: 'guest', name: 'Guest', type: '1'},
+			],
+			values: {
+				L_CONTENTS: {admin: ['UPDATE']},
+				L_FILES: {admin: ['UPDATE']},
+				OBJECT_ENTRY_FOLDER: {admin: ['UPDATE']},
+			},
+		};
+
+		renderComponent(props);
+
+		const adminUpdateCheckbox = screen.getByTestId(
+			`row-checkbox-admin_UPDATE`
+		);
+		const adminViewCheckbox = screen.getByTestId(`row-checkbox-admin_VIEW`);
+		const guestUpdateCheckbox = screen.getByTestId(
+			`row-checkbox-guest_UPDATE`
+		);
+		const guestViewCheckbox = screen.getByTestId(`row-checkbox-guest_VIEW`);
+
+		expect(adminUpdateCheckbox).toBeChecked();
+		expect(adminViewCheckbox).not.toBeChecked();
+		expect(guestUpdateCheckbox).not.toBeChecked();
+		expect(guestViewCheckbox).not.toBeChecked();
+
+		adminViewCheckbox.click();
+
+		await waitFor(() => {
+			expect(adminUpdateCheckbox).toBeChecked();
+			expect(adminViewCheckbox).toBeChecked();
+			expect(guestUpdateCheckbox).not.toBeChecked();
+			expect(guestViewCheckbox).not.toBeChecked();
+			expect(onChangeFn).toHaveBeenCalledTimes(1);
+
+			expect(data).toHaveProperty('L_CONTENTS', {admin: ['UPDATE']});
+			expect(data).toHaveProperty('L_FILES', {admin: ['UPDATE']});
+			expect(data).toHaveProperty('OBJECT_ENTRY_FOLDER', {
+				admin: ['UPDATE', 'VIEW'],
+			});
+		});
+
+		guestUpdateCheckbox.click();
+
+		await waitFor(() => {
+			expect(adminUpdateCheckbox).toBeChecked();
+			expect(adminViewCheckbox).toBeChecked();
+			expect(guestUpdateCheckbox).toBeChecked();
+			expect(guestViewCheckbox).not.toBeChecked();
+			expect(onChangeFn).toHaveBeenCalledTimes(2);
+
+			expect(data).toHaveProperty('L_CONTENTS', {admin: ['UPDATE']});
+			expect(data).toHaveProperty('L_FILES', {admin: ['UPDATE']});
+			expect(data).toHaveProperty('OBJECT_ENTRY_FOLDER', {
+				admin: ['UPDATE', 'VIEW'],
+				guest: ['UPDATE'],
+			});
+		});
+
+		screen.getByRole('tab', {name: /file/i}).click();
+
+		await waitFor(() => {
+			expect(screen.getByRole('tab', {name: /file/i})).toHaveClass(
+				'active'
+			);
+		});
+
+		guestViewCheckbox.click();
+
+		await waitFor(() => {
+			expect(adminUpdateCheckbox).toBeChecked();
+			expect(adminViewCheckbox).not.toBeChecked();
+			expect(guestUpdateCheckbox).not.toBeChecked();
+			expect(guestViewCheckbox).toBeChecked();
+			expect(onChangeFn).toHaveBeenCalledTimes(3);
+
+			expect(data).toHaveProperty('L_CONTENTS', {admin: ['UPDATE']});
+			expect(data).toHaveProperty('L_FILES', {
+				admin: ['UPDATE'],
+				guest: ['VIEW'],
+			});
+			expect(data).toHaveProperty('OBJECT_ENTRY_FOLDER', {
+				admin: ['UPDATE', 'VIEW'],
+				guest: ['UPDATE'],
+			});
+		});
+	});
+
+	it('Disable fields if needed', async () => {
+		const props = {
+			actions: {
+				L_CONTENTS: [
+					{key: 'UPDATE1', label: 'Update1'},
+					{key: 'VIEW1', label: 'View1'},
+				],
+				L_FILES: [
+					{key: 'UPDATE2', label: 'Update2'},
+					{key: 'VIEW2', label: 'View2'},
+				],
+				OBJECT_ENTRY_FOLDER: [
+					{key: 'UPDATE3', label: 'Update3'},
+					{key: 'VIEW3', label: 'View3'},
+				],
+			},
+			disabled: true,
+			roles: [{key: 'admin', name: 'Administrator', type: '1'}],
+		};
+
+		renderComponent(props);
+
+		expect(screen.getByTestId(`row-checkbox-admin_UPDATE3`)).toBeDisabled();
+		expect(screen.getByTestId(`row-checkbox-admin_VIEW3`)).toBeDisabled();
+		expect(screen.getByRole(`textbox`, {name: /search/i})).toBeDisabled();
+
+		screen.getByRole('tab', {name: /file/i}).click();
+
+		expect(screen.getByRole('tab', {name: /folder/i})).toHaveClass(
+			'active'
+		);
+		expect(screen.getByRole('tab', {name: /file/i})).not.toHaveClass(
+			'active'
+		);
 	});
 });

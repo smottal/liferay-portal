@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import '../../../../css/components/DefaultPermission.scss'
+import '../../../../css/components/DefaultPermission.scss';
 
 import ClayButton from '@clayui/button';
 import ClayModal from '@clayui/modal';
@@ -20,11 +20,17 @@ import PermissionMatrixContainer, {
 	IValuesType,
 } from './PermissionMatrixContainer';
 
-// TODO: passare il loading per disabilitare le checkbox e la ricerca
 // TODO: code refactor
-// TODO: ruoli
 // TODO: test
 // TODO: prima colonna fissa
+
+/*
+
+	modal - loading data
+	modal - save
+	modal - disabled
+
+*/
 
 export default function PermissionModal({
 	actions,
@@ -152,6 +158,7 @@ export default function PermissionModal({
 			<ClayModal.Body className="p-0">
 				<PermissionMatrixContainer
 					actions={actions}
+					disabled={loading}
 					onChange={onChangeHandler}
 					roles={roles}
 					values={currentValues}

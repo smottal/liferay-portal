@@ -13,10 +13,12 @@ import {
 	IActionsType,
 	IDataType,
 	IRoleType,
+	ITypeType,
 } from '../../../../../src/main/resources/META-INF/resources/js/structure_builder/components/default_permissions/PermissionMatrixContainer';
 
 const renderComponent = async (props: {
-	actions: string[];
+	actions: ITypeType[];
+	disabled?: boolean;
 	onChange?: (data: IDataType) => void;
 	roles: IRoleType[];
 	values?: IActionsType;
@@ -27,10 +29,13 @@ const renderComponent = async (props: {
 describe('Permission Matrix', () => {
 	it('Generates the empty correct permission matrix', async () => {
 		const props = {
-			actions: ['UPDATE', 'VIEW'],
+			actions: [
+				{key: 'UPDATE', label: 'Update'},
+				{key: 'VIEW', label: 'View'},
+			],
 			roles: [
-				{key: 'admin', name: 'Administrator'},
-				{key: 'guest', name: 'Guest'},
+				{key: 'admin', name: 'Administrator', type: '1'},
+				{key: 'guest', name: 'Guest', type: '2'},
 			],
 		};
 
@@ -38,7 +43,7 @@ describe('Permission Matrix', () => {
 
 		props.actions.forEach((action) => {
 			expect(
-				screen.getByTestId(`head-cell-${action}`)
+				screen.getByTestId(`head-cell-${action.key}`)
 			).toBeInTheDocument();
 		});
 
@@ -49,15 +54,18 @@ describe('Permission Matrix', () => {
 
 			props.actions.forEach((action) => {
 				expect(
-					screen.getByTestId(`row-cell-${role.key}_${action}`)
+					screen.getByTestId(`row-cell-${role.key}_${action.key}`)
 				).toBeInTheDocument();
 
 				expect(
-					screen.getByTestId(`row-checkbox-${role.key}_${action}`)
+					screen.getByTestId(`row-checkbox-${role.key}_${action.key}`)
 				).toBeInTheDocument();
 				expect(
-					screen.getByTestId(`row-checkbox-${role.key}_${action}`)
+					screen.getByTestId(`row-checkbox-${role.key}_${action.key}`)
 				).not.toBeChecked();
+				expect(
+					screen.getByTestId(`row-checkbox-${role.key}_${action.key}`)
+				).not.toBeDisabled();
 			});
 		});
 
@@ -65,17 +73,47 @@ describe('Permission Matrix', () => {
 			screen.getByRole(`textbox`, {name: /search/i})
 		).toBeInTheDocument();
 		expect(
+			screen.getByRole(`textbox`, {name: /search/i})
+		).not.toBeDisabled();
+		expect(
 			screen.getByRole(`navigation`, {name: /pagination/i})
 		).toBeInTheDocument();
 	});
 
+	it('Show role icons', async () => {
+		const props = {
+			actions: [
+				{key: 'UPDATE', label: 'Update'},
+				{key: 'VIEW', label: 'View'},
+			],
+			roles: [
+				{key: 'admin', name: 'Administrator', type: '1'},
+				{key: 'guest', name: 'Guest', type: '2'},
+			],
+		};
+
+		renderComponent(props);
+
+		expect(screen.getByTestId(`row-cell-icon-admin`)).toBeVisible();
+		expect(screen.getByTestId(`row-cell-icon-admin`)).toHaveClass(
+			'lexicon-icon-user'
+		);
+		expect(screen.getByTestId(`row-cell-icon-guest`)).toBeVisible();
+		expect(screen.getByTestId(`row-cell-icon-guest`)).toHaveClass(
+			'lexicon-icon-globe'
+		);
+	});
+
 	it('Preload checked permissions', async () => {
 		const props = {
-			actions: ['UPDATE', 'VIEW'],
+			actions: [
+				{key: 'UPDATE', label: 'Update'},
+				{key: 'VIEW', label: 'View'},
+			],
 			roles: [
-				{key: 'admin', name: 'Administrator'},
-				{key: 'guest', name: 'Guest'},
-				{key: 'owner', name: 'Owner'},
+				{key: 'admin', name: 'Administrator', type: '1'},
+				{key: 'guest', name: 'Guest', type: '1'},
+				{key: 'owner', name: 'Owner', type: '1'},
 			],
 			values: {admin: ['UPDATE', 'VIEW'], owner: ['VIEW']},
 		};
@@ -96,11 +134,14 @@ describe('Permission Matrix', () => {
 
 	it('Search', async () => {
 		const props = {
-			actions: ['UPDATE', 'VIEW'],
+			actions: [
+				{key: 'UPDATE', label: 'Update'},
+				{key: 'VIEW', label: 'View'},
+			],
 			roles: [
-				{key: 'admin', name: 'Administrator'},
-				{key: 'guest', name: 'Guest'},
-				{key: 'owner', name: 'Owner'},
+				{key: 'admin', name: 'Administrator', type: '1'},
+				{key: 'guest', name: 'Guest', type: '1'},
+				{key: 'owner', name: 'Owner', type: '1'},
 			],
 		};
 
@@ -155,11 +196,14 @@ describe('Permission Matrix', () => {
 		});
 
 		const props = {
-			actions: ['UPDATE', 'VIEW'],
+			actions: [
+				{key: 'UPDATE', label: 'Update'},
+				{key: 'VIEW', label: 'View'},
+			],
 			onChange: onChangeFn,
 			roles: [
-				{key: 'admin', name: 'Administrator'},
-				{key: 'guest', name: 'Guest'},
+				{key: 'admin', name: 'Administrator', type: '1'},
+				{key: 'guest', name: 'Guest', type: '1'},
 			],
 		};
 
@@ -188,10 +232,10 @@ describe('Permission Matrix', () => {
 			expect(guestViewCheckbox).not.toBeChecked();
 			expect(onChangeFn).toHaveBeenCalledTimes(1);
 
-			expect(data).toHaveProperty('admin_UPDATE', true);
-			expect(data).not.toHaveProperty('admin_VIEW');
-			expect(data).not.toHaveProperty('guest_UPDATE');
-			expect(data).not.toHaveProperty('guest_VIEW');
+			expect(data).toHaveProperty('admin#UPDATE', true);
+			expect(data).not.toHaveProperty('admin#VIEW');
+			expect(data).not.toHaveProperty('guest#UPDATE');
+			expect(data).not.toHaveProperty('guest#VIEW');
 		});
 
 		guestUpdateCheckbox.click();
@@ -203,10 +247,10 @@ describe('Permission Matrix', () => {
 			expect(guestViewCheckbox).not.toBeChecked();
 			expect(onChangeFn).toHaveBeenCalledTimes(2);
 
-			expect(data).toHaveProperty('admin_UPDATE', true);
-			expect(data).not.toHaveProperty('admin_VIEW');
-			expect(data).toHaveProperty('guest_UPDATE', true);
-			expect(data).not.toContain('guest_VIEW');
+			expect(data).toHaveProperty('admin#UPDATE', true);
+			expect(data).not.toHaveProperty('admin#VIEW');
+			expect(data).toHaveProperty('guest#UPDATE', true);
+			expect(data).not.toContain('guest#VIEW');
 		});
 
 		adminViewCheckbox.click();
@@ -218,10 +262,39 @@ describe('Permission Matrix', () => {
 			expect(guestViewCheckbox).not.toBeChecked();
 			expect(onChangeFn).toHaveBeenCalledTimes(3);
 
-			expect(data).toHaveProperty('admin_UPDATE', true);
-			expect(data).toHaveProperty('admin_VIEW', true);
-			expect(data).toHaveProperty('guest_UPDATE', true);
-			expect(data).not.toHaveProperty('guest_VIEW');
+			expect(data).toHaveProperty('admin#UPDATE', true);
+			expect(data).toHaveProperty('admin#VIEW', true);
+			expect(data).toHaveProperty('guest#UPDATE', true);
+			expect(data).not.toHaveProperty('guest#VIEW');
 		});
+	});
+
+	it('Disable fields if needed', async () => {
+		const props = {
+			actions: [
+				{key: 'UPDATE', label: 'Update'},
+				{key: 'VIEW', label: 'View'},
+			],
+			disabled: true,
+			roles: [
+				{key: 'admin', name: 'Administrator', type: '1'},
+				{key: 'guest', name: 'Guest', type: '2'},
+			],
+		};
+
+		renderComponent(props);
+
+		props.roles.forEach((role) => {
+			props.actions.forEach((action) => {
+				expect(
+					screen.getByTestId(`row-checkbox-${role.key}_${action.key}`)
+				).toBeInTheDocument();
+				expect(
+					screen.getByTestId(`row-checkbox-${role.key}_${action.key}`)
+				).toBeDisabled();
+			});
+		});
+
+		expect(screen.getByRole(`textbox`, {name: /search/i})).toBeDisabled();
 	});
 });
