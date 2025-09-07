@@ -24,14 +24,6 @@ import PermissionMatrixContainer, {
 // TODO: test
 // TODO: prima colonna fissa
 
-/*
-
-	modal - loading data
-	modal - save
-	modal - disabled
-
-*/
-
 export default function PermissionModal({
 	actions,
 	classExternalReferenceCode,
@@ -169,6 +161,7 @@ export default function PermissionModal({
 				last={
 					<ClayButton.Group spaced>
 						<ClayButton
+							data-testid="button-cancel"
 							disabled={loading}
 							displayType="secondary"
 							onClick={closeHandler}
@@ -176,7 +169,11 @@ export default function PermissionModal({
 							{Liferay.Language.get('cancel')}
 						</ClayButton>
 
-						<ClayButton disabled={loading} onClick={saveHandler}>
+						<ClayButton
+							data-testid="button-save"
+							disabled={loading}
+							onClick={saveHandler}
+						>
 							{Liferay.Language.get('save')}
 						</ClayButton>
 					</ClayButton.Group>
