@@ -285,7 +285,7 @@ describe('Permission Modal', () => {
 			expect(apiPatchSpy).toHaveBeenCalledWith(
 				{
 					defaultPermissions:
-						'{"OBJECT_ENTRY_FOLDER":{"admin":["VIEW3"],"guest":["VIEW3","UPDATE3"]},"L_CONTENTS":{"admin":["VIEW1"]},"L_FILES":{"admin":["VIEW2"]}}',
+						'{"L_CONTENTS":{"admin":["VIEW1"]},"L_FILES":{"admin":["VIEW2"]},"OBJECT_ENTRY_FOLDER":{"admin":["VIEW3"],"guest":["VIEW3","UPDATE3"]}}',
 				},
 				'/o/cms/default-permissions/by-external-reference-code/fa9f1559-8256-4313-8868-6668c8b421c0'
 			);
