@@ -38,20 +38,44 @@ public class BooleanQueryParserUtil {
 			return null;
 		}
 
-		Map<String, Map<?, ?>> clauseMap = _getClauseMap(filter);
+		Map<String, Map<?, ?>> clausesMap = _getClausesMap(filter);
 
-		if (MapUtil.isEmpty(clauseMap)) {
+		if (MapUtil.isEmpty(clausesMap)) {
 			return null;
 		}
 
 		BooleanQuery booleanQuery = queries.booleanQuery();
 
-		Map<String, SimpleClause> simpleClauses = (Map)clauseMap.get("simple");
+		Map<String, DateRangeClause> dateRangeClausesMap =
+			(Map<String, DateRangeClause>)clausesMap.get("dateRangeClauses");
 
-		for (Map.Entry<String, SimpleClause> entry : simpleClauses.entrySet()) {
+		for (Map.Entry<String, DateRangeClause> entry :
+				dateRangeClausesMap.entrySet()) {
+
+			DateRangeClause dateRangeClause = entry.getValue();
+
+			String start = dateRangeClause.getStart();
+			String end = dateRangeClause.getEnd();
+
+			booleanQuery.addMustQueryClauses(
+				queries.dateRangeTerm(
+					_fieldsMap.get(dateRangeClause.getField()),
+					Validator.isNotNull(start), Validator.isNotNull(end),
+					Validator.isNotNull(start) ?
+						_dateTimeFormatter.format(Instant.parse(start)) : null,
+					Validator.isNotNull(end) ?
+						_dateTimeFormatter.format(Instant.parse(end)) : null));
+		}
+
+		Map<String, SimpleClause> simpleClausesMap =
+			(Map<String, SimpleClause>)clausesMap.get("simpleClauses");
+
+		for (Map.Entry<String, SimpleClause> entry :
+				simpleClausesMap.entrySet()) {
+
 			SimpleClause simpleClause = entry.getValue();
 
-			String field = _fieldMapping.get(simpleClause.getField());
+			String field = _fieldsMap.get(simpleClause.getField());
 			String operator = simpleClause.getOperator();
 			Object value = simpleClause.getValue();
 
@@ -88,31 +112,10 @@ public class BooleanQueryParserUtil {
 			}
 		}
 
-		Map<String, DateRangeClause> dateRangeClauses =
-			(Map<String, DateRangeClause>)clauseMap.get("dateRange");
-
-		for (Map.Entry<String, DateRangeClause> entry :
-				dateRangeClauses.entrySet()) {
-
-			DateRangeClause dateRangeClause = entry.getValue();
-
-			String start = dateRangeClause.getStart();
-			String end = dateRangeClause.getEnd();
-
-			booleanQuery.addMustQueryClauses(
-				queries.dateRangeTerm(
-					_fieldMapping.get(dateRangeClause.getField()),
-					Validator.isNotNull(start), Validator.isNotNull(end),
-					Validator.isNotNull(start) ?
-						_dateTimeFormatter.format(Instant.parse(start)) : null,
-					Validator.isNotNull(end) ?
-						_dateTimeFormatter.format(Instant.parse(end)) : null));
-		}
-
 		return booleanQuery;
 	}
 
-	private static Map<String, Map<?, ?>> _getClauseMap(String filter) {
+	private static Map<String, Map<?, ?>> _getClausesMap(String filter) {
 		Map<String, DateRangeClause> dateRangeClauses = new HashMap<>();
 		Map<String, SimpleClause> simpleClauses = new HashMap<>();
 
@@ -134,11 +137,10 @@ public class BooleanQueryParserUtil {
 				continue;
 			}
 
-			Matcher notMatcher = _clauseNotPattern.matcher(clause);
+			Matcher matcher = _clauseNotPattern.matcher(clause);
 
-			if (notMatcher.matches()) {
-				Matcher matcher = _clauseSimplePattern.matcher(
-					notMatcher.group(1));
+			if (matcher.matches()) {
+				matcher = _clauseSimplePattern.matcher(matcher.group(1));
 
 				if (matcher.find() &&
 					StringUtil.equals(matcher.group(2), "in")) {
@@ -162,12 +164,12 @@ public class BooleanQueryParserUtil {
 					List<String> values = new ArrayList<>();
 
 					for (String part : clause.split(" OR ")) {
-						Matcher matcher = _clauseSimplePattern.matcher(part);
+						matcher = _clauseSimplePattern.matcher(part);
 
 						if (matcher.find() &&
 							StringUtil.equals(matcher.group(2), "eq")) {
 
-							if (field == null) {
+							if (Validator.isNull(field)) {
 								field = matcher.group(1);
 							}
 							else if (!field.equals(matcher.group(1))) {
@@ -178,13 +180,13 @@ public class BooleanQueryParserUtil {
 						}
 					}
 
-					if ((field != null) && !values.isEmpty()) {
+					if (Validator.isNotNull(field) && !values.isEmpty()) {
 						simpleClauses.put(
 							field, new SimpleClause(field, "or", values));
 					}
 				}
 				else if (clause.contains(" ge ") || clause.contains(" le ")) {
-					Matcher matcher = _clauseDateRangePattern.matcher(clause);
+					matcher = _clauseDateRangePattern.matcher(clause);
 
 					if (matcher.find()) {
 						dateRangeClauses.computeIfAbsent(
@@ -197,7 +199,7 @@ public class BooleanQueryParserUtil {
 				}
 			}
 			else {
-				Matcher matcher = _clauseSimplePattern.matcher(clause);
+				matcher = _clauseSimplePattern.matcher(clause);
 
 				if (matcher.find()) {
 					String field = matcher.group(1);
@@ -224,9 +226,9 @@ public class BooleanQueryParserUtil {
 		}
 
 		return HashMapBuilder.<String, Map<?, ?>>put(
-			"dateRange", dateRangeClauses
+			"dateRangeClauses", dateRangeClauses
 		).put(
-			"simple", simpleClauses
+			"simpleClauses", simpleClauses
 		).build();
 	}
 
@@ -239,18 +241,18 @@ public class BooleanQueryParserUtil {
 	}
 
 	private static final Pattern _clauseDateRangePattern = Pattern.compile(
-		"(\\w+)\\s+(ge|le)\\s+(.*)");
+		"(\\w+)\\s+(ge|le)\\s+(.*)", Pattern.CASE_INSENSITIVE);
 	private static final Pattern _clauseNotPattern = Pattern.compile(
 		"\\(\\s*not\\s+\\(([^)]+)\\)\\s*\\)", Pattern.CASE_INSENSITIVE);
 	private static final Pattern _clauseSimplePattern = Pattern.compile(
-		"(\\w+)\\s+(eq|in|ne)\\s+(.*)");
+		"(\\w+)\\s+(eq|in|ne)\\s+(.*)", Pattern.CASE_INSENSITIVE);
 	private static final DateTimeFormatter _dateTimeFormatter =
 		DateTimeFormatter.ofPattern(
 			"yyyyMMddHHmmss"
 		).withZone(
 			ZoneId.of("UTC")
 		);
-	private static final Map<String, String> _fieldMapping = HashMapBuilder.put(
+	private static final Map<String, String> _fieldsMap = HashMapBuilder.put(
 		"cmsKind", "cms_kind"
 	).put(
 		"cmsRoot", "cms_root"
