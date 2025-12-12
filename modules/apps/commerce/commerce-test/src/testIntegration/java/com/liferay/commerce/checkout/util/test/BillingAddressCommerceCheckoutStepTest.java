@@ -7,7 +7,6 @@ package com.liferay.commerce.checkout.util.test;
 
 import com.liferay.account.constants.AccountRoleConstants;
 import com.liferay.account.model.AccountEntry;
-import com.liferay.account.service.AccountEntryUserRelLocalService;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.commerce.account.test.util.CommerceAccountTestUtil;
 import com.liferay.commerce.constants.CommerceCheckoutWebKeys;
@@ -27,7 +26,6 @@ import com.liferay.portal.kernel.model.Address;
 import com.liferay.portal.kernel.model.Country;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
-import com.liferay.portal.kernel.model.Region;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
@@ -38,7 +36,6 @@ import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
-import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.rule.Sync;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -79,28 +76,58 @@ public class BillingAddressCommerceCheckoutStepTest {
 	public void setUp() throws Exception {
 		_group = GroupTestUtil.addGroup();
 
-		_commerceCurrency = CommerceCurrencyTestUtil.addCommerceCurrency(
-			_group.getCompanyId());
+		_user = UserTestUtil.addUser(_group.getGroupId());
 
-		_commerceChannel = CommerceTestUtil.addCommerceChannel(
-			_group.getGroupId(), _commerceCurrency.getCode());
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
 
-		_serviceContext = ServiceContextTestUtil.getServiceContext(
-			_group.getGroupId());
+		AccountEntry accountEntry =
+			CommerceAccountTestUtil.addBusinessAccountEntry(
+				_user.getUserId(), RandomTestUtil.randomString(),
+				RandomTestUtil.randomString() + "@liferay.com",
+				RandomTestUtil.randomString(), new long[] {_user.getUserId()},
+				null, serviceContext);
 
-		_user = UserTestUtil.addUser();
-
-		_accountEntry = CommerceAccountTestUtil.addBusinessAccountEntry(
-			_user.getUserId(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString() + "@liferay.com",
-			RandomTestUtil.randomString(), new long[] {_user.getUserId()}, null,
-			_serviceContext);
-
-		_buyerRole = _roleLocalService.getRole(
+		_role = _roleLocalService.getRole(
 			_group.getCompanyId(),
 			AccountRoleConstants.ROLE_NAME_ACCOUNT_BUYER);
 
-		_buyerUser = _addBuyerUser(_buyerRole);
+		_userGroupRoleLocalService.addUserGroupRole(
+			_user.getUserId(), accountEntry.getAccountEntryGroupId(),
+			_role.getRoleId());
+
+		Country country = CommerceInventoryTestUtil.addCountry(serviceContext);
+
+		Address address = _addressLocalService.addAddress(
+			RandomTestUtil.randomString(), _user.getUserId(),
+			AccountEntry.class.getName(), accountEntry.getAccountEntryId(),
+			country.getCountryId(), 0, 0, RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), false, RandomTestUtil.randomString(),
+			true, RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), null, RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), serviceContext);
+
+		CommerceCurrency commerceCurrency =
+			CommerceCurrencyTestUtil.addCommerceCurrency(_group.getCompanyId());
+
+		CommerceChannel commerceChannel = CommerceTestUtil.addCommerceChannel(
+			_group.getGroupId(), commerceCurrency.getCode());
+
+		_commerceChannelAccountEntryRelLocalService.
+			addCommerceChannelAccountEntryRel(
+				_user.getUserId(), accountEntry.getAccountEntryId(),
+				Address.class.getName(), address.getAddressId(),
+				commerceChannel.getCommerceChannelId(), true, 0,
+				CommerceChannelAccountEntryRelConstants.TYPE_BILLING_ADDRESS);
+
+		_commerceOrder = _commerceOrderLocalService.addCommerceOrder(
+			_user.getUserId(), commerceChannel.getGroupId(),
+			accountEntry.getAccountEntryId(), commerceCurrency.getCode(), 0);
+
+		_commerceOrder.setShippingAddressId(address.getAddressId());
+
+		_commerceOrder = _commerceOrderLocalService.updateCommerceOrder(
+			_commerceOrder);
 	}
 
 	@Test
@@ -108,107 +135,32 @@ public class BillingAddressCommerceCheckoutStepTest {
 		throws Exception {
 
 		Assert.assertTrue(
-			_resourcePermissionLocalService.hasResourcePermission(
-				_group.getCompanyId(), CommerceOrderConstants.RESOURCE_NAME,
-				ResourceConstants.SCOPE_GROUP_TEMPLATE,
-				String.valueOf(GroupConstants.DEFAULT_PARENT_GROUP_ID),
-				_buyerRole.getRoleId(),
-				CommerceOrderActionKeys.VIEW_BILLING_ADDRESS));
+			_isBillingAddressCommerceCheckoutStepActive(_commerceOrder, _user));
 
 		_resourcePermissionLocalService.removeResourcePermission(
 			_group.getCompanyId(), CommerceOrderConstants.RESOURCE_NAME,
 			ResourceConstants.SCOPE_GROUP_TEMPLATE,
 			String.valueOf(GroupConstants.DEFAULT_PARENT_GROUP_ID),
-			_buyerRole.getRoleId(),
-			CommerceOrderActionKeys.VIEW_BILLING_ADDRESS);
+			_role.getRoleId(), CommerceOrderActionKeys.VIEW_BILLING_ADDRESS);
 
-		Assert.assertFalse(
-			_resourcePermissionLocalService.hasResourcePermission(
+		try {
+			Assert.assertFalse(
+				_isBillingAddressCommerceCheckoutStepActive(
+					_commerceOrder, _user));
+		}
+		finally {
+			_resourcePermissionLocalService.addResourcePermission(
 				_group.getCompanyId(), CommerceOrderConstants.RESOURCE_NAME,
 				ResourceConstants.SCOPE_GROUP_TEMPLATE,
 				String.valueOf(GroupConstants.DEFAULT_PARENT_GROUP_ID),
-				_buyerRole.getRoleId(),
-				CommerceOrderActionKeys.VIEW_BILLING_ADDRESS));
-
-		boolean activeBillingAddressCommerceCheckoutStep =
-			_isBillingAddressCommerceCheckoutStepActive();
-
-		Assert.assertFalse(activeBillingAddressCommerceCheckoutStep);
-
-		_resourcePermissionLocalService.addResourcePermission(
-			_group.getCompanyId(), CommerceOrderConstants.RESOURCE_NAME,
-			ResourceConstants.SCOPE_GROUP_TEMPLATE,
-			String.valueOf(GroupConstants.DEFAULT_PARENT_GROUP_ID),
-			_buyerRole.getRoleId(),
-			CommerceOrderActionKeys.VIEW_BILLING_ADDRESS);
-
-		Assert.assertTrue(
-			_resourcePermissionLocalService.hasResourcePermission(
-				_group.getCompanyId(), CommerceOrderConstants.RESOURCE_NAME,
-				ResourceConstants.SCOPE_GROUP_TEMPLATE,
-				String.valueOf(GroupConstants.DEFAULT_PARENT_GROUP_ID),
-				_buyerRole.getRoleId(),
-				CommerceOrderActionKeys.VIEW_BILLING_ADDRESS));
+				_role.getRoleId(),
+				CommerceOrderActionKeys.VIEW_BILLING_ADDRESS);
+		}
 	}
 
-	@Test
-	public void testBillingAddressIsVisibleToBuyerUserWithPermission()
+	private boolean _isBillingAddressCommerceCheckoutStepActive(
+			CommerceOrder commerceOrder, User user)
 		throws Exception {
-
-		boolean activeBillingAddressCommerceCheckoutStep =
-			_isBillingAddressCommerceCheckoutStepActive();
-
-		Assert.assertTrue(activeBillingAddressCommerceCheckoutStep);
-	}
-
-	private User _addBuyerUser(Role buyerRole) throws Exception {
-		User buyerUser = UserTestUtil.addUser(_group.getGroupId());
-
-		_accountEntryUserRelLocalService.addAccountEntryUserRel(
-			_accountEntry.getAccountEntryId(), buyerUser.getUserId());
-
-		_userGroupRoleLocalService.addUserGroupRole(
-			buyerUser.getUserId(), _accountEntry.getAccountEntryGroupId(),
-			buyerRole.getRoleId());
-
-		return buyerUser;
-	}
-
-	private boolean _isBillingAddressCommerceCheckoutStepActive()
-		throws Exception {
-
-		CommerceOrder commerceOrder =
-			_commerceOrderLocalService.addCommerceOrder(
-				_buyerUser.getUserId(), _commerceChannel.getGroupId(),
-				_accountEntry.getAccountEntryId(), _commerceCurrency.getCode(),
-				0);
-
-		Country country = CommerceInventoryTestUtil.addCountry(_serviceContext);
-
-		Region region = CommerceInventoryTestUtil.addRegion(
-			country.getCountryId(), _serviceContext);
-
-		Address address = _addressLocalService.addAddress(
-			RandomTestUtil.randomString(), _user.getUserId(),
-			AccountEntry.class.getName(), _accountEntry.getAccountEntryId(),
-			country.getCountryId(), 0, region.getRegionId(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(), false,
-			RandomTestUtil.randomString(), true, RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(), null,
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			_serviceContext);
-
-		commerceOrder.setShippingAddressId(address.getAddressId());
-
-		commerceOrder = _commerceOrderLocalService.updateCommerceOrder(
-			commerceOrder);
-
-		_commerceChannelAccountEntryRelLocalService.
-			addCommerceChannelAccountEntryRel(
-				_user.getUserId(), _accountEntry.getAccountEntryId(),
-				Address.class.getName(), address.getAddressId(),
-				_commerceChannel.getCommerceChannelId(), true, 0,
-				CommerceChannelAccountEntryRelConstants.TYPE_BILLING_ADDRESS);
 
 		HttpServletRequest httpServletRequest = new MockHttpServletRequest();
 
@@ -218,29 +170,18 @@ public class BillingAddressCommerceCheckoutStepTest {
 		ThemeDisplay themeDisplay = ThemeDisplayFactory.create();
 
 		themeDisplay.setPermissionChecker(
-			PermissionCheckerFactoryUtil.create(_buyerUser));
+			PermissionCheckerFactoryUtil.create(user));
 		themeDisplay.setScopeGroupId(_group.getGroupId());
 		themeDisplay.setSignedIn(true);
-		themeDisplay.setUser(_buyerUser);
+		themeDisplay.setUser(user);
 
 		httpServletRequest.setAttribute(WebKeys.THEME_DISPLAY, themeDisplay);
 
 		return _commerceCheckoutStep.isActive(httpServletRequest, null);
 	}
 
-	private AccountEntry _accountEntry;
-
-	@Inject
-	private AccountEntryUserRelLocalService _accountEntryUserRelLocalService;
-
 	@Inject
 	private AddressLocalService _addressLocalService;
-
-	private Role _buyerRole;
-	private User _buyerUser;
-
-	@DeleteAfterTestRun
-	private CommerceChannel _commerceChannel;
 
 	@Inject
 	private CommerceChannelAccountEntryRelLocalService
@@ -251,7 +192,7 @@ public class BillingAddressCommerceCheckoutStepTest {
 	)
 	private CommerceCheckoutStep _commerceCheckoutStep;
 
-	private CommerceCurrency _commerceCurrency;
+	private CommerceOrder _commerceOrder;
 
 	@Inject
 	private CommerceOrderLocalService _commerceOrderLocalService;
@@ -261,10 +202,11 @@ public class BillingAddressCommerceCheckoutStepTest {
 	@Inject
 	private ResourcePermissionLocalService _resourcePermissionLocalService;
 
+	private Role _role;
+
 	@Inject
 	private RoleLocalService _roleLocalService;
 
-	private ServiceContext _serviceContext;
 	private User _user;
 
 	@Inject
