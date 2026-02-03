@@ -537,3 +537,91 @@ test(
 		await expect(page.getByText(comment)).toBeVisible();
 	}
 );
+
+test(
+	'Invite external user and verify pending status then remove user',
+	{tag: '@LPD-66359'},
+	async ({
+		digitalSalesRoomSettingsPage,
+		digitalSalesRoomUsersPage,
+		digitalSalesRoomsPage,
+		editDigitalSalesRoomPage,
+		page,
+	}) => {
+		const roomName = `A${getRandomInt()}`;
+		const email = `invited-${getRandomInt()}@liferay.com`;
+
+		await digitalSalesRoomsPage.goto();
+
+		await expect(
+			digitalSalesRoomsPage.digitalSalesRoomsTable.searchInput
+		).toBeVisible();
+
+		await digitalSalesRoomsPage.digitalSalesRoomsTable.newButton.click();
+
+		await editDigitalSalesRoomPage.addDigitalSalesRoom({
+			roomName,
+		});
+
+		await digitalSalesRoomsPage.goto();
+
+		await expect(
+			digitalSalesRoomsPage.digitalSalesRoomsTable.cell(roomName)
+		).toBeVisible();
+
+		await expect(async () => {
+			await (
+				await digitalSalesRoomsPage.digitalSalesRoomsTable.rowActions(
+					roomName,
+					0
+				)
+			).click();
+
+			await expect(digitalSalesRoomsPage.settingsMenuItem).toBeVisible({
+				timeout: 200,
+			});
+		}).toPass({timeout: 1000});
+
+		await digitalSalesRoomsPage.settingsMenuItem.click();
+
+		await expect(
+			digitalSalesRoomSettingsPage.clientNameInput
+		).toBeVisible();
+
+		await digitalSalesRoomSettingsPage.usersLink.click();
+
+		await expect(
+			digitalSalesRoomUsersPage.userEmailAddressesInput
+		).toBeVisible();
+
+		await digitalSalesRoomUsersPage.userEmailAddressesInput.fill(email);
+		await digitalSalesRoomUsersPage.userEmailAddressesInput.press('Enter');
+
+		await digitalSalesRoomUsersPage.inviteButton.click();
+
+		await waitForAlert(page, 'Success:User invited successfully.');
+
+		await expect(digitalSalesRoomUsersPage.userRow(email)).toBeVisible();
+		await expect(
+			digitalSalesRoomUsersPage.externalText(email)
+		).toBeVisible();
+		await expect(
+			digitalSalesRoomUsersPage.roleText(email, 'Viewer')
+		).toBeVisible();
+		await expect(
+			digitalSalesRoomUsersPage.roleDropdown(email)
+		).not.toBeVisible();
+
+		await digitalSalesRoomUsersPage.removeUserButton(email).click();
+
+		await expect(digitalSalesRoomUsersPage.removeUserModal).toBeVisible();
+
+		await digitalSalesRoomUsersPage.removeUserModalRemoveButton.click();
+
+		await waitForAlert(page, 'Success:User removed successfully.');
+
+		await expect(
+			digitalSalesRoomUsersPage.userRow(email)
+		).not.toBeVisible();
+	}
+);

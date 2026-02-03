@@ -9,6 +9,7 @@ import {DigitalSalesRoomSaveAsTemplatePage} from '../pages/digital-sales-room-we
 import {DigitalSalesRoomSettingsPage} from '../pages/digital-sales-room-web/DigitalSalesRoomSettingsPage';
 import {DigitalSalesRoomTemplateSettingsPage} from '../pages/digital-sales-room-web/DigitalSalesRoomTemplateSettingsPage';
 import {DigitalSalesRoomTemplatesPage} from '../pages/digital-sales-room-web/DigitalSalesRoomTemplatesPage';
+import {DigitalSalesRoomUsersPage} from '../pages/digital-sales-room-web/DigitalSalesRoomUsersPage';
 import {DigitalSalesRoomsPage} from '../pages/digital-sales-room-web/DigitalSalesRoomsPage';
 import {EditDigitalSalesRoomPage} from '../pages/digital-sales-room-web/EditDigitalSalesRoomPage';
 import {EditDigitalSalesRoomTemplatePage} from '../pages/digital-sales-room-web/EditDigitalSalesRoomTemplatePage';
@@ -18,6 +19,7 @@ const digitalSalesRoomPagesTest = test.extend<{
 	digitalSalesRoomSettingsPage: DigitalSalesRoomSettingsPage;
 	digitalSalesRoomTemplateSettingsPage: DigitalSalesRoomTemplateSettingsPage;
 	digitalSalesRoomTemplatesPage: DigitalSalesRoomTemplatesPage;
+	digitalSalesRoomUsersPage: DigitalSalesRoomUsersPage;
 	digitalSalesRoomsPage: DigitalSalesRoomsPage;
 	editDigitalSalesRoomPage: EditDigitalSalesRoomPage;
 	editDigitalSalesRoomTemplatePage: EditDigitalSalesRoomTemplatePage;
@@ -33,6 +35,9 @@ const digitalSalesRoomPagesTest = test.extend<{
 	},
 	digitalSalesRoomTemplatesPage: async ({page}, use) => {
 		await use(new DigitalSalesRoomTemplatesPage(page));
+	},
+	digitalSalesRoomUsersPage: async ({page}, use) => {
+		await use(new DigitalSalesRoomUsersPage(page));
 	},
 	digitalSalesRoomsPage: async ({page}, use) => {
 		await use(new DigitalSalesRoomsPage(page));

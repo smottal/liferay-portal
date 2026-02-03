@@ -25,4 +25,16 @@ export class HeadlessDigitalSalesRoomApiHelper {
 			`${this.apiHelpers.baseUrl}${this.basePath}/digital-sales-room-templates`
 		);
 	}
+
+	async getDigitalSalesRoomUserAccountBriefs(digitalSalesRoomId: number) {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/digital-sales-rooms/${digitalSalesRoomId}/user-account-briefs`
+		);
+	}
+
+	async getDigitalSalesRoomInvitedMemberBriefs(digitalSalesRoomId: number) {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/digital-sales-rooms/${digitalSalesRoomId}/invited-member-briefs`
+		);
+	}
 }
