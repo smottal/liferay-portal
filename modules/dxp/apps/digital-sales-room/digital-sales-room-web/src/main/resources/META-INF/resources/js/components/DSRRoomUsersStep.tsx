@@ -100,12 +100,25 @@ function DSRRoomUsersStep({
 		setLoading(true);
 
 		try {
-			const usersList =
-				await DigitalSalesRoomService.getDigitalSalesRoomUserAccountBriefs(
+			const [usersList, invitedMembersList] = await Promise.all([
+				DigitalSalesRoomService.getDigitalSalesRoomUserAccountBriefs(
 					digitalSalesRoomId
-				);
+				),
+				DigitalSalesRoomService.getDigitalSalesRoomInvitedMemberBriefs(
+					digitalSalesRoomId
+				),
+			]);
 
-			setUsers(usersList);
+			setUsers([
+				...usersList,
+				...invitedMembersList.map((invitedMember) => ({
+					emailAddress: invitedMember.emailAddress,
+					id: invitedMember.id,
+					isInvitedMember: true,
+					name: '',
+					roleKey: invitedMember.roleKey,
+				})),
+			]);
 		}
 		catch (error) {
 			const errorMessage = (error as Error).message;
@@ -187,9 +200,10 @@ function DSRRoomUsersStep({
 	}, [digitalSalesRoomId, emailAddresses, loadUsers, roleKey]);
 
 	const handleRemoveUser = useCallback(
-		(userId: number) => {
+		(userId: number, isInvitedMember?: boolean) => {
 			deleteDSRUserAction({
 				digitalSalesRoomId,
+				isInvitedMember,
 				loadData: loadUsers,
 				userId,
 			});
@@ -348,7 +362,7 @@ function DSRRoomUsersStep({
 				<div className="mt-3">
 					{users.map((user) => (
 						<div
-							className="align-items-center d-flex justify-content-between mb-3"
+							className="align-items-center d-flex justify-content-between mb-3 user-row"
 							key={user.id}
 						>
 							<div className="align-items-center d-flex">
@@ -380,7 +394,9 @@ function DSRRoomUsersStep({
 									</span>
 
 									<span className="badge badge-secondary ml-2">
-										{Liferay.Language.get('internal')}
+										{user.isInvitedMember
+											? Liferay.Language.get('external')
+											: Liferay.Language.get('internal')}
 									</span>
 								</div>
 							</div>
@@ -389,6 +405,10 @@ function DSRRoomUsersStep({
 								{user.roleKey === OWNER_ROLE_KEY ? (
 									<span className="text-secondary">
 										{Liferay.Language.get('owner')}
+									</span>
+								) : user.isInvitedMember ? (
+									<span className="text-secondary">
+										{getRoleLabel(user.roleKey)}
 									</span>
 								) : (
 									<DropDown
@@ -443,7 +463,10 @@ function DSRRoomUsersStep({
 										disabled={loading}
 										displayType="unstyled"
 										onClick={() =>
-											handleRemoveUser(user.id)
+											handleRemoveUser(
+												user.id,
+												user.isInvitedMember
+											)
 										}
 									>
 										<ClayIcon symbol="trash" />

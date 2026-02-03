@@ -7,10 +7,12 @@ import DigitalSalesRoomService from '../../commons/DigitalSalesRoomService';
 
 export default function deleteDSRUserAction({
 	digitalSalesRoomId,
+	isInvitedMember,
 	loadData,
 	userId,
 }: {
 	digitalSalesRoomId: number;
+	isInvitedMember?: boolean;
 	loadData: () => void;
 	userId: number;
 }) {
@@ -29,10 +31,18 @@ export default function deleteDSRUserAction({
 				label: Liferay.Language.get('remove'),
 				onClick: async ({processClose}: {processClose: () => void}) => {
 					try {
-						await DigitalSalesRoomService.deleteDigitalSalesRoomUserAccountBrief(
-							digitalSalesRoomId,
-							userId
-						);
+						if (isInvitedMember) {
+							await DigitalSalesRoomService.deleteDigitalSalesRoomInvitedMemberBrief(
+								digitalSalesRoomId,
+								userId
+							);
+						}
+						else {
+							await DigitalSalesRoomService.deleteDigitalSalesRoomUserAccountBrief(
+								digitalSalesRoomId,
+								userId
+							);
+						}
 
 						Liferay.Util.openToast({
 							message: Liferay.Language.get(

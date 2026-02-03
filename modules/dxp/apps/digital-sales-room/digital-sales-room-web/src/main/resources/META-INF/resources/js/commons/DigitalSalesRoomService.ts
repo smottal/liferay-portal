@@ -172,12 +172,27 @@ export type TUserAccountBrief = {
 	externalReferenceCode?: string;
 	id: number;
 	image?: string;
+	isInvitedMember?: boolean;
 	name: string;
 	roleKey?: string;
 };
 
 export type TUserAccountBriefsDTO = {
 	items: Array<TUserAccountBrief>;
+	lastPage: number;
+	page: number;
+	pageSize: number;
+	totalCount: number;
+};
+
+export type TInvitedMemberBrief = {
+	emailAddress: string;
+	id: number;
+	roleKey?: string;
+};
+
+export type TInvitedMemberBriefsDTO = {
+	items: Array<TInvitedMemberBrief>;
 	lastPage: number;
 	page: number;
 	pageSize: number;
@@ -561,15 +576,44 @@ async function deleteDigitalSalesRoomUserAccountBrief(
 	}
 }
 
+async function getDigitalSalesRoomInvitedMemberBriefs(
+	digitalSalesRoomId: number
+): Promise<TInvitedMemberBrief[]> {
+	const {data, error} = await ApiHelper.get(
+		`${PATH}/${digitalSalesRoomId}/invited-member-briefs`
+	);
+
+	if (data) {
+		return (data as TInvitedMemberBriefsDTO).items || [];
+	}
+
+	throw new Error(error);
+}
+
+async function deleteDigitalSalesRoomInvitedMemberBrief(
+	digitalSalesRoomId: number,
+	invitedMemberBriefId: number
+): Promise<void> {
+	const {error} = await ApiHelper.delete(
+		`${PATH}/${digitalSalesRoomId}/invited-member-briefs/${invitedMemberBriefId}`
+	);
+
+	if (error) {
+		throw new Error(error);
+	}
+}
+
 export default {
 	addDigitalSalesRoomUserAccountBrief,
 	deleteDigitalSalesRoom,
+	deleteDigitalSalesRoomInvitedMemberBrief,
 	deleteDigitalSalesRoomTemplate,
 	deleteDigitalSalesRoomUserAccountBrief,
 	getAccounts,
 	getChannels,
 	getComments: getDigitalSalesRoomComments,
 	getDigitalSalesRoom,
+	getDigitalSalesRoomInvitedMemberBriefs,
 	getDigitalSalesRoomTemplate,
 	getDigitalSalesRoomTemplates,
 	getDigitalSalesRoomUserAccountBriefs,
