@@ -37,7 +37,9 @@ jest.mock(
 		__esModule: true,
 		default: {
 			addDigitalSalesRoomUserAccountBrief: jest.fn(),
+			deleteDigitalSalesRoomInvitedMemberBrief: jest.fn(),
 			deleteDigitalSalesRoomUserAccountBrief: jest.fn(),
+			getDigitalSalesRoomInvitedMemberBriefs: jest.fn(),
 			getDigitalSalesRoomUserAccountBriefs: jest.fn(),
 			updateDigitalSalesRoomUserAccountBrief: jest.fn(),
 		},
@@ -137,6 +139,10 @@ describe('DSRRoomUsersStep', () => {
 		(
 			DigitalSalesRoomService.getDigitalSalesRoomUserAccountBriefs as jest.Mock
 		).mockResolvedValue(mockUsers);
+
+		(
+			DigitalSalesRoomService.getDigitalSalesRoomInvitedMemberBriefs as jest.Mock
+		).mockResolvedValue([]);
 
 		(
 			DigitalSalesRoomService.addDigitalSalesRoomUserAccountBrief as jest.Mock
@@ -344,7 +350,7 @@ describe('DSRRoomUsersStep', () => {
 			expect(screen.getByText('Win Doe')).toBeInTheDocument();
 		});
 
-		const userRow = screen.getByText('Win Doe').closest('.mb-3');
+		const userRow = screen.getByText('Win Doe').closest('.user-row');
 		const dropdownButton = userRow?.querySelector(
 			'.dropdown-toggle'
 		) as HTMLElement;
@@ -498,5 +504,57 @@ describe('DSRRoomUsersStep', () => {
 				screen.getByText('who-has-access-3-users')
 			).toBeInTheDocument();
 		});
+	});
+
+	it('loads and displays invited members along with regular users', async () => {
+		const mockInvitedMembers = [
+			{
+				emailAddress: 'invited@example.com',
+				id: 100,
+			},
+		];
+
+		(
+			DigitalSalesRoomService.getDigitalSalesRoomInvitedMemberBriefs as jest.Mock
+		).mockResolvedValue(mockInvitedMembers);
+
+		renderComponent({
+			numberOfSteps: 1,
+			setHandleStepSubmit: () => {},
+		});
+
+		await waitFor(() => {
+			expect(screen.getByText('John Doe')).toBeInTheDocument();
+			expect(screen.getByText('invited@example.com')).toBeInTheDocument();
+		});
+	});
+
+	it('hides role dropdown for invited members', async () => {
+		const mockInvitedMembers = [
+			{
+				emailAddress: 'invited@example.com',
+				id: 100,
+			},
+		];
+
+		(
+			DigitalSalesRoomService.getDigitalSalesRoomInvitedMemberBriefs as jest.Mock
+		).mockResolvedValue(mockInvitedMembers);
+
+		renderComponent({
+			numberOfSteps: 1,
+			setHandleStepSubmit: () => {},
+		});
+
+		await waitFor(() => {
+			expect(screen.getByText('invited@example.com')).toBeInTheDocument();
+		});
+
+		const invitedUserRow = screen
+			.getByText('invited@example.com')
+			.closest('.user-row');
+
+		expect(invitedUserRow?.querySelector('.dropdown-toggle')).toBeNull();
+		expect(invitedUserRow?.textContent).toContain('viewer');
 	});
 });
