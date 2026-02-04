@@ -9,10 +9,17 @@ import com.liferay.application.list.BasePanelApp;
 import com.liferay.application.list.PanelApp;
 import com.liferay.digital.sales.room.constants.DigitalSalesRoomPortletKeys;
 import com.liferay.digital.sales.room.web.internal.constants.DigitalSalesRoomPanelCategoryKeys;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Portlet;
 
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.service.permission.PortletPermissionUtil;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+
+import java.util.Objects;
 
 /**
  * @author Stefano Motta
@@ -40,5 +47,14 @@ public class DigitalSalesRoomPanelApp extends BasePanelApp {
 		target = "(jakarta.portlet.name=" + DigitalSalesRoomPortletKeys.DIGITAL_SALES_ROOM_MANAGEMENT + ")"
 	)
 	private Portlet _portlet;
+
+	@Override
+	public boolean isShow(PermissionChecker permissionChecker, Group group)
+		throws PortalException {
+
+		return super.isShow(permissionChecker, group) && PortletPermissionUtil.contains(
+			permissionChecker, DigitalSalesRoomPortletKeys.DIGITAL_SALES_ROOM_MANAGEMENT,
+			ActionKeys.ACCESS_IN_CONTROL_PANEL);
+	}
 
 }
