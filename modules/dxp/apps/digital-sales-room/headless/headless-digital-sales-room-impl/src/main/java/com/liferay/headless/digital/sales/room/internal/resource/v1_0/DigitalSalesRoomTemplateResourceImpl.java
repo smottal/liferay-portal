@@ -14,12 +14,15 @@ import com.liferay.headless.digital.sales.room.internal.dto.v1_0.converter.Digit
 import com.liferay.headless.digital.sales.room.internal.util.v1_0.ExportImportUtil;
 import com.liferay.headless.digital.sales.room.resource.v1_0.DigitalSalesRoomTemplateResource;
 import com.liferay.layout.util.LayoutServiceContextHelper;
+import com.liferay.object.constants.ObjectActionKeys;
+import com.liferay.object.definition.security.permission.resource.ObjectDefinitionPortletResourcePermissionRegistryUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.rest.dto.v1_0.ObjectEntry;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManager;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManagerRegistry;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
+import com.liferay.object.service.ObjectEntryService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.events.ServicePreAction;
 import com.liferay.portal.events.ThemeServicePreAction;
@@ -31,6 +34,11 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionRegistryUtil;
+import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.GroupService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
@@ -102,6 +110,8 @@ public class DigitalSalesRoomTemplateResourceImpl
 			_objectEntryLocalService.getObjectEntry(
 				group.getExternalReferenceCode(), group.getGroupId(),
 				objectDefinition.getObjectDefinitionId());
+
+		_checkPermission(ActionKeys.DELETE, serviceBuilderObjectEntry);
 
 		_objectEntryLocalService.deleteObjectEntry(
 			serviceBuilderObjectEntry.getObjectEntryId());
@@ -202,6 +212,14 @@ public class DigitalSalesRoomTemplateResourceImpl
 		}
 
 		Group group = _groupService.getGroup(digitalSalesRoomTemplateId);
+		ObjectDefinition objectDefinition = _getObjectDefinition();
+
+		com.liferay.object.model.ObjectEntry serviceBuilderObjectEntry =
+			_objectEntryLocalService.getObjectEntry(
+				group.getExternalReferenceCode(), group.getGroupId(),
+				objectDefinition.getObjectDefinitionId());
+
+		_checkPermission(ActionKeys.UPDATE, serviceBuilderObjectEntry);
 
 		if (Validator.isNotNull(digitalSalesRoomTemplate.getName())) {
 			group.setName(digitalSalesRoomTemplate.getName());
@@ -212,8 +230,6 @@ public class DigitalSalesRoomTemplateResourceImpl
 		}
 
 		group = _groupLocalService.updateGroup(group);
-
-		ObjectDefinition objectDefinition = _getObjectDefinition();
 
 		ObjectEntryManager objectEntryManager =
 			_objectEntryManagerRegistry.getObjectEntryManager(
@@ -259,6 +275,15 @@ public class DigitalSalesRoomTemplateResourceImpl
 			_objectDefinitionLocalService.
 				getObjectDefinitionByExternalReferenceCode(
 					"L_DSR_ROOM", contextCompany.getCompanyId());
+
+		PortletResourcePermission portletResourcePermission =
+			ObjectDefinitionPortletResourcePermissionRegistryUtil.getService(
+				dsrRoomObjectDefinition.getResourceName());
+
+		portletResourcePermission.check(
+			PermissionThreadLocal.getPermissionChecker(), 0L,
+			ObjectActionKeys.ADD_OBJECT_ENTRY);
+
 		Group sourceGroup = _groupService.getGroup(digitalSalesRoomId);
 
 		if (!Objects.equals(
@@ -371,12 +396,20 @@ public class DigitalSalesRoomTemplateResourceImpl
 			throw new UnsupportedOperationException();
 		}
 
+		ObjectDefinition objectDefinition = _getObjectDefinition();
+
+		PortletResourcePermission portletResourcePermission =
+			ObjectDefinitionPortletResourcePermissionRegistryUtil.getService(
+				objectDefinition.getResourceName());
+
+		portletResourcePermission.check(
+			PermissionThreadLocal.getPermissionChecker(), 0L,
+			ObjectActionKeys.ADD_OBJECT_ENTRY);
+
 		Group group = _addGroup(
 			digitalSalesRoomTemplate.getDescription(),
 			"com.liferay.digital.sales.room.site.initializer",
 			digitalSalesRoomTemplate.getName());
-
-		ObjectDefinition objectDefinition = _getObjectDefinition();
 
 		group.setClassName(objectDefinition.getClassName());
 
@@ -423,6 +456,15 @@ public class DigitalSalesRoomTemplateResourceImpl
 		}
 
 		ObjectDefinition objectDefinition = _getObjectDefinition();
+
+		PortletResourcePermission portletResourcePermission =
+			ObjectDefinitionPortletResourcePermissionRegistryUtil.getService(
+				objectDefinition.getResourceName());
+
+		portletResourcePermission.check(
+			PermissionThreadLocal.getPermissionChecker(), 0L,
+			ObjectActionKeys.ADD_OBJECT_ENTRY);
+
 		Group sourceGroup = _groupService.getGroup(
 			parentDigitalSalesRoomTemplateId);
 
@@ -518,6 +560,27 @@ public class DigitalSalesRoomTemplateResourceImpl
 			_objectEntryLocalService.getObjectEntry(objectEntry.getId()));
 	}
 
+	private Map<String, String> _addAction(
+		String actionName, long groupId, String methodName,
+		ModelResourcePermission<com.liferay.object.model.ObjectEntry>
+			modelResourcePermission,
+		long objectEntryId) {
+
+		Map<String, String> action = addAction(
+			actionName, objectEntryId, methodName, modelResourcePermission);
+
+		if (action == null) {
+			return null;
+		}
+
+		action.compute(
+			"href",
+			(key, value) -> StringUtil.replace(
+				value, String.valueOf(objectEntryId), String.valueOf(groupId)));
+
+		return action;
+	}
+
 	private Group _addGroup(
 			String description, String siteTemplateKey, String name)
 		throws Exception {
@@ -570,6 +633,21 @@ public class DigitalSalesRoomTemplateResourceImpl
 		finally {
 			ServiceContextThreadLocal.popServiceContext();
 		}
+	}
+
+	private void _checkPermission(
+			String actionId,
+			com.liferay.object.model.ObjectEntry serviceBuilderObjectEntry)
+		throws Exception {
+
+		ModelResourcePermission<com.liferay.object.model.ObjectEntry>
+			modelResourcePermission =
+				_objectEntryService.getModelResourcePermission(
+					serviceBuilderObjectEntry.getObjectDefinitionId());
+
+		modelResourcePermission.check(
+			PermissionThreadLocal.getPermissionChecker(),
+			serviceBuilderObjectEntry.getObjectEntryId(), actionId);
 	}
 
 	private String _getFrontendTokensValues(
@@ -790,9 +868,54 @@ public class DigitalSalesRoomTemplateResourceImpl
 			com.liferay.object.model.ObjectEntry serviceBuilderObjectEntry)
 		throws Exception {
 
+		ModelResourcePermission<com.liferay.object.model.ObjectEntry>
+			modelResourcePermission =
+				ModelResourcePermissionRegistryUtil.getModelResourcePermission(
+					serviceBuilderObjectEntry.getModelClassName());
+
 		return _digitalSalesRoomTemplateDTOConverter.toDTO(
 			new DigitalSalesRoomTemplateDTOConverterContext(
-				true, null, _dtoConverterRegistry, group.getGroupId(),
+				true,
+				HashMapBuilder.<String, Map<String, String>>put(
+					"create-room",
+					() -> {
+						ObjectDefinition objectDefinition =
+							_objectDefinitionLocalService.
+								getObjectDefinitionByExternalReferenceCode(
+									"L_DSR_ROOM",
+									contextCompany.getCompanyId());
+
+						PortletResourcePermission portletResourcePermission =
+							ObjectDefinitionPortletResourcePermissionRegistryUtil.
+								getService(objectDefinition.getResourceName());
+
+						if (!portletResourcePermission.contains(
+								PermissionThreadLocal.getPermissionChecker(),
+								0L, ObjectActionKeys.ADD_OBJECT_ENTRY)) {
+
+							return null;
+						}
+
+						return HashMapBuilder.put(
+							"method", "POST"
+						).build();
+					}
+				).<String, Map<String, String>>put(
+					"delete",
+					_addAction(
+						ActionKeys.DELETE, group.getGroupId(),
+						"deleteDigitalSalesRoomTemplate",
+						modelResourcePermission,
+						serviceBuilderObjectEntry.getObjectEntryId())
+				).put(
+					"update",
+					_addAction(
+						ActionKeys.UPDATE, group.getGroupId(),
+						"patchDigitalSalesRoomTemplate",
+						modelResourcePermission,
+						serviceBuilderObjectEntry.getObjectEntryId())
+				).build(),
+				_dtoConverterRegistry, group.getGroupId(),
 				contextAcceptLanguage.getPreferredLocale(),
 				serviceBuilderObjectEntry, contextUriInfo, contextUser),
 			group);
@@ -876,6 +999,9 @@ public class DigitalSalesRoomTemplateResourceImpl
 
 	@Reference
 	private ObjectEntryManagerRegistry _objectEntryManagerRegistry;
+
+	@Reference
+	private ObjectEntryService _objectEntryService;
 
 	@Reference
 	private Portal _portal;

@@ -330,6 +330,15 @@ public class DigitalSalesRoomResourceImpl
 			_objectDefinitionLocalService.
 				getObjectDefinitionByExternalReferenceCode(
 					"L_DSR_TEMPLATE", contextCompany.getCompanyId());
+
+		PortletResourcePermission portletResourcePermission =
+			ObjectDefinitionPortletResourcePermissionRegistryUtil.getService(
+				dsrTemplateObjectDefinition.getResourceName());
+
+		portletResourcePermission.check(
+			PermissionThreadLocal.getPermissionChecker(), 0L,
+			ObjectActionKeys.ADD_OBJECT_ENTRY);
+
 		Group sourceGroup = _groupService.getGroup(digitalSalesRoomTemplateId);
 
 		if (!Objects.equals(
@@ -753,6 +762,30 @@ public class DigitalSalesRoomResourceImpl
 			new DigitalSalesRoomDTOConverterContext(
 				true,
 				HashMapBuilder.<String, Map<String, String>>put(
+					"create-template",
+					() -> {
+						ObjectDefinition objectDefinition =
+							_objectDefinitionLocalService.
+								getObjectDefinitionByExternalReferenceCode(
+									"L_DSR_TEMPLATE",
+									contextCompany.getCompanyId());
+
+						PortletResourcePermission portletResourcePermission =
+							ObjectDefinitionPortletResourcePermissionRegistryUtil.
+								getService(objectDefinition.getResourceName());
+
+						if (!portletResourcePermission.contains(
+								PermissionThreadLocal.getPermissionChecker(),
+								0L, ObjectActionKeys.ADD_OBJECT_ENTRY)) {
+
+							return null;
+						}
+
+						return HashMapBuilder.put(
+							"method", "POST"
+						).build();
+					}
+				).<String, Map<String, String>>put(
 					"delete",
 					_addAction(
 						ActionKeys.DELETE, group.getGroupId(),

@@ -11,11 +11,15 @@ import com.liferay.frontend.data.set.model.FDSActionDropdownItemBuilder;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItemList;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenuBuilder;
+import com.liferay.object.constants.ObjectActionKeys;
+import com.liferay.object.definition.security.permission.resource.ObjectDefinitionPortletResourcePermissionRegistryUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
 import com.liferay.portal.kernel.service.GroupService;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.Portal;
@@ -47,14 +51,26 @@ public class ViewDigitalSalesRoomRoomListDisplayContext {
 	}
 
 	public CreationMenu getCreationMenu() throws Exception {
-		ObjectDefinition objectDefinition = _getObjectDefinition();
+		ObjectDefinition dsrRoomObjectDefinition = _getDSRRoomObjectDefinition();
+
+		PortletResourcePermission portletResourcePermission =
+			ObjectDefinitionPortletResourcePermissionRegistryUtil.getService(
+				dsrRoomObjectDefinition.getResourceName());
+
+		if (!portletResourcePermission.contains(
+			PermissionThreadLocal.getPermissionChecker(), 0L,
+			ObjectActionKeys.ADD_OBJECT_ENTRY)) {
+			return null;
+		}
+
+		ObjectDefinition dsrTemplateObjectDefinition = _getDSRTemplateObjectDefinition();
 
 		long[] classNameIds = {
-			_portal.getClassNameId(objectDefinition.getClassName())
+			_portal.getClassNameId(dsrTemplateObjectDefinition.getClassName())
 		};
 
 		int count = _groupService.searchCount(
-			objectDefinition.getCompanyId(), classNameIds, StringPool.BLANK,
+			dsrTemplateObjectDefinition.getCompanyId(), classNameIds, StringPool.BLANK,
 			LinkedHashMapBuilder.<String, Object>put(
 				"active", true
 			).put(
@@ -115,7 +131,7 @@ public class ViewDigitalSalesRoomRoomListDisplayContext {
 				LanguageUtil.get(_httpServletRequest, "save-as-template")
 			).setMethod(
 				"post"
-			).build(
+			).setPermissionKey("create-template").build(
 				"saveAsTemplate"
 			),
 			FDSActionDropdownItemBuilder.setIcon(
@@ -124,7 +140,7 @@ public class ViewDigitalSalesRoomRoomListDisplayContext {
 				LanguageUtil.get(_httpServletRequest, "share")
 			).setMethod(
 				"post"
-			).build(
+			).setPermissionKey("update").build(
 				"share"
 			),
 			FDSActionDropdownItemBuilder.setHref(
@@ -145,7 +161,7 @@ public class ViewDigitalSalesRoomRoomListDisplayContext {
 				LanguageUtil.get(_httpServletRequest, "settings")
 			).setMethod(
 				"get"
-			).build(
+			).setPermissionKey("update").build(
 				"settings"
 			),
 			FDSActionDropdownItemBuilder.setIcon(
@@ -154,28 +170,43 @@ public class ViewDigitalSalesRoomRoomListDisplayContext {
 				LanguageUtil.get(_httpServletRequest, "delete")
 			).setMethod(
 				"delete"
-			).build(
+			).setPermissionKey("delete").build(
 				"delete"
 			));
 	}
 
-	private ObjectDefinition _getObjectDefinition() throws Exception {
-		if (_objectDefinition != null) {
-			return _objectDefinition;
+	private ObjectDefinition _getDSRTemplateObjectDefinition() throws Exception {
+		if (_dsrTemplateObjectDefinition != null) {
+			return _dsrTemplateObjectDefinition;
 		}
 
-		_objectDefinition =
+		_dsrTemplateObjectDefinition =
 			_objectDefinitionLocalService.
 				getObjectDefinitionByExternalReferenceCode(
 					"L_DSR_TEMPLATE",
 					_portal.getCompanyId(_httpServletRequest));
 
-		return _objectDefinition;
+		return _dsrTemplateObjectDefinition;
+	}
+
+	private ObjectDefinition _getDSRRoomObjectDefinition() throws Exception {
+		if (_dsrRoomObjectDefinition != null) {
+			return _dsrRoomObjectDefinition;
+		}
+
+		_dsrRoomObjectDefinition =
+			_objectDefinitionLocalService.
+				getObjectDefinitionByExternalReferenceCode(
+					"L_DSR_ROOM",
+					_portal.getCompanyId(_httpServletRequest));
+
+		return _dsrRoomObjectDefinition;
 	}
 
 	private final GroupService _groupService;
 	private final HttpServletRequest _httpServletRequest;
-	private ObjectDefinition _objectDefinition;
+	private ObjectDefinition _dsrTemplateObjectDefinition;
+	private ObjectDefinition _dsrRoomObjectDefinition;
 	private final ObjectDefinitionLocalService _objectDefinitionLocalService;
 	private final Portal _portal;
 
