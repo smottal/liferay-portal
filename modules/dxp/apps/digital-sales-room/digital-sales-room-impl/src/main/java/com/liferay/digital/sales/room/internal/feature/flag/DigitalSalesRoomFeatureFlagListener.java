@@ -44,20 +44,19 @@ public class DigitalSalesRoomFeatureFlagListener implements FeatureFlagListener 
 			return;
 		}
 
-		ObjectDefinition objectDefinition = _objectDefinitionLocalService.fetchObjectDefinitionByExternalReferenceCode(
+		ObjectDefinition dsrRoomObjectDefinition = _objectDefinitionLocalService.fetchObjectDefinitionByExternalReferenceCode(
 			"L_DSR_ROOM", companyId
 		);
+		ObjectDefinition dsrTemplateObjectDefinition = _objectDefinitionLocalService.fetchObjectDefinitionByExternalReferenceCode(
+			"L_DSR_TEMPLATE", companyId
+		);
 
-		System.out.println(objectDefinition.getResourceName());
-		System.out.println(objectDefinition.getClassName());
-		System.out.println(objectDefinition.getModelClassName());
-
-		if (objectDefinition == null) {
+		if (dsrRoomObjectDefinition == null || dsrTemplateObjectDefinition == null) {
 			return;
 		}
 
 		try {
-			Role role = _roleLocalService.fetchRole(companyId, "DSR Seller");
+			Role role = _roleLocalService.fetchRoleByExternalReferenceCode("L_DSR_SELLER", companyId);
 
 			System.out.println(role);
 
@@ -68,7 +67,6 @@ public class DigitalSalesRoomFeatureFlagListener implements FeatureFlagListener 
 			}
 
 			if (role == null) {
-
 				User user = _userLocalService.getGuestUser(companyId);
 
 					role = _roleLocalService.addRole(
@@ -84,55 +82,42 @@ public class DigitalSalesRoomFeatureFlagListener implements FeatureFlagListener 
 					ActionKeys.ACCESS_IN_CONTROL_PANEL);
 
 				_resourcePermissionLocalService.addResourcePermission(
-					role.getCompanyId(), objectDefinition.getResourceName(),
+					role.getCompanyId(), dsrRoomObjectDefinition.getResourceName(),
+					ResourceConstants.SCOPE_COMPANY,
+					String.valueOf(companyId), role.getRoleId(),
+					"ADD_OBJECT_ENTRY");
+
+				_resourcePermissionLocalService.addResourcePermission(
+					role.getCompanyId(), dsrTemplateObjectDefinition.getResourceName(),
 					ResourceConstants.SCOPE_COMPANY,
 					String.valueOf(companyId), role.getRoleId(),
 					"ADD_OBJECT_ENTRY");
 			}
 
-			/*
-			{
-					"actionIds": [
-						"VIEW_CONTROL_PANEL"
-					],
-					"label": "90",
-					"primaryKey": "57646087144299",
-					"resourceName": "90",
-					"scope": 1
-				},
-				{
-					"actionIds": [
-						"ACCESS_IN_CONTROL_PANEL"
-					],
-					"primaryKey": "57646087144299",
-					"resourceName": "com_liferay_digital_sales_room_web_internal_portlet_DigitalSalesRoomManagementPortlet",
-					"scope": 1
-				},
-				{
-					"actionIds": [
-						"VIEW"
-					],
-					"primaryKey": "57646087144299",
-					"resourceName": "com.liferay.object.model.ObjectDefinition#D1S2",
-					"scope": 1
-				},
-				{
-					"actionIds": [
-						"ADD_OBJECT_ENTRY"
-					],
-					"id": 60623,
-					"label": "com.liferay.object#60627",
-					"primaryKey": "57646087144299",
-					"resourceName": "com.liferay.object#60627",
-					"roleId": 60623,
-					"scope": 1
-				}
-			 */
+			role = _roleLocalService.fetchRoleByExternalReferenceCode("L_DSR_CONTRIBUTOR", companyId);
 
-			role = _roleLocalService.fetchRole(companyId, "DSR Contributor");
+			System.out.println(role);
+
+			if (role != null) {
+				_roleLocalService.deleteRole(role);
+
+				role = null;
+			}
 
 			if (role == null) {
+				User user = _userLocalService.getGuestUser(companyId);
 
+				role = _roleLocalService.addRole(
+					"L_DSR_CONTRIBUTOR", user.getUserId(), null, 0, "DSR Contributor",
+					null,
+					null, RoleConstants.TYPE_SITE,
+					null, null);
+
+				_resourcePermissionLocalService.addResourcePermission(
+					role.getCompanyId(), dsrRoomObjectDefinition.getResourceName(),
+					ResourceConstants.SCOPE_COMPANY,
+					String.valueOf(companyId), role.getRoleId(),
+					"ADD_OBJECT_ENTRY");
 			}
 
 		}catch (Exception exception) {
