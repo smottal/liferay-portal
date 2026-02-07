@@ -388,7 +388,9 @@ const DigitalSalesRoomPanel = ({dsr}) => {
 								containerElement="span"
 							>
 								<span className="align-items-center d-flex">
-									{Liferay.Language.get('digital-sales-room-management')}
+									{Liferay.Language.get(
+										'digital-sales-room-management'
+									)}
 
 									<span className="badge badge-pill badge-primary ml-1">
 										{Liferay.Language.get('new')}
@@ -485,7 +487,12 @@ const AppsPanel = ({
 					<ClayLayout.Row>
 						<ClayLayout.Col
 							className="pr-0"
-							md={Liferay.FeatureFlags['LPD-17564'] || Liferay.FeatureFlags['LPD-66359'] ? '8' : '9'}
+							md={
+								Liferay.FeatureFlags['LPD-17564'] ||
+								Liferay.FeatureFlags['LPD-66359']
+									? '8'
+									: '9'
+							}
 							xl="8"
 						>
 							<ClayTabs.Content activeIndex={activeTab}>
@@ -519,7 +526,12 @@ const AppsPanel = ({
 
 						<ClayLayout.Col
 							className="d-flex px-0"
-							md={Liferay.FeatureFlags['LPD-17564'] || Liferay.FeatureFlags['LPD-66359'] ? '4' : '3'}
+							md={
+								Liferay.FeatureFlags['LPD-17564'] ||
+								Liferay.FeatureFlags['LPD-66359']
+									? '4'
+									: '3'
+							}
 							xl="4"
 						>
 							<ClayLayout.ContainerFluid size={false}>
@@ -528,7 +540,8 @@ const AppsPanel = ({
 										className="c-px-0"
 										md="12"
 										xl={
-											Liferay.FeatureFlags['LPD-17564'] || Liferay.FeatureFlags['LPD-66359']
+											Liferay.FeatureFlags['LPD-17564'] ||
+											Liferay.FeatureFlags['LPD-66359']
 												? '6'
 												: '12'
 										}
@@ -540,19 +553,26 @@ const AppsPanel = ({
 										/>
 									</ClayLayout.Col>
 
-									{Liferay.FeatureFlags['LPD-17564'] || Liferay.FeatureFlags['LPD-66359'] && (
-										<ClayLayout.Col
-											className="c-px-0"
-											md="12"
-											xl="6"
-										>
-											{Liferay.FeatureFlags['LPD-17564'] && (
-											<SpacesPanel cms={cms} />)}
+									{Liferay.FeatureFlags['LPD-17564'] ||
+										(Liferay.FeatureFlags['LPD-66359'] && (
+											<ClayLayout.Col
+												className="c-px-0"
+												md="12"
+												xl="6"
+											>
+												{Liferay.FeatureFlags[
+													'LPD-17564'
+												] && <SpacesPanel cms={cms} />}
 
-											{Liferay.FeatureFlags['LPD-66359'] && (
-                                            											<DigitalSalesRoomPanel dsr={dsr} />)}
-										</ClayLayout.Col>
-									)}
+												{Liferay.FeatureFlags[
+													'LPD-66359'
+												] && (
+													<DigitalSalesRoomPanel
+														dsr={dsr}
+													/>
+												)}
+											</ClayLayout.Col>
+										))}
 								</ClayLayout.Row>
 							</ClayLayout.ContainerFluid>
 						</ClayLayout.Col>
@@ -565,10 +585,23 @@ const AppsPanel = ({
 					<ClayLayout.Row>
 						<ClayLayout.Col
 							className={
-								Liferay.FeatureFlags['LPD-17564'] || Liferay.FeatureFlags['LPD-66359'] ? 'pr-3' : ''
+								Liferay.FeatureFlags['LPD-17564'] ||
+								Liferay.FeatureFlags['LPD-66359']
+									? 'pr-3'
+									: ''
 							}
-							md={Liferay.FeatureFlags['LPD-17564'] || Liferay.FeatureFlags['LPD-66359'] ? '8' : '12'}
-							xl={Liferay.FeatureFlags['LPD-17564'] || Liferay.FeatureFlags['LPD-66359'] ? '8' : '12'}
+							md={
+								Liferay.FeatureFlags['LPD-17564'] ||
+								Liferay.FeatureFlags['LPD-66359']
+									? '8'
+									: '12'
+							}
+							xl={
+								Liferay.FeatureFlags['LPD-17564'] ||
+								Liferay.FeatureFlags['LPD-66359']
+									? '8'
+									: '12'
+							}
 						>
 							<ClayLayout.ContentRow
 								className="applications-menu-border-top bg-white c-py-3"
@@ -596,7 +629,8 @@ const AppsPanel = ({
 							</ClayLayout.ContentRow>
 						</ClayLayout.Col>
 
-						{(Liferay.FeatureFlags['LPD-17564'] || Liferay.FeatureFlags['LPD-66359']) && (
+						{(Liferay.FeatureFlags['LPD-17564'] ||
+							Liferay.FeatureFlags['LPD-66359']) && (
 							<ClayLayout.Col
 								className="d-md-block d-none px-0"
 								md="4"
