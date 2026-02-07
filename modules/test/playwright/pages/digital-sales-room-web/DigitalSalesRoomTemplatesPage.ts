@@ -39,7 +39,10 @@ export class DigitalSalesRoomTemplatesPage {
 		);
 		this.noResultsFoundMessage = page.getByText('No Results Found');
 		this.page = page;
-		this.roomsLink = page.getByRole('menuitem', {exact: true, name: 'Rooms'});
+		this.roomsLink = page.getByRole('menuitem', {
+			exact: true,
+			name: 'Rooms',
+		});
 		this.settingsMenuItem = page.getByRole('menuitem', {name: 'Settings'});
 		this.templatesLink = page.getByRole('menuitem', {
 			exact: true,
