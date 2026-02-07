@@ -11,9 +11,7 @@ import com.liferay.fragment.renderer.FragmentRenderer;
 import com.liferay.fragment.renderer.FragmentRendererContext;
 import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.info.constants.InfoDisplayWebKeys;
-import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
-
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -22,9 +20,8 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
-import jakarta.servlet.http.HttpServletRequest;
 
-import java.util.Map;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -34,39 +31,12 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(service = FragmentRenderer.class)
 public class EditDigitalSalesRoomRoomSettingsJSPSectionFragmentRenderer
-	extends BaseJSPSectionFragmentRenderer<EditDigitalSalesRoomRoomSettingsDisplayContext> {
+	extends BaseJSPSectionFragmentRenderer
+		<EditDigitalSalesRoomRoomSettingsDisplayContext> {
 
 	@Override
 	public String getCollectionKey() {
 		return "sections";
-	}
-
-	@Override
-	protected String getLabelKey() {
-		return "room-settings";
-	}
-
-	@Override
-	protected EditDigitalSalesRoomRoomSettingsDisplayContext getDisplayContext(
-		HttpServletRequest httpServletRequest) {
-
-		Object object = httpServletRequest.getAttribute(
-			InfoDisplayWebKeys.INFO_ITEM);
-
-		if (!(object instanceof ObjectEntry)) {
-			return null;
-		}
-
-		ObjectEntry objectEntry = (ObjectEntry)object;
-		FragmentEntryLink fragmentEntryLink =
-			fragmentRendererContext.getFragmentEntryLink();
-
-		return new EditDigitalSalesRoomRoomSettingsDisplayContext(
-			objectEntry.getGroupId(), httpServletRequest, GetterUtil.getString(
-			_fragmentEntryConfigurationParser.getFieldValue(
-				getConfigurationJSONObject(fragmentRendererContext),
-				fragmentEntryLink.getEditableValuesJSONObject(),
-				fragmentRendererContext.getLocale(), "step")));
 	}
 
 	@Override
@@ -92,20 +62,47 @@ public class EditDigitalSalesRoomRoomSettingsJSPSectionFragmentRenderer
 		}
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		EditDigitalSalesRoomRoomSettingsJSPSectionFragmentRenderer.class);
+	@Override
+	protected EditDigitalSalesRoomRoomSettingsDisplayContext getDisplayContext(
+		HttpServletRequest httpServletRequest) {
 
+		Object object = httpServletRequest.getAttribute(
+			InfoDisplayWebKeys.INFO_ITEM);
 
-	@Reference
-	private JSONFactory _jsonFactory;
+		if (!(object instanceof ObjectEntry)) {
+			return null;
+		}
 
+		ObjectEntry objectEntry = (ObjectEntry)object;
+		FragmentEntryLink fragmentEntryLink =
+			fragmentRendererContext.getFragmentEntryLink();
 
-	@Reference
-	private FragmentEntryConfigurationParser _fragmentEntryConfigurationParser;
+		return new EditDigitalSalesRoomRoomSettingsDisplayContext(
+			objectEntry.getGroupId(), httpServletRequest,
+			GetterUtil.getString(
+				_fragmentEntryConfigurationParser.getFieldValue(
+					getConfigurationJSONObject(fragmentRendererContext),
+					fragmentEntryLink.getEditableValuesJSONObject(),
+					fragmentRendererContext.getLocale(), "step")));
+	}
 
 	@Override
 	protected String getJSPPath() {
 		return "/room/settings/edit.jsp";
 	}
+
+	@Override
+	protected String getLabelKey() {
+		return "room-settings";
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		EditDigitalSalesRoomRoomSettingsJSPSectionFragmentRenderer.class);
+
+	@Reference
+	private FragmentEntryConfigurationParser _fragmentEntryConfigurationParser;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 }

@@ -6,7 +6,6 @@
 package com.liferay.digital.sales.room.web.internal.display.context;
 
 import com.liferay.digital.sales.room.constants.DigitalSalesRoomConstants;
-import com.liferay.digital.sales.room.constants.DigitalSalesRoomPortletKeys;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItemBuilder;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItemList;
@@ -17,13 +16,10 @@ import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Portal;
-
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
-import jakarta.portlet.PortletRequest;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -35,7 +31,9 @@ import java.util.List;
 public class ViewDigitalSalesRoomTemplateListDisplayContext {
 
 	public ViewDigitalSalesRoomTemplateListDisplayContext(
-		HttpServletRequest httpServletRequest, ObjectDefinitionLocalService objectDefinitionLocalService, Portal portal) {
+		HttpServletRequest httpServletRequest,
+		ObjectDefinitionLocalService objectDefinitionLocalService,
+		Portal portal) {
 
 		_httpServletRequest = httpServletRequest;
 		_objectDefinitionLocalService = objectDefinitionLocalService;
@@ -59,25 +57,6 @@ public class ViewDigitalSalesRoomTemplateListDisplayContext {
 		).build();
 	}
 
-	private ObjectDefinition _getObjectDefinition() throws Exception {
-		if (_objectDefinition != null) {
-			return _objectDefinition;
-		}
-
-		_objectDefinition =
-			_objectDefinitionLocalService.
-				getObjectDefinitionByExternalReferenceCode(
-					"L_DSR_TEMPLATE",
-					_portal.getCompanyId(_httpServletRequest));
-
-		return _objectDefinition;
-	}
-
-
-	private final ObjectDefinitionLocalService _objectDefinitionLocalService;
-
-	private ObjectDefinition _objectDefinition;
-
 	public List<FDSActionDropdownItem> getFDSActionDropdownItems()
 		throws Exception {
 
@@ -93,16 +72,19 @@ public class ViewDigitalSalesRoomTemplateListDisplayContext {
 			),
 			FDSActionDropdownItemBuilder.setHref(
 				() -> {
-					ThemeDisplay themeDisplay = (ThemeDisplay)_httpServletRequest.getAttribute(
-						WebKeys.THEME_DISPLAY);
+					ThemeDisplay themeDisplay =
+						(ThemeDisplay)_httpServletRequest.getAttribute(
+							WebKeys.THEME_DISPLAY);
 
 					ObjectDefinition objectDefinition = _getObjectDefinition();
 
 					return StringBundler.concat(
 						themeDisplay.getPathFriendlyURLPublic(),
-						DigitalSalesRoomConstants.DSR_FRIENDLY_URL, "/e/template/",
-						PortalUtil.getClassNameId(objectDefinition.getClassName()),
-						StringPool.SLASH, "{classPK}");
+						DigitalSalesRoomConstants.DSR_FRIENDLY_URL,
+						"/e/template/",
+						PortalUtil.getClassNameId(
+							objectDefinition.getClassName()),
+						"/{classPK}");
 				}
 			).setIcon(
 				"cog"
@@ -133,7 +115,23 @@ public class ViewDigitalSalesRoomTemplateListDisplayContext {
 			));
 	}
 
+	private ObjectDefinition _getObjectDefinition() throws Exception {
+		if (_objectDefinition != null) {
+			return _objectDefinition;
+		}
+
+		_objectDefinition =
+			_objectDefinitionLocalService.
+				getObjectDefinitionByExternalReferenceCode(
+					"L_DSR_TEMPLATE",
+					_portal.getCompanyId(_httpServletRequest));
+
+		return _objectDefinition;
+	}
+
 	private final HttpServletRequest _httpServletRequest;
+	private ObjectDefinition _objectDefinition;
+	private final ObjectDefinitionLocalService _objectDefinitionLocalService;
 	private final Portal _portal;
 
 }

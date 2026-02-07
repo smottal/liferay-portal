@@ -84,6 +84,8 @@ public abstract class BaseJSPSectionFragmentRenderer<T>
 
 	protected abstract String getLabelKey();
 
+	protected FragmentRendererContext fragmentRendererContext;
+
 	@Reference
 	protected Language language;
 
@@ -91,7 +93,5 @@ public abstract class BaseJSPSectionFragmentRenderer<T>
 		target = "(osgi.web.symbolicname=com.liferay.digital.sales.room.web)"
 	)
 	protected ServletContext servletContext;
-
-	protected FragmentRendererContext fragmentRendererContext;
 
 }

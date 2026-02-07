@@ -9,7 +9,6 @@ import com.liferay.digital.sales.room.web.internal.display.context.ViewDigitalSa
 import com.liferay.fragment.renderer.FragmentRenderer;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.portal.kernel.service.GroupService;
-import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.Portal;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,7 +21,8 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(service = FragmentRenderer.class)
 public class ViewDigitalSalesRoomRoomListJSPSectionFragmentRenderer
-	extends BaseJSPSectionFragmentRenderer<ViewDigitalSalesRoomRoomListDisplayContext> {
+	extends BaseJSPSectionFragmentRenderer
+		<ViewDigitalSalesRoomRoomListDisplayContext> {
 
 	@Override
 	public String getCollectionKey() {
@@ -39,15 +39,9 @@ public class ViewDigitalSalesRoomRoomListJSPSectionFragmentRenderer
 		HttpServletRequest httpServletRequest) {
 
 		return new ViewDigitalSalesRoomRoomListDisplayContext(
-				_groupService, httpServletRequest,
-				_objectDefinitionLocalService, _portal);
+			_groupService, httpServletRequest, _objectDefinitionLocalService,
+			_portal);
 	}
-
-	@Reference
-	private GroupService _groupService;
-
-	@Reference
-	private Portal _portal;
 
 	@Override
 	protected String getJSPPath() {
@@ -55,6 +49,12 @@ public class ViewDigitalSalesRoomRoomListJSPSectionFragmentRenderer
 	}
 
 	@Reference
+	private GroupService _groupService;
+
+	@Reference
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
+
+	@Reference
+	private Portal _portal;
 
 }

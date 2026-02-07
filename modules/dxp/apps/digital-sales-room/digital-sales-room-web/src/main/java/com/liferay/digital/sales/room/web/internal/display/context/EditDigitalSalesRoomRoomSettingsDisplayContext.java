@@ -20,13 +20,14 @@ import jakarta.servlet.http.HttpServletRequest;
 public class EditDigitalSalesRoomRoomSettingsDisplayContext {
 
 	public EditDigitalSalesRoomRoomSettingsDisplayContext(
-		long digitalSalesRoomId, HttpServletRequest httpServletRequest, String step) {
+		long digitalSalesRoomId, HttpServletRequest httpServletRequest,
+		String step) {
 
 		_digitalSalesRoomId = digitalSalesRoomId;
 		_step = step;
-		_themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
+
+		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
 	}
 
 	public String getCancelURL(RenderResponse renderResponse) {
@@ -35,16 +36,16 @@ public class EditDigitalSalesRoomRoomSettingsDisplayContext {
 			DigitalSalesRoomConstants.DSR_FRIENDLY_URL, "/rooms");
 	}
 
-	public String getStep() {
-		return _step;
-	}
-
 	public long getDigitalSalesRoomId() {
 		return _digitalSalesRoomId;
 	}
 
+	public String getStep() {
+		return _step;
+	}
+
 	private final long _digitalSalesRoomId;
-	private final ThemeDisplay _themeDisplay;
 	private final String _step;
+	private final ThemeDisplay _themeDisplay;
 
 }

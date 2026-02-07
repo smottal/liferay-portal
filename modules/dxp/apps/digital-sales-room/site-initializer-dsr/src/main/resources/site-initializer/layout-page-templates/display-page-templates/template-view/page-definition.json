@@ -1,81 +1,68 @@
 {
-	"pageElement":
-	{
+	"pageElement": {
 		"id": "4587d461-a123-f55d-1b78-0c6fbc1a3a6a",
-		"pageElements":
-		[
+		"pageElements": [
 			{
-				"definition":
-				{
+				"definition": {
 					"indexed": true,
-					"layout":
-					{}
+					"layout": {
+					}
 				},
 				"id": "ccaa12b6-75b8-a82b-8c41-d91a9cf260ae",
-				"pageElements":
-				[
+				"pageElements": [
 					{
-						"definition":
-						{
+						"definition": {
 							"gutters": true,
 							"indexed": true,
 							"modulesPerRow": 2,
 							"numberOfColumns": 2,
 							"reverseOrder": false,
-							"rowViewports":
-							[
+							"rowViewports": [
 								{
 									"id": "landscapeMobile",
-									"rowViewportDefinition":
-									{
+									"rowViewportDefinition": {
 										"modulesPerRow": 1
 									}
 								},
 								{
 									"id": "portraitMobile",
-									"rowViewportDefinition":
-									{}
+									"rowViewportDefinition": {
+									}
 								},
 								{
 									"id": "tablet",
-									"rowViewportDefinition":
-									{}
+									"rowViewportDefinition": {
+									}
 								}
 							],
 							"verticalAlignment": "top"
 						},
 						"id": "4a6db363-11ae-b003-ffc1-433328f264b5",
-						"pageElements":
-						[
+						"pageElements": [
 							{
-								"definition":
-								{
-									"columnViewports":
-									[
+								"definition": {
+									"columnViewports": [
 										{
-											"columnViewportDefinition":
-											{
+											"columnViewportDefinition": {
 												"size": 12
 											},
 											"id": "landscapeMobile"
 										},
 										{
-											"columnViewportDefinition":
-											{},
+											"columnViewportDefinition": {
+											},
 											"id": "portraitMobile"
 										},
 										{
-											"columnViewportDefinition":
-											{},
+											"columnViewportDefinition": {
+											},
 											"id": "tablet"
 										}
 									],
 									"size": 6
 								},
 								"id": "88a129ef-e3e0-bcaa-f1a0-a3b8db684ec5",
-								"pageElements":
-								[
-
+								"pageElements": [
 									{
 										"definition": {
 											"fragment": {
@@ -101,33 +88,29 @@
 								"type": "Column"
 							},
 							{
-								"definition":
-								{
-									"columnViewports":
-									[
+								"definition": {
+									"columnViewports": [
 										{
-											"columnViewportDefinition":
-											{
+											"columnViewportDefinition": {
 												"size": 12
 											},
 											"id": "landscapeMobile"
 										},
 										{
-											"columnViewportDefinition":
-											{},
+											"columnViewportDefinition": {
+											},
 											"id": "portraitMobile"
 										},
 										{
-											"columnViewportDefinition":
-											{},
+											"columnViewportDefinition": {
+											},
 											"id": "tablet"
 										}
 									],
 									"size": 6
 								},
 								"id": "5740c489-cd1f-3243-e123-a906c9c58a88",
-								"pageElements":
-								[
+								"pageElements": [
 									{
 										"definition": {
 											"fragment": {
@@ -161,11 +144,9 @@
 		],
 		"type": "Root"
 	},
-	"settings":
-	{
+	"settings": {
 		"colorSchemeName": "01",
-		"masterPage":
-		{
+		"masterPage": {
 			"key": "dsr-master"
 		},
 		"themeName": "CMS"

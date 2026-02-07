@@ -6,7 +6,6 @@
 package com.liferay.digital.sales.room.web.internal.constants;
 
 import com.liferay.digital.sales.room.constants.DigitalSalesRoomConstants;
-import com.liferay.digital.sales.room.constants.DigitalSalesRoomPortletKeys;
 
 /**
  * @author Stefano Motta
@@ -17,7 +16,6 @@ public class DigitalSalesRoomFDSNames {
 		DigitalSalesRoomConstants.BUNDLE_SYMBOLIC_NAME + "-rooms";
 
 	public static final String TEMPLATES =
-		DigitalSalesRoomConstants.BUNDLE_SYMBOLIC_NAME +
-			"-templates";
+		DigitalSalesRoomConstants.BUNDLE_SYMBOLIC_NAME + "-templates";
 
 }

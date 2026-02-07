@@ -10,10 +10,9 @@ package com.liferay.digital.sales.room.constants;
  */
 public class DigitalSalesRoomConstants {
 
-	public static final String DSR_FRIENDLY_URL = "/dsr";
-
 	public static final String BUNDLE_SYMBOLIC_NAME =
 		"com.liferay.digital.sales.room.api";
 
+	public static final String DSR_FRIENDLY_URL = "/dsr";
 
 }

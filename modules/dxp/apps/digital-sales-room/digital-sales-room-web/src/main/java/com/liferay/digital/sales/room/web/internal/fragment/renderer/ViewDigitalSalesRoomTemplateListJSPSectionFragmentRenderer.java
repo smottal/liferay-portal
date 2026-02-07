@@ -5,12 +5,9 @@
 
 package com.liferay.digital.sales.room.web.internal.fragment.renderer;
 
-import com.liferay.digital.sales.room.web.internal.display.context.ViewDigitalSalesRoomRoomListDisplayContext;
 import com.liferay.digital.sales.room.web.internal.display.context.ViewDigitalSalesRoomTemplateListDisplayContext;
 import com.liferay.fragment.renderer.FragmentRenderer;
 import com.liferay.object.service.ObjectDefinitionLocalService;
-import com.liferay.portal.kernel.service.GroupService;
-import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.Portal;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,7 +20,8 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(service = FragmentRenderer.class)
 public class ViewDigitalSalesRoomTemplateListJSPSectionFragmentRenderer
-	extends BaseJSPSectionFragmentRenderer<ViewDigitalSalesRoomTemplateListDisplayContext> {
+	extends BaseJSPSectionFragmentRenderer
+		<ViewDigitalSalesRoomTemplateListDisplayContext> {
 
 	@Override
 	public String getCollectionKey() {
@@ -40,21 +38,18 @@ public class ViewDigitalSalesRoomTemplateListJSPSectionFragmentRenderer
 		HttpServletRequest httpServletRequest) {
 
 		return new ViewDigitalSalesRoomTemplateListDisplayContext(
-				httpServletRequest,
-			_objectDefinitionLocalService,
-				_portal);
+			httpServletRequest, _objectDefinitionLocalService, _portal);
 	}
-
-	@Reference
-	private Portal _portal;
-
-	@Reference
-	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
 	@Override
 	protected String getJSPPath() {
 		return "/template/view.jsp";
 	}
 
+	@Reference
+	private ObjectDefinitionLocalService _objectDefinitionLocalService;
+
+	@Reference
+	private Portal _portal;
 
 }

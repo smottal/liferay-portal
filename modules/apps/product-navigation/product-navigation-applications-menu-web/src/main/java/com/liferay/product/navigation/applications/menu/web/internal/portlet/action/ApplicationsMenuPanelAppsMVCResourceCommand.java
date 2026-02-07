@@ -42,6 +42,7 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.webserver.WebServerServletToken;
@@ -107,7 +108,9 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 
 		return JSONUtil.put(
 			"cms", _getCMSJSONObject(httpServletRequest, themeDisplay)
-		).put("dsr", _getDSRJSONObject(httpServletRequest, themeDisplay)).put(
+		).put(
+			"dsr", _getDSRJSONObject(themeDisplay)
+		).put(
 			"items",
 			_getPanelCategoriesJSONArray(httpServletRequest, themeDisplay)
 		).put(
@@ -310,18 +313,6 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 		);
 	}
 
-	private JSONObject _getDSRJSONObject(
-		HttpServletRequest httpServletRequest, ThemeDisplay themeDisplay)
-		throws Exception {
-
-		return JSONUtil.put(
-			"url",
-			StringBundler.concat(
-				themeDisplay.getPathFriendlyURLPublic(),
-				"/dsr", "/rooms")
-		);
-	}
-
 	private long _getCMSSpaceDepotEntryId(
 		HttpServletRequest httpServletRequest) {
 
@@ -357,6 +348,16 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 		}
 
 		return 0;
+	}
+
+	private JSONObject _getDSRJSONObject(
+			ThemeDisplay themeDisplay)
+		throws Exception {
+
+		return JSONUtil.put(
+			"url",
+			StringBundler.concat(
+				themeDisplay.getPathFriendlyURLPublic(), "/", StringUtil.toLowerCase(GroupConstants.DSR), "/rooms"));
 	}
 
 	private String _getNewSpaceCreationURL(
