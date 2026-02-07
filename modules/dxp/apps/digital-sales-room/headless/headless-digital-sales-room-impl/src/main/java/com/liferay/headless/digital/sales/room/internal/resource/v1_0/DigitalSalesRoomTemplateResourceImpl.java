@@ -408,7 +408,7 @@ public class DigitalSalesRoomTemplateResourceImpl
 
 		Group group = _addGroup(
 			digitalSalesRoomTemplate.getDescription(),
-			"com.liferay.digital.sales.room.site.initializer",
+			"com.liferay.digital.sales.room.template.site.initializer",
 			digitalSalesRoomTemplate.getName());
 
 		group.setClassName(objectDefinition.getClassName());

@@ -280,7 +280,7 @@ public class DigitalSalesRoomResourceImpl
 			digitalSalesRoom.getExternalReferenceCode(),
 			digitalSalesRoom.getDescription(),
 			digitalSalesRoom.getFriendlyUrlPath(),
-			"com.liferay.digital.sales.room.site.initializer",
+			"com.liferay.digital.sales.room.template.site.initializer",
 			digitalSalesRoom.getName());
 
 		group.setClassName(objectDefinition.getClassName());

@@ -170,7 +170,7 @@ public class DigitalSalesRoomFeatureFlagListener
 	private RoleLocalService _roleLocalService;
 
 	@Reference(
-		target = "(site.initializer.key=com.liferay.site.initializer.dsr)"
+		target = "(site.initializer.key=com.liferay.digital.sales.room.site.initializer)"
 	)
 	private SiteInitializer _siteInitializer;
 
