@@ -114,11 +114,11 @@ public class DigitalSalesRoomDTOConverter
 					});
 				setActions(dtoConverterContext::getActions);
 				setBanner(() -> _getFileEntry("banner", values));
-				setClassName(group::getClassName);
-				setClassPK(group::getClassPK);
 				setChannelId(() -> GetterUtil.getLong(values.get("channelId")));
 				setChannelName(
 					() -> GetterUtil.getString(values.get("channelName")));
+				setClassName(group::getClassName);
+				setClassPK(group::getClassPK);
 				setClientLogo(() -> _getFileEntry("clientLogo", values));
 				setClientName(
 					() -> GetterUtil.getString(values.get("clientName")));

@@ -150,9 +150,7 @@ public class DigitalSalesRoomFeatureFlagListener
 			}
 		}
 		catch (Exception exception) {
-			if (_log.isErrorEnabled()) {
-				_log.error(exception);
-			}
+			_log.error(exception);
 		}
 	}
 

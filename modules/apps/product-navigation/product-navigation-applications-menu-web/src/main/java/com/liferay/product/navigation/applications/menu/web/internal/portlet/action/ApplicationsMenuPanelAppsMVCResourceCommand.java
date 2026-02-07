@@ -350,14 +350,14 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 		return 0;
 	}
 
-	private JSONObject _getDSRJSONObject(
-			ThemeDisplay themeDisplay)
+	private JSONObject _getDSRJSONObject(ThemeDisplay themeDisplay)
 		throws Exception {
 
 		return JSONUtil.put(
 			"url",
 			StringBundler.concat(
-				themeDisplay.getPathFriendlyURLPublic(), "/", StringUtil.toLowerCase(GroupConstants.DSR), "/rooms"));
+				themeDisplay.getPathFriendlyURLPublic(), "/",
+				StringUtil.toLowerCase(GroupConstants.DSR), "/rooms"));
 	}
 
 	private String _getNewSpaceCreationURL(

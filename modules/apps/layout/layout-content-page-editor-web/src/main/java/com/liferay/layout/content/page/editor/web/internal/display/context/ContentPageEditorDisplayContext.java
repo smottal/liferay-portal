@@ -552,8 +552,7 @@ public class ContentPageEditorDisplayContext {
 				() -> {
 					Group scopeGroup = themeDisplay.getScopeGroup();
 
-					return scopeGroup.isCMS() ||
-						   "DSR".equals(scopeGroup.getGroupKey());
+					return scopeGroup.isCMS();
 				}
 			).put(
 				"isConversionDraft", _isConversionDraft()
