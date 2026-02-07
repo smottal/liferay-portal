@@ -104,7 +104,7 @@ public class DigitalSalesRoomTemplateDTOConverter
 				setId(group::getGroupId);
 				setModifiedDate(group::getModifiedDate);
 				setName(() -> group.getName(dtoConverterContext.getLocale()));
-				setOwnerId(objectEntry::getObjectEntryId);
+				setOwnerId(objectEntry::getUserId);
 				setOwnerName(objectEntry::getUserName);
 				setPrimaryColor(
 					() -> GetterUtil.getString(values.get("primaryColor")));
