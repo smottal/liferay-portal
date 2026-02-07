@@ -29,7 +29,7 @@ export class DigitalSalesRoomsPage {
 		this.digitalSalesRoomsTable = new DataTablePage(
 			page,
 			page.locator(
-				'#portlet_com_liferay_digital_sales_room_web_internal_portlet_DigitalSalesRoomManagementPortlet'
+				'.lfr-layout-structure-item-com-liferay-digital-sales-room-web-internal-fragment-renderer-viewdigitalsalesroomroomlistjspsectionfragmentrenderer'
 			)
 		);
 		this.editMenuItem = page.getByRole('menuitem', {name: 'Edit'});
@@ -38,7 +38,7 @@ export class DigitalSalesRoomsPage {
 		);
 		this.noResultsFoundMessage = page.getByText('No Results Found');
 		this.page = page;
-		this.roomsLink = page.getByRole('link', {exact: true, name: 'Rooms'});
+		this.roomsLink = page.getByRole('menuitem', {exact: true, name: 'Rooms'});
 		this.saveAsTemplateMenuItem = page.getByRole('menuitem', {
 			name: 'Save as Template',
 		});
@@ -49,7 +49,7 @@ export class DigitalSalesRoomsPage {
 		this.startFromTemplateButton = page.getByRole('menuitem', {
 			name: 'Start from Template',
 		});
-		this.templatesLink = page.getByRole('link', {
+		this.templatesLink = page.getByRole('menuitem', {
 			exact: true,
 			name: 'Templates',
 		});

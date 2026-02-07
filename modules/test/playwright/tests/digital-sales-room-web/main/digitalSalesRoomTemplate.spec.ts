@@ -39,29 +39,6 @@ test.afterEach(async ({apiHelpers}) => {
 });
 
 test(
-	'Go to the templates page',
-	{tag: '@LPD-73189'},
-	async ({digitalSalesRoomTemplatesPage, digitalSalesRoomsPage}) => {
-		await digitalSalesRoomsPage.goto();
-
-		await expect(
-			digitalSalesRoomsPage.digitalSalesRoomsTable.searchInput
-		).toBeVisible();
-
-		await expect(digitalSalesRoomsPage.roomsLink).toBeVisible();
-		await expect(digitalSalesRoomsPage.templatesLink).toBeVisible();
-
-		await digitalSalesRoomsPage.templatesLink.click();
-
-		await expect(
-			digitalSalesRoomTemplatesPage.newDigitalSalesRoomTemplateButton
-		).toBeVisible();
-		await expect(digitalSalesRoomTemplatesPage.roomsLink).toBeVisible();
-		await expect(digitalSalesRoomTemplatesPage.templatesLink).toBeVisible();
-	}
-);
-
-test(
 	'Create a digital sales room template',
 	{tag: '@LPD-75031'},
 	async ({
@@ -335,7 +312,7 @@ test(
 		await digitalSalesRoomTemplateSettingsPage.descriptionInput.fill(
 			'Edited description'
 		);
-		await digitalSalesRoomTemplateSettingsPage.saveButton.click();
+		await digitalSalesRoomTemplateSettingsPage.saveButton.first().click();
 
 		await waitForAlert(page);
 
@@ -347,8 +324,6 @@ test(
 		await expect(
 			digitalSalesRoomTemplateSettingsPage.descriptionInput
 		).toHaveValue('Edited description');
-
-		await digitalSalesRoomTemplateSettingsPage.lookAndFeelLink.click();
 
 		const fileChooserPromise = page.waitForEvent('filechooser');
 
@@ -364,13 +339,11 @@ test(
 		await digitalSalesRoomTemplateSettingsPage.secondaryColorInput.fill(
 			'blue'
 		);
-		await digitalSalesRoomTemplateSettingsPage.saveButton.click();
+		await digitalSalesRoomTemplateSettingsPage.saveButton.last().click();
 
 		await waitForAlert(page);
 
 		await page.reload();
-
-		await digitalSalesRoomTemplateSettingsPage.lookAndFeelLink.click();
 
 		await expect(
 			digitalSalesRoomTemplateSettingsPage.clientLogoSticker

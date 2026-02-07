@@ -2,6 +2,6 @@ Bundle-Name: Liferay Digital Sales Room Template Site Initializer
 Bundle-SymbolicName: com.liferay.digital.sales.room.template.site.initializer
 Bundle-Version: 1.0.3
 Liferay-Site-Initializer-Feature-Flag: LPD-66359
-Liferay-Site-Initializer-Name: Digital Sales Room
+Liferay-Site-Initializer-Name: Digital Sales Room Template
 Provide-Capability: liferay.site.initializer
 Web-ContextPath: /digital-sales-room-template-site-initializer

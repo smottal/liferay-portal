@@ -449,7 +449,7 @@ test(
 		await digitalSalesRoomSettingsPage.roomNameInput.fill(
 			`Edited ${roomName}`
 		);
-		await digitalSalesRoomSettingsPage.saveButton.click();
+		await digitalSalesRoomSettingsPage.saveButton.first().click();
 
 		await waitForAlert(digitalSalesRoomSettingsPage.page);
 
@@ -461,8 +461,6 @@ test(
 		await expect(digitalSalesRoomSettingsPage.roomNameInput).toHaveValue(
 			`Edited ${roomName}`
 		);
-
-		await digitalSalesRoomSettingsPage.settingsLink.click();
 
 		await expect(
 			digitalSalesRoomSettingsPage.selectChannelInput

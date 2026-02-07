@@ -63,7 +63,7 @@ const mockUsers = [
 		emailAddress: 'ran.doe@liferay.com',
 		id: 2,
 		name: 'Ran Doe',
-		roleKey: 'Site Administrator',
+		roleKey: 'DSR Contributor',
 	},
 	{
 		emailAddress: 'win.doe@liferay.com',
@@ -370,7 +370,7 @@ describe('DSRRoomUsersStep', () => {
 			expect(
 				DigitalSalesRoomService.updateDigitalSalesRoomUserAccountBrief
 			).toHaveBeenCalledWith(123, 3, {
-				roleKey: 'Site Administrator',
+				roleKey: 'DSR Contributor',
 			});
 		});
 	});
@@ -469,7 +469,7 @@ describe('DSRRoomUsersStep', () => {
 				DigitalSalesRoomService.addDigitalSalesRoomUserAccountBrief
 			).toHaveBeenCalledWith(123, {
 				emailAddress: 'newuser@liferay.com',
-				roleKey: 'Site Administrator',
+				roleKey: 'DSR Contributor',
 			});
 		});
 	});

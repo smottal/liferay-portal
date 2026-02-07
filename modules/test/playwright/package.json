@@ -17,13 +17,13 @@
 		"@types/node": "^20.9.0",
 		"@types/yauzl": "^2.10.3",
 		"dotenv": "^16.3.2",
+		"playwright": "^1.58.2",
 		"ts-node": "^10.9.2",
 		"tslib": "^2.8.1",
 		"typescript": "4.7.4",
 		"zip-a-folder": "^3.1.6"
 	},
-	"keywords": [
-	],
+	"keywords": [],
 	"license": "ISC",
 	"main": "index.js",
 	"name": "@liferay/playwright",

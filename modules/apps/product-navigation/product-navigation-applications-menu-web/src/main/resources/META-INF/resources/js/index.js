@@ -389,7 +389,7 @@ const DigitalSalesRoomPanel = ({dsr}) => {
 							>
 								<span className="align-items-center d-flex">
 									{Liferay.Language.get(
-										'digital-sales-room-management'
+										'digital-sales-room'
 									)}
 
 									<span className="badge badge-pill badge-primary ml-1">

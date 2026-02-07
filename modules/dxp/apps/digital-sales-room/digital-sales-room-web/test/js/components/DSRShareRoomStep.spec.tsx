@@ -212,7 +212,7 @@ describe('DSRShareRoomStep', () => {
 
 		expect(state.share).toEqual({
 			emailAddresses: [],
-			roleKey: 'Site Administrator',
+			roleKey: 'DSR Contributor',
 		});
 
 		await waitFor(() => {
@@ -259,7 +259,7 @@ describe('DSRShareRoomStep', () => {
 
 		expect(state.share).toEqual({
 			emailAddresses: ['test@liferay.com', 'test1@liferay.com'],
-			roleKey: 'Site Administrator',
+			roleKey: 'DSR Contributor',
 		});
 
 		container.rerender(

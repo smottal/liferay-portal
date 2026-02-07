@@ -429,11 +429,11 @@ describe('DSRInitializer', () => {
 			userAccountBriefs: [
 				{
 					emailAddress: 'test@liferay.com',
-					roleKey: 'Site Administrator',
+					roleKey: 'DSR Contributor',
 				},
 				{
 					emailAddress: 'test1@liferay.com',
-					roleKey: 'Site Administrator',
+					roleKey: 'DSR Contributor',
 				},
 			],
 		});
@@ -612,11 +612,11 @@ describe('DSRInitializer', () => {
 			userAccountBriefs: [
 				{
 					emailAddress: 'test@liferay.com',
-					roleKey: 'Site Administrator',
+					roleKey: 'DSR Contributor',
 				},
 				{
 					emailAddress: 'test1@liferay.com',
-					roleKey: 'Site Administrator',
+					roleKey: 'DSR Contributor',
 				},
 			],
 		});

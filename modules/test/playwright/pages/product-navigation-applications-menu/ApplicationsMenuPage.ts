@@ -211,9 +211,8 @@ export class ApplicationsMenuPage {
 			exact: true,
 			name: 'Default Permissions',
 		});
-		this.digitalSalesRoomsMenuItem = page.getByRole('menuitem', {
-			exact: true,
-			name: 'Digital Sales Rooms',
+		this.digitalSalesRoomsMenuItem = page.getByRole('link', {
+			name: 'digital-sales-room',
 		});
 		this.exportMenuItem = page.getByRole('menuitem', {
 			exact: true,
@@ -544,7 +543,7 @@ export class ApplicationsMenuPage {
 	}
 
 	async goToDigitalSalesRooms() {
-		await this.goToCommercePanel();
+		await this.goto(false);
 		await this.digitalSalesRoomsMenuItem.click();
 	}
 
