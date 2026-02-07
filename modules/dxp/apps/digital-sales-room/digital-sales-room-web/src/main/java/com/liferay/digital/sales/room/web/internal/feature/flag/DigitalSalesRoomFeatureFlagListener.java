@@ -13,7 +13,6 @@ import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagListener;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -55,48 +54,42 @@ public class DigitalSalesRoomFeatureFlagListener
 			return;
 		}
 
-		ObjectDefinition dsrRoomObjectDefinition =
-			_objectDefinitionLocalService.
-				fetchObjectDefinitionByExternalReferenceCode(
-					"L_DSR_ROOM", companyId);
-		ObjectDefinition dsrTemplateObjectDefinition =
-			_objectDefinitionLocalService.
-				fetchObjectDefinitionByExternalReferenceCode(
-					"L_DSR_TEMPLATE", companyId);
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setProductionModeWithSafeCloseable()) {
 
-		if ((dsrRoomObjectDefinition == null) ||
-			(dsrTemplateObjectDefinition == null)) {
-
-			return;
-		}
-
-		try {
 			Group group = _groupLocalService.fetchGroup(
 				companyId, GroupConstants.DSR);
 
-			try (SafeCloseable safeCloseable =
-					CTCollectionThreadLocal.
-						setProductionModeWithSafeCloseable()) {
-
-				if (group == null) {
-					_groupLocalService.addGroup(
-						"L_" + GroupConstants.DSR,
-						_userLocalService.getGuestUserId(companyId),
-						GroupConstants.DEFAULT_PARENT_GROUP_ID, null, 0,
-						GroupConstants.DEFAULT_LIVE_GROUP_ID,
-						HashMapBuilder.put(
-							LocaleUtil.getDefault(), GroupConstants.DSR
-						).build(),
-						null, GroupConstants.TYPE_SITE_PRIVATE, null, true,
-						GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION,
-						DigitalSalesRoomConstants.DSR_FRIENDLY_URL, false,
-						false, true, null);
-				}
-
-				SiteInitializerUtil.initialize(companyId, _siteInitializer);
+			if (group == null) {
+				_groupLocalService.addGroup(
+					"L_" + GroupConstants.DSR,
+					_userLocalService.getGuestUserId(companyId),
+					GroupConstants.DEFAULT_PARENT_GROUP_ID, null, 0,
+					GroupConstants.DEFAULT_LIVE_GROUP_ID,
+					HashMapBuilder.put(
+						LocaleUtil.getDefault(), GroupConstants.DSR
+					).build(),
+					null, GroupConstants.TYPE_SITE_PRIVATE, null, true,
+					GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION,
+					DigitalSalesRoomConstants.DSR_FRIENDLY_URL, false, false,
+					true, null);
 			}
-			catch (PortalException portalException) {
-				_log.error(portalException);
+
+			SiteInitializerUtil.initialize(companyId, _siteInitializer);
+
+			ObjectDefinition dsrRoomObjectDefinition =
+				_objectDefinitionLocalService.
+					fetchObjectDefinitionByExternalReferenceCode(
+						"L_DSR_ROOM", companyId);
+			ObjectDefinition dsrTemplateObjectDefinition =
+				_objectDefinitionLocalService.
+					fetchObjectDefinitionByExternalReferenceCode(
+						"L_DSR_TEMPLATE", companyId);
+
+			if ((dsrRoomObjectDefinition == null) ||
+				(dsrTemplateObjectDefinition == null)) {
+
+				return;
 			}
 
 			Role role = _roleLocalService.fetchRoleByExternalReferenceCode(
