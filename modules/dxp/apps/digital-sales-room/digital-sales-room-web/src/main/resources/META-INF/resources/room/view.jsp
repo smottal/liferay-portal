@@ -8,10 +8,10 @@
 <%@ include file="/init.jsp" %>
 
 <%
-ViewDigitalSalesRoomRoomListDisplayContext viewDigitalSalesRoomRoomListDisplayContext = (ViewDigitalSalesRoomRoomListDisplayContext)request.getAttribute(WebKeys.PORTLET_DISPLAY_CONTEXT);
+ViewDigitalSalesRoomRoomListDisplayContext viewDigitalSalesRoomRoomListDisplayContext = (ViewDigitalSalesRoomRoomListDisplayContext)request.getAttribute(ViewDigitalSalesRoomRoomListDisplayContext.class.getName());
 %>
 
-<h2 class="font-weight-semi-bold page-title text-7 text-dark">
+<h2 class="font-weight-semi-bold my-3 page-title text-7 text-dark">
 	<liferay-ui:message key="rooms" />
 </h2>
 

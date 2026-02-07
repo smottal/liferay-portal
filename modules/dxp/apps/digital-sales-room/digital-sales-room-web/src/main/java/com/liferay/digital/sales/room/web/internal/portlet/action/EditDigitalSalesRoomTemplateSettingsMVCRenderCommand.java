@@ -49,7 +49,7 @@ public class EditDigitalSalesRoomTemplateSettingsMVCRenderCommand
 				WebKeys.PORTLET_DISPLAY_CONTEXT,
 				new EditDigitalSalesRoomTemplateSettingsDisplayContext(
 					group.getGroupId(),
-					_portal.getHttpServletRequest(renderRequest)));
+					_portal.getHttpServletRequest(renderRequest), "general"));
 
 			return "/template/edit_settings.jsp";
 		}

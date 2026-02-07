@@ -6,24 +6,38 @@
 package com.liferay.digital.sales.room.internal.feature.flag;
 
 import com.liferay.digital.sales.room.constants.DigitalSalesRoomPortletKeys;
+import com.liferay.digital.sales.room.internal.util.SiteInitializerUtil;
 import com.liferay.object.constants.ObjectActionKeys;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectDefinitionLocalService;
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagListener;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.UserPersonalSite;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 
 import java.util.Objects;
 
+import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
+import com.liferay.site.initializer.SiteInitializer;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -60,6 +74,31 @@ public class DigitalSalesRoomFeatureFlagListener
 		}
 
 		try {
+			Group group = _groupLocalService.fetchGroup(
+				companyId, "DSR");
+
+			try (SafeCloseable safeCloseable =
+					 CTCollectionThreadLocal.
+						 setProductionModeWithSafeCloseable()) {
+
+				if (group == null) {
+					_groupLocalService.addGroup(
+						"L_DSR", _userLocalService.getGuestUserId(companyId),
+						GroupConstants.DEFAULT_PARENT_GROUP_ID, null, 0,
+						GroupConstants.DEFAULT_LIVE_GROUP_ID,
+						HashMapBuilder.put(
+							LocaleUtil.getDefault(), "DSR"
+						).build(), null, GroupConstants.TYPE_SITE_PRIVATE, null, true,
+						GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION, "/dsr",
+						false, false, true, null);
+				}
+
+				SiteInitializerUtil.initialize(companyId, _siteInitializer);
+			}
+			catch (PortalException portalException) {
+				_log.error(portalException);
+			}
+
 			Role role = _roleLocalService.fetchRoleByExternalReferenceCode(
 				"L_DSR_SELLER", companyId);
 
@@ -111,11 +150,20 @@ public class DigitalSalesRoomFeatureFlagListener
 			}
 		}
 		catch (Exception exception) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(exception);
+			if (_log.isErrorEnabled()) {
+				_log.error(exception);
 			}
 		}
 	}
+
+
+	@Reference(
+		target = "(site.initializer.key=com.liferay.site.initializer.dsr)"
+	)
+	private SiteInitializer _siteInitializer;
+
+	@Reference
+	private GroupLocalService _groupLocalService;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DigitalSalesRoomFeatureFlagListener.class);

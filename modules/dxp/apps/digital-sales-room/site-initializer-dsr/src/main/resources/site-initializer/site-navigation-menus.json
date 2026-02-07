@@ -1,0 +1,22 @@
+[
+	{
+		"externalReferenceCode": "DSRPRIMARYNAVIGATION",
+		"menuItems": [
+			{
+				"displayIcon": "home",
+				"externalReferenceCode": "DSRPRIMARYNAVIGATION1",
+				"friendlyURL": "/rooms",
+				"privateLayout": false,
+				"type": "layout"
+			},
+			{
+				"displayIcon": "analytics",
+				"externalReferenceCode": "DSRPRIMARYNAVIGATION2",
+				"friendlyURL": "/templates",
+				"privateLayout": false,
+				"type": "layout"
+			}
+		],
+		"name": "DSR Primary Navigation"
+	}
+]

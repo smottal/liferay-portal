@@ -11,15 +11,17 @@ import com.liferay.frontend.data.set.model.FDSActionDropdownItemBuilder;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItemList;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenuBuilder;
-import com.liferay.object.constants.ObjectActionKeys;
-import com.liferay.object.definition.security.permission.resource.ObjectDefinitionPortletResourcePermissionRegistryUtil;
 import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.service.ObjectDefinitionLocalService;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
-import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
-import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Portal;
 
+import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.WebKeys;
 import jakarta.portlet.PortletRequest;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,9 +34,10 @@ import java.util.List;
 public class ViewDigitalSalesRoomTemplateListDisplayContext {
 
 	public ViewDigitalSalesRoomTemplateListDisplayContext(
-		HttpServletRequest httpServletRequest, Portal portal) {
+		HttpServletRequest httpServletRequest, ObjectDefinitionLocalService objectDefinitionLocalService, Portal portal) {
 
 		_httpServletRequest = httpServletRequest;
+		_objectDefinitionLocalService = objectDefinitionLocalService;
 		_portal = portal;
 	}
 
@@ -43,35 +46,7 @@ public class ViewDigitalSalesRoomTemplateListDisplayContext {
 			"/digital-sales-room-templates";
 	}
 
-	private ObjectDefinition _getObjectDefinition() throws Exception {
-		if (_dsrRoomObjectDefinition != null) {
-			return _dsrRoomObjectDefinition;
-		}
-
-		_dsrRoomObjectDefinition =
-			_objectDefinitionLocalService.
-				getObjectDefinitionByExternalReferenceCode(
-					"L_DSR_ROOM",
-					_portal.getCompanyId(_httpServletRequest));
-
-		return _dsrRoomObjectDefinition;
-	}
-
-	private ObjectDefinition _dsrRoomObjectDefinition;
-
 	public CreationMenu getCreationMenu() {
-		ObjectDefinition dsrRoomObjectDefinition = _getObjectDefinition();
-
-		PortletResourcePermission portletResourcePermission =
-			ObjectDefinitionPortletResourcePermissionRegistryUtil.getService(
-				dsrRoomObjectDefinition.getResourceName());
-
-		if (!portletResourcePermission.contains(
-			PermissionThreadLocal.getPermissionChecker(), 0L,
-			ObjectActionKeys.ADD_OBJECT_ENTRY)) {
-			return null;
-		}
-
 		return CreationMenuBuilder.addPrimaryDropdownItem(
 			dropdownItem -> {
 				dropdownItem.putData("action", "addDigitalSalesRoomTemplate");
@@ -82,6 +57,25 @@ public class ViewDigitalSalesRoomTemplateListDisplayContext {
 			}
 		).build();
 	}
+
+	private ObjectDefinition _getObjectDefinition() throws Exception {
+		if (_objectDefinition != null) {
+			return _objectDefinition;
+		}
+
+		_objectDefinition =
+			_objectDefinitionLocalService.
+				getObjectDefinitionByExternalReferenceCode(
+					"L_DSR_TEMPLATE",
+					_portal.getCompanyId(_httpServletRequest));
+
+		return _objectDefinition;
+	}
+
+
+	private final ObjectDefinitionLocalService _objectDefinitionLocalService;
+
+	private ObjectDefinition _objectDefinition;
 
 	public List<FDSActionDropdownItem> getFDSActionDropdownItems()
 		throws Exception {
@@ -97,18 +91,18 @@ public class ViewDigitalSalesRoomTemplateListDisplayContext {
 				"edit"
 			),
 			FDSActionDropdownItemBuilder.setHref(
-				() -> PortletURLBuilder.create(
-					_portal.getControlPanelPortletURL(
-						_httpServletRequest,
-						DigitalSalesRoomPortletKeys.
-							DIGITAL_SALES_ROOM_MANAGEMENT,
-						PortletRequest.RENDER_PHASE)
-				).setMVCRenderCommandName(
-					"/digital_sales_room" +
-						"/edit_digital_sales_room_template_settings"
-				).setParameter(
-					"digitalSalesRoomTemplateId", "{id}"
-				).buildString()
+				() -> {
+					ThemeDisplay themeDisplay = (ThemeDisplay)_httpServletRequest.getAttribute(
+						WebKeys.THEME_DISPLAY);
+
+					ObjectDefinition objectDefinition = _getObjectDefinition();
+
+					return StringBundler.concat(
+						themeDisplay.getPathFriendlyURLPublic(),
+						"/dsr", "/e/template/",
+						PortalUtil.getClassNameId(objectDefinition.getClassName()),
+						StringPool.SLASH, "{ownerId}");
+				}
 			).setIcon(
 				"cog"
 			).setLabel(

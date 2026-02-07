@@ -86,7 +86,7 @@ public class RecentGroupManagerImpl implements RecentGroupManager {
 
 		Group liveGroup = _groupLocalService.fetchGroup(liveGroupId);
 
-		if (liveGroup.isCMS() || liveGroup.isLayoutPrototype() ||
+		if (liveGroup.isCMS() || "DSR".equals(liveGroup.getGroupKey()) || liveGroup.isLayoutPrototype() ||
 			liveGroup.isLayoutSetPrototype()) {
 
 			return;

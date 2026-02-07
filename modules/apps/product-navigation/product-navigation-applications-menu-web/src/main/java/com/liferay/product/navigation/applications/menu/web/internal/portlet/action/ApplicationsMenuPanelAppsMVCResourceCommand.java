@@ -107,7 +107,7 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 
 		return JSONUtil.put(
 			"cms", _getCMSJSONObject(httpServletRequest, themeDisplay)
-		).put(
+		).put("dsr", _getDSRJSONObject(httpServletRequest, themeDisplay)).put(
 			"items",
 			_getPanelCategoriesJSONArray(httpServletRequest, themeDisplay)
 		).put(
@@ -307,6 +307,18 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 			"url",
 			themeDisplay.getPathFriendlyURLPublic() +
 				GroupConstants.CMS_FRIENDLY_URL + "/home"
+		);
+	}
+
+	private JSONObject _getDSRJSONObject(
+		HttpServletRequest httpServletRequest, ThemeDisplay themeDisplay)
+		throws Exception {
+
+		return JSONUtil.put(
+			"url",
+			StringBundler.concat(
+				themeDisplay.getPathFriendlyURLPublic(),
+				"/dsr", "/rooms")
 		);
 	}
 

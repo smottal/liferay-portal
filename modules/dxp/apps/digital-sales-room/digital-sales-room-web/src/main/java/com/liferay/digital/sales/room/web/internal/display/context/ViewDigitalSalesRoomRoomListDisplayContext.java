@@ -15,15 +15,20 @@ import com.liferay.object.constants.ObjectActionKeys;
 import com.liferay.object.definition.security.permission.resource.ObjectDefinitionPortletResourcePermissionRegistryUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectDefinitionLocalService;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
 import com.liferay.portal.kernel.service.GroupService;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.Portal;
 
+import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.WebKeys;
 import jakarta.portlet.PortletRequest;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -144,17 +149,18 @@ public class ViewDigitalSalesRoomRoomListDisplayContext {
 				"share"
 			),
 			FDSActionDropdownItemBuilder.setHref(
-				() -> PortletURLBuilder.create(
-					_portal.getControlPanelPortletURL(
-						_httpServletRequest,
-						DigitalSalesRoomPortletKeys.
-							DIGITAL_SALES_ROOM_MANAGEMENT,
-						PortletRequest.RENDER_PHASE)
-				).setMVCRenderCommandName(
-					"/digital_sales_room/edit_digital_sales_room_room_settings"
-				).setParameter(
-					"digitalSalesRoomId", "{id}"
-				).buildString()
+				() -> {
+					ThemeDisplay themeDisplay = (ThemeDisplay)_httpServletRequest.getAttribute(
+						WebKeys.THEME_DISPLAY);
+
+					ObjectDefinition objectDefinition = _getDSRRoomObjectDefinition();
+
+					return StringBundler.concat(
+						themeDisplay.getPathFriendlyURLPublic(),
+						"/dsr", "/e/room/",
+						PortalUtil.getClassNameId(objectDefinition.getClassName()),
+						StringPool.SLASH, "{ownerId}");
+				}
 			).setIcon(
 				"cog"
 			).setLabel(

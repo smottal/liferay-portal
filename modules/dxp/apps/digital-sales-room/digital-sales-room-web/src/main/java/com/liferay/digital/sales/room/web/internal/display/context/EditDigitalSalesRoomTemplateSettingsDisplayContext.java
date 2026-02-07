@@ -6,6 +6,7 @@
 package com.liferay.digital.sales.room.web.internal.display.context;
 
 import com.liferay.digital.sales.room.web.internal.constants.DigitalSalesRoomScreenNavigationEntryConstants;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -23,35 +24,22 @@ public class EditDigitalSalesRoomTemplateSettingsDisplayContext {
 
 	public EditDigitalSalesRoomTemplateSettingsDisplayContext(
 		long digitalSalesRoomTemplateId,
-		HttpServletRequest httpServletRequest) {
+		HttpServletRequest httpServletRequest, String step) {
 
 		_digitalSalesRoomTemplateId = digitalSalesRoomTemplateId;
-
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
+		_step = step;
+		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
-
-		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
-
-		portletDisplay.setShowBackIcon(true);
-
-		RenderResponse renderResponse =
-			(RenderResponse)httpServletRequest.getAttribute(
-				JavaConstants.JAKARTA_PORTLET_RESPONSE);
-
-		portletDisplay.setURLBack(getCancelURL(renderResponse));
-
-		portletDisplay.setURLBackTitle(portletDisplay.getPortletDisplayName());
 	}
 
 	public String getCancelURL(RenderResponse renderResponse) {
-		return PortletURLBuilder.createRenderURL(
-			renderResponse
-		).setParameter(
-			"screenNavigationCategoryKey",
-			DigitalSalesRoomScreenNavigationEntryConstants.
-				CATEGORY_KEY_TEMPLATES
-		).buildString();
+		return StringBundler.concat(
+			_themeDisplay.getPathFriendlyURLPublic(),
+			"/dsr", "/templates");
+	}
+
+	public String getStep() {
+		return _step;
 	}
 
 	public long getDigitalSalesRoomTemplateId() {
@@ -59,5 +47,7 @@ public class EditDigitalSalesRoomTemplateSettingsDisplayContext {
 	}
 
 	private final long _digitalSalesRoomTemplateId;
+	private final String _step;
+	private final ThemeDisplay _themeDisplay;
 
 }

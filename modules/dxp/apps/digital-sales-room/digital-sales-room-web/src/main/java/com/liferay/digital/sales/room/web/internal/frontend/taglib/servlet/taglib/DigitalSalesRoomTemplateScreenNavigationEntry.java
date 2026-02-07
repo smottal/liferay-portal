@@ -9,6 +9,7 @@ import com.liferay.digital.sales.room.web.internal.constants.DigitalSalesRoomScr
 import com.liferay.digital.sales.room.web.internal.display.context.ViewDigitalSalesRoomTemplateListDisplayContext;
 import com.liferay.frontend.taglib.servlet.taglib.ScreenNavigationEntry;
 import com.liferay.frontend.taglib.servlet.taglib.util.JSPRenderer;
+import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.util.Portal;
@@ -69,7 +70,7 @@ public class DigitalSalesRoomTemplateScreenNavigationEntry
 		ViewDigitalSalesRoomTemplateListDisplayContext
 			viewDigitalSalesRoomTemplateListDisplayContext =
 				new ViewDigitalSalesRoomTemplateListDisplayContext(
-					httpServletRequest, _portal);
+					httpServletRequest, _objectDefinitionLocalService, _portal);
 
 		httpServletRequest.setAttribute(
 			WebKeys.PORTLET_DISPLAY_CONTEXT,
@@ -78,6 +79,9 @@ public class DigitalSalesRoomTemplateScreenNavigationEntry
 		_jspRenderer.renderJSP(
 			httpServletRequest, httpServletResponse, "/template/view.jsp");
 	}
+
+	@Reference
+	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
 	@Reference
 	private JSPRenderer _jspRenderer;

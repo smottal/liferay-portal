@@ -6,6 +6,8 @@
 package com.liferay.digital.sales.room.web.internal.display.context;
 
 import com.liferay.digital.sales.room.web.internal.constants.DigitalSalesRoomScreenNavigationEntryConstants;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -22,34 +24,23 @@ import jakarta.servlet.http.HttpServletRequest;
 public class EditDigitalSalesRoomRoomSettingsDisplayContext {
 
 	public EditDigitalSalesRoomRoomSettingsDisplayContext(
-		long digitalSalesRoomId, HttpServletRequest httpServletRequest) {
+		long digitalSalesRoomId, HttpServletRequest httpServletRequest, String step) {
 
 		_digitalSalesRoomId = digitalSalesRoomId;
-
-		ThemeDisplay themeDisplay =
+		_step = step;
+		_themeDisplay =
 			(ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
-
-		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
-
-		portletDisplay.setShowBackIcon(true);
-
-		RenderResponse renderResponse =
-			(RenderResponse)httpServletRequest.getAttribute(
-				JavaConstants.JAKARTA_PORTLET_RESPONSE);
-
-		portletDisplay.setURLBack(getCancelURL(renderResponse));
-
-		portletDisplay.setURLBackTitle(portletDisplay.getPortletDisplayName());
 	}
 
 	public String getCancelURL(RenderResponse renderResponse) {
-		return PortletURLBuilder.createRenderURL(
-			renderResponse
-		).setParameter(
-			"screenNavigationCategoryKey",
-			DigitalSalesRoomScreenNavigationEntryConstants.CATEGORY_KEY_ROOMS
-		).buildString();
+		return StringBundler.concat(
+			_themeDisplay.getPathFriendlyURLPublic(),
+			"/dsr", "/rooms");
+	}
+
+	public String getStep() {
+		return _step;
 	}
 
 	public long getDigitalSalesRoomId() {
@@ -57,5 +48,7 @@ public class EditDigitalSalesRoomRoomSettingsDisplayContext {
 	}
 
 	private final long _digitalSalesRoomId;
+	private final ThemeDisplay _themeDisplay;
+	private final String _step;
 
 }

@@ -370,9 +370,43 @@ const SpacesPanel = ({cms}) => {
 	);
 };
 
+const DigitalSalesRoomPanel = ({dsr}) => {
+	return (
+		<div className="applications-menu-spaces c-p-3 c-px-md-4 w-100">
+			<div className="c-mt-2">
+				{dsr && (
+					<a
+						className="applications-menu-cms applications-menu-nav-link d-inline-flex"
+						href={dsr.url}
+					>
+						<ClayLayout.ContentRow
+							containerElement="span"
+							verticalAlign="center"
+						>
+							<ClayLayout.ContentCol
+								className="applications-menu-shrink c-ml-2"
+								containerElement="span"
+							>
+								<span className="align-items-center d-flex">
+									{Liferay.Language.get('digital-sales-room-management')}
+
+									<span className="badge badge-pill badge-primary ml-1">
+										{Liferay.Language.get('new')}
+									</span>
+								</span>
+							</ClayLayout.ContentCol>
+						</ClayLayout.ContentRow>
+					</a>
+				)}
+			</div>
+		</div>
+	);
+};
+
 const AppsPanel = ({
 	categories = [],
 	cms = {},
+	dsr = {},
 	handleCloseButtonClick = () => {},
 	liferayLogoURL,
 	liferayName,
@@ -451,7 +485,7 @@ const AppsPanel = ({
 					<ClayLayout.Row>
 						<ClayLayout.Col
 							className="pr-0"
-							md={Liferay.FeatureFlags['LPD-17564'] ? '8' : '9'}
+							md={Liferay.FeatureFlags['LPD-17564'] || Liferay.FeatureFlags['LPD-66359'] ? '8' : '9'}
 							xl="8"
 						>
 							<ClayTabs.Content activeIndex={activeTab}>
@@ -485,7 +519,7 @@ const AppsPanel = ({
 
 						<ClayLayout.Col
 							className="d-flex px-0"
-							md={Liferay.FeatureFlags['LPD-17564'] ? '4' : '3'}
+							md={Liferay.FeatureFlags['LPD-17564'] || Liferay.FeatureFlags['LPD-66359'] ? '4' : '3'}
 							xl="4"
 						>
 							<ClayLayout.ContainerFluid size={false}>
@@ -494,7 +528,7 @@ const AppsPanel = ({
 										className="c-px-0"
 										md="12"
 										xl={
-											Liferay.FeatureFlags['LPD-17564']
+											Liferay.FeatureFlags['LPD-17564'] || Liferay.FeatureFlags['LPD-66359']
 												? '6'
 												: '12'
 										}
@@ -506,13 +540,17 @@ const AppsPanel = ({
 										/>
 									</ClayLayout.Col>
 
-									{Liferay.FeatureFlags['LPD-17564'] && (
+									{Liferay.FeatureFlags['LPD-17564'] || Liferay.FeatureFlags['LPD-66359'] && (
 										<ClayLayout.Col
 											className="c-px-0"
 											md="12"
 											xl="6"
 										>
-											<SpacesPanel cms={cms} />
+											{Liferay.FeatureFlags['LPD-17564'] && (
+											<SpacesPanel cms={cms} />)}
+
+											{Liferay.FeatureFlags['LPD-66359'] && (
+                                            											<DigitalSalesRoomPanel dsr={dsr} />)}
 										</ClayLayout.Col>
 									)}
 								</ClayLayout.Row>
@@ -527,10 +565,10 @@ const AppsPanel = ({
 					<ClayLayout.Row>
 						<ClayLayout.Col
 							className={
-								Liferay.FeatureFlags['LPD-17564'] ? 'pr-3' : ''
+								Liferay.FeatureFlags['LPD-17564'] || Liferay.FeatureFlags['LPD-66359'] ? 'pr-3' : ''
 							}
-							md={Liferay.FeatureFlags['LPD-17564'] ? '8' : '12'}
-							xl={Liferay.FeatureFlags['LPD-17564'] ? '8' : '12'}
+							md={Liferay.FeatureFlags['LPD-17564'] || Liferay.FeatureFlags['LPD-66359'] ? '8' : '12'}
+							xl={Liferay.FeatureFlags['LPD-17564'] || Liferay.FeatureFlags['LPD-66359'] ? '8' : '12'}
 						>
 							<ClayLayout.ContentRow
 								className="applications-menu-border-top bg-white c-py-3"
@@ -558,7 +596,7 @@ const AppsPanel = ({
 							</ClayLayout.ContentRow>
 						</ClayLayout.Col>
 
-						{Liferay.FeatureFlags['LPD-17564'] && (
+						{(Liferay.FeatureFlags['LPD-17564'] || Liferay.FeatureFlags['LPD-66359']) && (
 							<ClayLayout.Col
 								className="d-md-block d-none px-0"
 								md="4"
@@ -648,10 +686,11 @@ const ApplicationsMenu = ({
 		if (!fetchCategoriesPromiseRef.current) {
 			fetchCategoriesPromiseRef.current = fetch(panelAppsURL)
 				.then((response) => response.json())
-				.then(({cms, items, portletNamespace, sites}) => {
+				.then(({cms, dsr, items, portletNamespace, sites}) => {
 					setAppsPanelData({
 						categories: items,
 						cms,
+						dsr,
 						portletNamespace,
 						selectedPortletId,
 						sites,

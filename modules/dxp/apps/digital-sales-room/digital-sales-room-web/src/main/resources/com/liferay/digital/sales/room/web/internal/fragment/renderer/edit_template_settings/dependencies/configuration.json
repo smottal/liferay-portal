@@ -1,0 +1,26 @@
+{
+	"fieldSets": [
+		{
+			"fields": [
+				{
+					"defaultValue": "general",
+					"label": "step",
+					"name": "step",
+					"type": "select",
+					"typeOptions": {
+						"validValues": [
+							{
+								"label": "general",
+								"value": "general"
+							},
+							{
+								"label": "look-and-feel",
+								"value": "lookAndFeel"
+							}
+						]
+					}
+				}
+			]
+		}
+	]
+}
