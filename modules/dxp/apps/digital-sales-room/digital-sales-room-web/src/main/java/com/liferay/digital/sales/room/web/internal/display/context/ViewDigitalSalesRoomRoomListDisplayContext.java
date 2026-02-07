@@ -5,6 +5,7 @@
 
 package com.liferay.digital.sales.room.web.internal.display.context;
 
+import com.liferay.digital.sales.room.constants.DigitalSalesRoomConstants;
 import com.liferay.digital.sales.room.constants.DigitalSalesRoomPortletKeys;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItemBuilder;
@@ -157,9 +158,9 @@ public class ViewDigitalSalesRoomRoomListDisplayContext {
 
 					return StringBundler.concat(
 						themeDisplay.getPathFriendlyURLPublic(),
-						"/dsr", "/e/room/",
+						DigitalSalesRoomConstants.DSR_FRIENDLY_URL, "/e/room/",
 						PortalUtil.getClassNameId(objectDefinition.getClassName()),
-						StringPool.SLASH, "{ownerId}");
+						StringPool.SLASH, "{classPK}");
 				}
 			).setIcon(
 				"cog"

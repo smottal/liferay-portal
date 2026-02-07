@@ -90,6 +90,8 @@ public class DigitalSalesRoomTemplateDTOConverter
 			{
 				setActions(dtoConverterContext::getActions);
 				setBanner(() -> _getFileEntry("banner", values));
+				setClassName(group::getClassName);
+				setClassPK(group::getClassPK);
 				setClientLogo(() -> _getFileEntry("clientLogo", values));
 				setClientName(
 					() -> GetterUtil.getString(values.get("clientName")));

@@ -20,6 +20,8 @@ public class GroupConstants {
 
 	public static final String CMS = "CMS";
 
+	public static final String DSR = "DSR";
+
 	public static final String CMS_FRIENDLY_URL = "/cms";
 
 	public static final String CONTROL_PANEL = "Control Panel";

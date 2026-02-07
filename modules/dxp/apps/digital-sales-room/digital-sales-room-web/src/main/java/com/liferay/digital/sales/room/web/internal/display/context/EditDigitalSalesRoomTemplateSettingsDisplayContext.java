@@ -5,12 +5,9 @@
 
 package com.liferay.digital.sales.room.web.internal.display.context;
 
-import com.liferay.digital.sales.room.web.internal.constants.DigitalSalesRoomScreenNavigationEntryConstants;
+import com.liferay.digital.sales.room.constants.DigitalSalesRoomConstants;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
-import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.WebKeys;
 
 import jakarta.portlet.RenderResponse;
@@ -35,7 +32,7 @@ public class EditDigitalSalesRoomTemplateSettingsDisplayContext {
 	public String getCancelURL(RenderResponse renderResponse) {
 		return StringBundler.concat(
 			_themeDisplay.getPathFriendlyURLPublic(),
-			"/dsr", "/templates");
+			DigitalSalesRoomConstants.DSR_FRIENDLY_URL, "/templates");
 	}
 
 	public String getStep() {

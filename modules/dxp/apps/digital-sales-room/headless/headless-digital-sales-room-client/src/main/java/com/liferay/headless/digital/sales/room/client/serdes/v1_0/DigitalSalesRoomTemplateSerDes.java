@@ -74,6 +74,30 @@ public class DigitalSalesRoomTemplateSerDes {
 			sb.append(String.valueOf(digitalSalesRoomTemplate.getBanner()));
 		}
 
+		if (digitalSalesRoomTemplate.getClassName() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"className\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(digitalSalesRoomTemplate.getClassName()));
+
+			sb.append("\"");
+		}
+
+		if (digitalSalesRoomTemplate.getClassPK() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"classPK\": ");
+
+			sb.append(digitalSalesRoomTemplate.getClassPK());
+		}
+
 		if (digitalSalesRoomTemplate.getClientLogo() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -300,6 +324,24 @@ public class DigitalSalesRoomTemplateSerDes {
 				"banner", String.valueOf(digitalSalesRoomTemplate.getBanner()));
 		}
 
+		if (digitalSalesRoomTemplate.getClassName() == null) {
+			map.put("className", null);
+		}
+		else {
+			map.put(
+				"className",
+				String.valueOf(digitalSalesRoomTemplate.getClassName()));
+		}
+
+		if (digitalSalesRoomTemplate.getClassPK() == null) {
+			map.put("classPK", null);
+		}
+		else {
+			map.put(
+				"classPK",
+				String.valueOf(digitalSalesRoomTemplate.getClassPK()));
+		}
+
 		if (digitalSalesRoomTemplate.getClientLogo() == null) {
 			map.put("clientLogo", null);
 		}
@@ -448,6 +490,12 @@ public class DigitalSalesRoomTemplateSerDes {
 			else if (Objects.equals(jsonParserFieldName, "banner")) {
 				return false;
 			}
+			else if (Objects.equals(jsonParserFieldName, "className")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "classPK")) {
+				return false;
+			}
 			else if (Objects.equals(jsonParserFieldName, "clientLogo")) {
 				return false;
 			}
@@ -511,6 +559,18 @@ public class DigitalSalesRoomTemplateSerDes {
 				if (jsonParserFieldValue != null) {
 					digitalSalesRoomTemplate.setBanner(
 						FileEntrySerDes.toDTO((String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "className")) {
+				if (jsonParserFieldValue != null) {
+					digitalSalesRoomTemplate.setClassName(
+						(String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "classPK")) {
+				if (jsonParserFieldValue != null) {
+					digitalSalesRoomTemplate.setClassPK(
+						Long.valueOf((String)jsonParserFieldValue));
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "clientLogo")) {

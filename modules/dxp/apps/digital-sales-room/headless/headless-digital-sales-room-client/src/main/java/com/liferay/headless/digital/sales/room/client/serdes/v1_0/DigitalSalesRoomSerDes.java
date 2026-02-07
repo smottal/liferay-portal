@@ -121,6 +121,30 @@ public class DigitalSalesRoomSerDes {
 			sb.append("\"");
 		}
 
+		if (digitalSalesRoom.getClassName() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"className\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(digitalSalesRoom.getClassName()));
+
+			sb.append("\"");
+		}
+
+		if (digitalSalesRoom.getClassPK() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"classPK\": ");
+
+			sb.append(digitalSalesRoom.getClassPK());
+		}
+
 		if (digitalSalesRoom.getClientLogo() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -388,6 +412,21 @@ public class DigitalSalesRoomSerDes {
 				String.valueOf(digitalSalesRoom.getChannelName()));
 		}
 
+		if (digitalSalesRoom.getClassName() == null) {
+			map.put("className", null);
+		}
+		else {
+			map.put(
+				"className", String.valueOf(digitalSalesRoom.getClassName()));
+		}
+
+		if (digitalSalesRoom.getClassPK() == null) {
+			map.put("classPK", null);
+		}
+		else {
+			map.put("classPK", String.valueOf(digitalSalesRoom.getClassPK()));
+		}
+
 		if (digitalSalesRoom.getClientLogo() == null) {
 			map.put("clientLogo", null);
 		}
@@ -543,6 +582,12 @@ public class DigitalSalesRoomSerDes {
 			else if (Objects.equals(jsonParserFieldName, "channelName")) {
 				return false;
 			}
+			else if (Objects.equals(jsonParserFieldName, "className")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "classPK")) {
+				return false;
+			}
 			else if (Objects.equals(jsonParserFieldName, "clientLogo")) {
 				return false;
 			}
@@ -630,6 +675,17 @@ public class DigitalSalesRoomSerDes {
 				if (jsonParserFieldValue != null) {
 					digitalSalesRoom.setChannelName(
 						(String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "className")) {
+				if (jsonParserFieldValue != null) {
+					digitalSalesRoom.setClassName((String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "classPK")) {
+				if (jsonParserFieldValue != null) {
+					digitalSalesRoom.setClassPK(
+						Long.valueOf((String)jsonParserFieldValue));
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "clientLogo")) {

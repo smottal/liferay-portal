@@ -5,6 +5,7 @@
 
 package com.liferay.digital.sales.room.web.internal.constants;
 
+import com.liferay.digital.sales.room.constants.DigitalSalesRoomConstants;
 import com.liferay.digital.sales.room.constants.DigitalSalesRoomPortletKeys;
 
 /**
@@ -13,10 +14,10 @@ import com.liferay.digital.sales.room.constants.DigitalSalesRoomPortletKeys;
 public class DigitalSalesRoomFDSNames {
 
 	public static final String ROOMS =
-		DigitalSalesRoomPortletKeys.DIGITAL_SALES_ROOM_MANAGEMENT + "-rooms";
+		DigitalSalesRoomConstants.BUNDLE_SYMBOLIC_NAME + "-rooms";
 
 	public static final String TEMPLATES =
-		DigitalSalesRoomPortletKeys.DIGITAL_SALES_ROOM_MANAGEMENT +
+		DigitalSalesRoomConstants.BUNDLE_SYMBOLIC_NAME +
 			"-templates";
 
 }

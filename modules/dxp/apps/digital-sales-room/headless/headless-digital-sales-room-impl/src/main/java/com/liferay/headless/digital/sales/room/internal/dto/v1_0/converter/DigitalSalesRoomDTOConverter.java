@@ -114,6 +114,8 @@ public class DigitalSalesRoomDTOConverter
 					});
 				setActions(dtoConverterContext::getActions);
 				setBanner(() -> _getFileEntry("banner", values));
+				setClassName(group::getClassName);
+				setClassPK(group::getClassPK);
 				setChannelId(() -> GetterUtil.getLong(values.get("channelId")));
 				setChannelName(
 					() -> GetterUtil.getString(values.get("channelName")));
@@ -129,7 +131,7 @@ public class DigitalSalesRoomDTOConverter
 				setId(group::getGroupId);
 				setModifiedDate(group::getModifiedDate);
 				setName(() -> group.getName(dtoConverterContext.getLocale()));
-				setOwnerId(objectEntry::getObjectEntryId);
+				setOwnerId(objectEntry::getUserId);
 				setOwnerName(objectEntry::getUserName);
 				setPrimaryColor(
 					() -> GetterUtil.getString(values.get("primaryColor")));

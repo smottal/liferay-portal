@@ -52,6 +52,13 @@ components:
                     type: integer
                 channelName:
                     type: string
+                className:
+                    readOnly: true
+                    type: string
+                classPK:
+                    format: int64
+                    readOnly: true
+                    type: integer
                 clientLogo:
                     $ref: "#/components/schemas/FileEntry"
                 clientName:
@@ -102,6 +109,13 @@ components:
                     type: object
                 banner:
                     $ref: "#/components/schemas/FileEntry"
+                className:
+                    readOnly: true
+                    type: string
+                classPK:
+                    format: int64
+                    readOnly: true
+                    type: integer
                 clientLogo:
                     $ref: "#/components/schemas/FileEntry"
                 clientName:
