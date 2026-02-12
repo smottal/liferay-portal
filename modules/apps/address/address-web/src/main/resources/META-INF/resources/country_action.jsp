@@ -15,7 +15,6 @@ ResultRow row = (ResultRow)request.getAttribute(WebKeys.SEARCH_CONTAINER_RESULT_
 Country country = (Country)row.getObject();
 
 boolean hasDeletePermission = CountryPermissionUtil.contains(permissionChecker, country, ActionKeys.DELETE);
-
 boolean hasUpdatePermission = CountryPermissionUtil.contains(permissionChecker, country, ActionKeys.UPDATE);
 %>
 

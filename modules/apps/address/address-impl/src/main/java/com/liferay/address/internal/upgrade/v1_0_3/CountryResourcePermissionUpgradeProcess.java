@@ -5,10 +5,8 @@
 
 package com.liferay.address.internal.upgrade.v1_0_3;
 
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Country;
 import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.ResourceConstants;
@@ -22,8 +20,6 @@ import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.PortletKeys;
-
-import java.util.List;
 
 /**
  * @author Tancredi Covioli
@@ -116,31 +112,31 @@ public class CountryResourcePermissionUpgradeProcess extends UpgradeProcess {
 
 		_resourceActionLocalService.deleteResourceAction(resourceAction);
 
-		_companyLocalService.forEachCompany(this::_addResource);
-	}
+		_companyLocalService.forEachCompany(
+			company -> {
+				for (Country country :
+						_countryLocalService.getCompanyCountries(
+							company.getCompanyId())) {
 
-	private void _addResource(Company company) throws PortalException {
-		List<Country> countries = _countryLocalService.getCompanyCountries(
-			company.getCompanyId());
+					long count =
+						_resourcePermissionLocalService.
+							getResourcePermissionsCount(
+								country.getCompanyId(), Country.class.getName(),
+								ResourceConstants.SCOPE_INDIVIDUAL,
+								String.valueOf(country.getPrimaryKeyObj()));
 
-		for (Country country : countries) {
-			long count =
-				_resourcePermissionLocalService.getResourcePermissionsCount(
-					country.getCompanyId(), Country.class.getName(),
-					ResourceConstants.SCOPE_INDIVIDUAL,
-					String.valueOf(country.getPrimaryKeyObj()));
+					if (count == 0) {
+						continue;
+					}
 
-			if (count == 0) {
-				continue;
-			}
+					User user = company.getGuestUser();
 
-			User user = company.getGuestUser();
-
-			_resourceLocalService.addResources(
-				country.getCompanyId(), 0, user.getUserId(),
-				Country.class.getName(), country.getCountryId(), false, false,
-				false);
-		}
+					_resourceLocalService.addResources(
+						country.getCompanyId(), 0, user.getUserId(),
+						Country.class.getName(), country.getCountryId(), false,
+						false, false);
+				}
+			});
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
