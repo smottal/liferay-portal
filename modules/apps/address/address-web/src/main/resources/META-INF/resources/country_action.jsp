@@ -13,16 +13,20 @@ String navigation = ParamUtil.getString(request, "navigation", "all");
 ResultRow row = (ResultRow)request.getAttribute(WebKeys.SEARCH_CONTAINER_RESULT_ROW);
 
 Country country = (Country)row.getObject();
+
+boolean hasDeletePermission = CountryPermissionUtil.contains(permissionChecker, country, ActionKeys.DELETE);
+
+boolean hasUpdatePermission = CountryPermissionUtil.contains(permissionChecker, country, ActionKeys.UPDATE);
 %>
 
-<liferay-ui:icon-menu
-	direction="left-side"
-	icon="<%= StringPool.BLANK %>"
-	markupView="lexicon"
-	message="<%= StringPool.BLANK %>"
-	showWhenSingleIcon="<%= true %>"
->
-	<c:if test="<%= PortalPermissionUtil.contains(permissionChecker, ActionKeys.MANAGE_COUNTRIES) %>">
+<c:if test="<%= hasDeletePermission || hasUpdatePermission %>">
+	<liferay-ui:icon-menu
+		direction="left-side"
+		icon="<%= StringPool.BLANK %>"
+		markupView="lexicon"
+		message="<%= StringPool.BLANK %>"
+		showWhenSingleIcon="<%= true %>"
+	>
 		<portlet:renderURL var="editURL">
 			<portlet:param name="mvcRenderCommandName" value="/address/edit_country" />
 			<portlet:param name="backURL" value='<%= ParamUtil.getString(request, "backURL") %>' />
@@ -30,45 +34,49 @@ Country country = (Country)row.getObject();
 		</portlet:renderURL>
 
 		<liferay-ui:icon
-			message="edit"
+			message='<%= hasUpdatePermission ? "edit" : "view" %>'
 			url="<%= editURL %>"
 		/>
 
-		<c:choose>
-			<c:when test="<%= country.isActive() %>">
-				<portlet:actionURL name="/address/update_country_status" var="deactivateCountryURL">
-					<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.DEACTIVATE %>" />
-					<portlet:param name="redirect" value="<%= currentURL %>" />
-					<portlet:param name="navigation" value="<%= navigation %>" />
-					<portlet:param name="countryIds" value="<%= String.valueOf(country.getCountryId()) %>" />
-				</portlet:actionURL>
+		<c:if test="<%= hasUpdatePermission %>">
+			<c:choose>
+				<c:when test="<%= country.isActive() %>">
+					<portlet:actionURL name="/address/update_country_status" var="deactivateCountryURL">
+						<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.DEACTIVATE %>" />
+						<portlet:param name="redirect" value="<%= currentURL %>" />
+						<portlet:param name="navigation" value="<%= navigation %>" />
+						<portlet:param name="countryIds" value="<%= String.valueOf(country.getCountryId()) %>" />
+					</portlet:actionURL>
 
-				<liferay-ui:icon-deactivate
-					url="<%= deactivateCountryURL %>"
-				/>
-			</c:when>
-			<c:otherwise>
-				<portlet:actionURL name="/address/update_country_status" var="activateCountryURL">
-					<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.RESTORE %>" />
-					<portlet:param name="redirect" value="<%= currentURL %>" />
-					<portlet:param name="navigation" value="<%= navigation %>" />
-					<portlet:param name="countryIds" value="<%= String.valueOf(country.getCountryId()) %>" />
-				</portlet:actionURL>
+					<liferay-ui:icon-deactivate
+						url="<%= deactivateCountryURL %>"
+					/>
+				</c:when>
+				<c:otherwise>
+					<portlet:actionURL name="/address/update_country_status" var="activateCountryURL">
+						<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.RESTORE %>" />
+						<portlet:param name="redirect" value="<%= currentURL %>" />
+						<portlet:param name="navigation" value="<%= navigation %>" />
+						<portlet:param name="countryIds" value="<%= String.valueOf(country.getCountryId()) %>" />
+					</portlet:actionURL>
 
-				<liferay-ui:icon
-					message="activate"
-					url="<%= activateCountryURL %>"
-				/>
-			</c:otherwise>
-		</c:choose>
+					<liferay-ui:icon
+						message="activate"
+						url="<%= activateCountryURL %>"
+					/>
+				</c:otherwise>
+			</c:choose>
+		</c:if>
 
-		<portlet:actionURL name="/address/delete_country" var="deleteCountryURL">
-			<portlet:param name="redirect" value="<%= currentURL %>" />
-			<portlet:param name="countryIds" value="<%= String.valueOf(country.getCountryId()) %>" />
-		</portlet:actionURL>
+		<c:if test="<%= hasDeletePermission %>">
+			<portlet:actionURL name="/address/delete_country" var="deleteCountryURL">
+				<portlet:param name="redirect" value="<%= currentURL %>" />
+				<portlet:param name="countryIds" value="<%= String.valueOf(country.getCountryId()) %>" />
+			</portlet:actionURL>
 
-		<liferay-ui:icon-delete
-			url="<%= deleteCountryURL %>"
-		/>
-	</c:if>
-</liferay-ui:icon-menu>
+			<liferay-ui:icon-delete
+				url="<%= deleteCountryURL %>"
+			/>
+		</c:if>
+	</liferay-ui:icon-menu>
+</c:if>
