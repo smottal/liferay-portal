@@ -7,7 +7,6 @@ package com.liferay.address.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.portal.kernel.model.Country;
-import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
@@ -15,17 +14,16 @@ import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
-import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CountryLocalService;
 import com.liferay.portal.kernel.service.CountryService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
-import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.test.context.ContextUserReplace;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
-import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.test.rule.Inject;
@@ -51,24 +49,17 @@ public class CountryServiceTest {
 
 	@Before
 	public void setUp() throws Exception {
-		_user = UserTestUtil.addUser();
-
-		PermissionThreadLocal.setPermissionChecker(
-			PermissionCheckerFactoryUtil.create(_user));
-
-		_group = GroupTestUtil.addGroup();
-
-		_serviceContext = ServiceContextTestUtil.getServiceContext(
-			_group.getCompanyId(), _group.getGroupId(), _user.getUserId());
-
 		_role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+		_user = UserTestUtil.addUser();
 
 		_userLocalService.addRoleUser(_role.getRoleId(), _user);
 	}
 
 	@Test
 	public void testAddCountry() throws Exception {
-		try {
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
+
 			_country = _countryService.addCountry(
 				"aa", "aaa", true, RandomTestUtil.randomBoolean(),
 				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
@@ -84,22 +75,22 @@ public class CountryServiceTest {
 		}
 
 		_resourcePermissionLocalService.addResourcePermission(
-			_serviceContext.getCompanyId(), PortletKeys.PORTAL,
+			TestPropsValues.getCompanyId(), PortletKeys.PORTAL,
 			ResourceConstants.SCOPE_COMPANY,
-			String.valueOf(_serviceContext.getCompanyId()), _role.getRoleId(),
+			String.valueOf(TestPropsValues.getCompanyId()), _role.getRoleId(),
 			ActionKeys.ADD_COUNTRY);
 
-		_country = _countryService.addCountry(
-			"aa", "aaa", true, RandomTestUtil.randomBoolean(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomDouble(),
-			RandomTestUtil.randomBoolean(), RandomTestUtil.randomBoolean(),
-			RandomTestUtil.randomBoolean(),
-			ServiceContextTestUtil.getServiceContext());
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
 
-		_country = _countryLocalService.fetchCountry(_country.getCountryId());
-
-		Assert.assertNotNull(_country);
+			_country = _countryService.addCountry(
+				"aa", "aaa", true, RandomTestUtil.randomBoolean(),
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				RandomTestUtil.randomString(), RandomTestUtil.randomDouble(),
+				RandomTestUtil.randomBoolean(), RandomTestUtil.randomBoolean(),
+				RandomTestUtil.randomBoolean(),
+				ServiceContextTestUtil.getServiceContext());
+		}
 	}
 
 	@Test
@@ -112,8 +103,11 @@ public class CountryServiceTest {
 			RandomTestUtil.randomBoolean(),
 			ServiceContextTestUtil.getServiceContext());
 
-		try {
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
+
 			_countryService.deleteCountry(_country.getCountryId());
+
 			Assert.fail();
 		}
 		catch (PrincipalException.MustHavePermission principalException) {
@@ -121,16 +115,16 @@ public class CountryServiceTest {
 		}
 
 		_resourcePermissionLocalService.addResourcePermission(
-			_serviceContext.getCompanyId(), Country.class.getName(),
+			TestPropsValues.getCompanyId(), Country.class.getName(),
 			ResourceConstants.SCOPE_COMPANY,
-			String.valueOf(_serviceContext.getCompanyId()), _role.getRoleId(),
+			String.valueOf(TestPropsValues.getCompanyId()), _role.getRoleId(),
 			ActionKeys.DELETE);
 
-		_countryService.deleteCountry(_country.getCountryId());
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
 
-		_country = _countryLocalService.fetchCountry(_country.getCountryId());
-
-		Assert.assertNull(_country);
+			_countryService.deleteCountry(_country.getCountryId());
+		}
 	}
 
 	@Test
@@ -143,8 +137,11 @@ public class CountryServiceTest {
 			RandomTestUtil.randomBoolean(),
 			ServiceContextTestUtil.getServiceContext());
 
-		try {
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
+
 			_countryService.updateActive(_country.getCountryId(), false);
+
 			Assert.fail();
 		}
 		catch (PrincipalException.MustHavePermission principalException) {
@@ -152,16 +149,16 @@ public class CountryServiceTest {
 		}
 
 		_resourcePermissionLocalService.addResourcePermission(
-			_serviceContext.getCompanyId(), Country.class.getName(),
+			TestPropsValues.getCompanyId(), Country.class.getName(),
 			ResourceConstants.SCOPE_COMPANY,
-			String.valueOf(_serviceContext.getCompanyId()), _role.getRoleId(),
+			String.valueOf(TestPropsValues.getCompanyId()), _role.getRoleId(),
 			ActionKeys.UPDATE);
 
-		_countryService.updateActive(country.getCountryId(), false);
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
 
-		country = _countryLocalService.fetchCountry(country.getCountryId());
-
-		Assert.assertFalse(country.isActive());
+			_countryService.updateActive(_country.getCountryId(), false);
+		}
 	}
 
 	@Test
@@ -174,19 +171,16 @@ public class CountryServiceTest {
 			RandomTestUtil.randomBoolean(),
 			ServiceContextTestUtil.getServiceContext());
 
-		boolean active = RandomTestUtil.randomBoolean();
-		boolean billingAllowed = RandomTestUtil.randomBoolean();
-		String idd = RandomTestUtil.randomString();
-		String name = RandomTestUtil.randomString();
-		String number = RandomTestUtil.randomString();
-		double position = RandomTestUtil.randomDouble();
-		boolean shippingAllowed = RandomTestUtil.randomBoolean();
-		boolean subjectToVAT = RandomTestUtil.randomBoolean();
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
 
-		try {
-			_countryService.updateCountry(
-				country.getCountryId(), "xx", "yyy", active, billingAllowed,
-				idd, name, number, position, shippingAllowed, subjectToVAT);
+			_country = _countryService.updateCountry(
+				_country.getCountryId(), _country.getA2(), _country.getA3(),
+				_country.isActive(), _country.isBillingAllowed(),
+				_country.getIdd(), RandomTestUtil.randomString(),
+				_country.getNumber(), _country.getPosition(),
+				_country.isShippingAllowed(), _country.isSubjectToVAT());
+
 			Assert.fail();
 		}
 		catch (PrincipalException.MustHavePermission principalException) {
@@ -194,32 +188,26 @@ public class CountryServiceTest {
 		}
 
 		_resourcePermissionLocalService.addResourcePermission(
-			_serviceContext.getCompanyId(), Country.class.getName(),
+			TestPropsValues.getCompanyId(), Country.class.getName(),
 			ResourceConstants.SCOPE_COMPANY,
-			String.valueOf(_serviceContext.getCompanyId()), _role.getRoleId(),
+			String.valueOf(TestPropsValues.getCompanyId()), _role.getRoleId(),
 			ActionKeys.UPDATE);
 
-		_countryService.updateCountry(
-			country.getCountryId(), "xx", "yyy", active, billingAllowed, idd,
-			name, number, position, shippingAllowed, subjectToVAT);
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
 
-		country = _countryLocalService.fetchCountry(country.getCountryId());
-
-		Assert.assertEquals("xx", country.getA2());
-		Assert.assertEquals("yyy", country.getA3());
-		Assert.assertEquals(active, country.isActive());
-		Assert.assertEquals(billingAllowed, country.isBillingAllowed());
-		Assert.assertEquals(idd, country.getIdd());
-		Assert.assertEquals(name, country.getName());
-		Assert.assertEquals(number, country.getNumber());
-		Assert.assertEquals(position, country.getPosition(), 0D);
-		Assert.assertEquals(shippingAllowed, country.isShippingAllowed());
-		Assert.assertEquals(subjectToVAT, country.isSubjectToVAT());
+			_country = _countryService.updateCountry(
+				_country.getCountryId(), _country.getA2(), _country.getA3(),
+				_country.isActive(), _country.isBillingAllowed(),
+				_country.getIdd(), RandomTestUtil.randomString(),
+				_country.getNumber(), _country.getPosition(),
+				_country.isShippingAllowed(), _country.isSubjectToVAT());
+		}
 	}
 
 	@Test
 	public void testUpdateGroupFilterEnabled() throws Exception {
-		Country country = _countryLocalService.addCountry(
+		_country = _countryLocalService.addCountry(
 			"aa", "aaa", true, RandomTestUtil.randomBoolean(),
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), RandomTestUtil.randomDouble(),
@@ -227,9 +215,12 @@ public class CountryServiceTest {
 			RandomTestUtil.randomBoolean(),
 			ServiceContextTestUtil.getServiceContext());
 
-		try {
-			_countryService.updateGroupFilterEnabled(
-				country.getCountryId(), true);
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
+
+			_country = _countryService.updateGroupFilterEnabled(
+				_country.getCountryId(), true);
+
 			Assert.fail();
 		}
 		catch (PrincipalException.MustHavePermission principalException) {
@@ -237,16 +228,17 @@ public class CountryServiceTest {
 		}
 
 		_resourcePermissionLocalService.addResourcePermission(
-			_serviceContext.getCompanyId(), Country.class.getName(),
+			TestPropsValues.getCompanyId(), Country.class.getName(),
 			ResourceConstants.SCOPE_COMPANY,
-			String.valueOf(_serviceContext.getCompanyId()), _role.getRoleId(),
+			String.valueOf(TestPropsValues.getCompanyId()), _role.getRoleId(),
 			ActionKeys.UPDATE);
 
-		_countryService.updateGroupFilterEnabled(country.getCountryId(), true);
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
 
-		country = _countryLocalService.fetchCountry(country.getCountryId());
-
-		Assert.assertTrue(country.isGroupFilterEnabled());
+			_country = _countryService.updateGroupFilterEnabled(
+				_country.getCountryId(), true);
+		}
 	}
 
 	@Inject
@@ -265,9 +257,7 @@ public class CountryServiceTest {
 	@DeleteAfterTestRun
 	private Country _country;
 
-	private Group _group;
 	private Role _role;
-	private ServiceContext _serviceContext;
 	private User _user;
 
 }

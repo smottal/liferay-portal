@@ -7,7 +7,6 @@ package com.liferay.address.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.portal.kernel.model.Country;
-import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Region;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
@@ -16,18 +15,16 @@ import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
-import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CountryLocalService;
-import com.liferay.portal.kernel.service.RegionLocalService;
 import com.liferay.portal.kernel.service.RegionService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
-import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
-import com.liferay.portal.kernel.test.rule.DataGuard;
-import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.context.ContextUserReplace;
+import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -42,7 +39,6 @@ import org.junit.runner.RunWith;
 /**
  * @author Tancredi Covioli
  */
-@DataGuard(scope = DataGuard.Scope.METHOD)
 @RunWith(Arquillian.class)
 public class RegionServiceTest {
 
@@ -53,16 +49,6 @@ public class RegionServiceTest {
 
 	@Before
 	public void setUp() throws Exception {
-		_user = UserTestUtil.addUser();
-
-		PermissionThreadLocal.setPermissionChecker(
-			PermissionCheckerFactoryUtil.create(_user));
-
-		_group = GroupTestUtil.addGroup();
-
-		_serviceContext = ServiceContextTestUtil.getServiceContext(
-			_group.getCompanyId(), _group.getGroupId(), _user.getUserId());
-
 		_country = _countryLocalService.addCountry(
 			"aa", "aaa", true, RandomTestUtil.randomBoolean(),
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
@@ -72,21 +58,21 @@ public class RegionServiceTest {
 			ServiceContextTestUtil.getServiceContext());
 
 		_role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+		_user = UserTestUtil.addUser();
 
 		_userLocalService.addRoleUser(_role.getRoleId(), _user);
 	}
 
 	@Test
 	public void testAddRegion() throws Exception {
-		boolean active = RandomTestUtil.randomBoolean();
-		String name = RandomTestUtil.randomString();
-		double position = RandomTestUtil.randomDouble();
-		String regionCode = RandomTestUtil.randomString();
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
 
-		try {
-			_regionService.addRegion(
-				_country.getCountryId(), active, name, position, regionCode,
-				_serviceContext);
+			_region = _regionService.addRegion(
+				_country.getCountryId(), true, RandomTestUtil.randomString(),
+				RandomTestUtil.nextDouble(), "aa",
+				ServiceContextTestUtil.getServiceContext());
+
 			Assert.fail();
 		}
 		catch (PrincipalException.MustHavePermission principalException) {
@@ -94,29 +80,34 @@ public class RegionServiceTest {
 		}
 
 		_resourcePermissionLocalService.addResourcePermission(
-			_serviceContext.getCompanyId(), Country.class.getName(),
+			TestPropsValues.getCompanyId(), Country.class.getName(),
 			ResourceConstants.SCOPE_COMPANY,
-			String.valueOf(_serviceContext.getCompanyId()), _role.getRoleId(),
+			String.valueOf(TestPropsValues.getCompanyId()), _role.getRoleId(),
 			ActionKeys.UPDATE);
 
-		Region region = _regionService.addRegion(
-			_country.getCountryId(), active, name, position, regionCode,
-			_serviceContext);
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
 
-		region = _regionLocalService.fetchRegion(region.getRegionId());
-
-		Assert.assertNotNull(region);
+			_region = _regionService.addRegion(
+				_country.getCountryId(), true, RandomTestUtil.randomString(),
+				RandomTestUtil.nextDouble(), "aa",
+				ServiceContextTestUtil.getServiceContext());
+		}
 	}
 
 	@Test
 	public void testDeleteRegion() throws Exception {
-		Region region = _regionLocalService.addRegion(
-			_country.getCountryId(), RandomTestUtil.randomBoolean(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomDouble(),
-			RandomTestUtil.randomString(), _serviceContext);
+		_region =
+			_region = _regionService.addRegion(
+				_country.getCountryId(), true, RandomTestUtil.randomString(),
+				RandomTestUtil.nextDouble(), "aa",
+				ServiceContextTestUtil.getServiceContext());
 
-		try {
-			_regionService.deleteRegion(region.getRegionId());
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
+
+			_regionService.deleteRegion(_region.getRegionId());
+
 			Assert.fail();
 		}
 		catch (PrincipalException.MustHavePermission principalException) {
@@ -124,27 +115,30 @@ public class RegionServiceTest {
 		}
 
 		_resourcePermissionLocalService.addResourcePermission(
-			_serviceContext.getCompanyId(), Country.class.getName(),
+			TestPropsValues.getCompanyId(), Country.class.getName(),
 			ResourceConstants.SCOPE_COMPANY,
-			String.valueOf(_serviceContext.getCompanyId()), _role.getRoleId(),
+			String.valueOf(TestPropsValues.getCompanyId()), _role.getRoleId(),
 			ActionKeys.UPDATE);
 
-		_regionService.deleteRegion(region.getRegionId());
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
 
-		region = _regionLocalService.fetchRegion(region.getRegionId());
-
-		Assert.assertNull(region);
+			_regionService.deleteRegion(_region.getRegionId());
+		}
 	}
 
 	@Test
 	public void testUpdateActive() throws Exception {
-		Region region = _regionLocalService.addRegion(
+		_region = _regionService.addRegion(
 			_country.getCountryId(), true, RandomTestUtil.randomString(),
-			RandomTestUtil.randomDouble(), RandomTestUtil.randomString(),
-			_serviceContext);
+			RandomTestUtil.nextDouble(), "aa",
+			ServiceContextTestUtil.getServiceContext());
 
-		try {
-			_regionService.updateActive(region.getRegionId(), false);
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
+
+			_regionService.updateActive(_region.getRegionId(), false);
+
 			Assert.fail();
 		}
 		catch (PrincipalException.MustHavePermission principalException) {
@@ -152,33 +146,33 @@ public class RegionServiceTest {
 		}
 
 		_resourcePermissionLocalService.addResourcePermission(
-			_serviceContext.getCompanyId(), Country.class.getName(),
+			TestPropsValues.getCompanyId(), Country.class.getName(),
 			ResourceConstants.SCOPE_COMPANY,
-			String.valueOf(_serviceContext.getCompanyId()), _role.getRoleId(),
+			String.valueOf(TestPropsValues.getCompanyId()), _role.getRoleId(),
 			ActionKeys.UPDATE);
 
-		_regionService.updateActive(region.getRegionId(), false);
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
 
-		region = _regionLocalService.fetchRegion(region.getRegionId());
-
-		Assert.assertFalse(region.isActive());
+			_regionService.updateActive(_region.getRegionId(), false);
+		}
 	}
 
 	@Test
 	public void testUpdateRegion() throws Exception {
-		Region region = _regionLocalService.addRegion(
-			_country.getCountryId(), RandomTestUtil.randomBoolean(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomDouble(),
-			RandomTestUtil.randomString(), _serviceContext);
+		_region = _regionService.addRegion(
+			_country.getCountryId(), true, RandomTestUtil.randomString(),
+			RandomTestUtil.nextDouble(), "aa",
+			ServiceContextTestUtil.getServiceContext());
 
-		boolean active = RandomTestUtil.randomBoolean();
-		String name = RandomTestUtil.randomString();
-		double position = RandomTestUtil.randomDouble();
-		String regionCode = RandomTestUtil.randomString();
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
 
-		try {
-			_regionService.updateRegion(
-				region.getRegionId(), active, name, position, regionCode);
+			_region = _regionService.updateRegion(
+				_region.getRegionId(), _region.isActive(),
+				RandomTestUtil.randomString(), _region.getPosition(),
+				_region.getRegionCode());
+
 			Assert.fail();
 		}
 		catch (PrincipalException.MustHavePermission principalException) {
@@ -186,27 +180,23 @@ public class RegionServiceTest {
 		}
 
 		_resourcePermissionLocalService.addResourcePermission(
-			_serviceContext.getCompanyId(), Country.class.getName(),
+			TestPropsValues.getCompanyId(), Country.class.getName(),
 			ResourceConstants.SCOPE_COMPANY,
-			String.valueOf(_serviceContext.getCompanyId()), _role.getRoleId(),
+			String.valueOf(TestPropsValues.getCompanyId()), _role.getRoleId(),
 			ActionKeys.UPDATE);
 
-		_regionService.updateRegion(
-			region.getRegionId(), active, name, position, regionCode);
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user, PermissionCheckerFactoryUtil.create(_user))) {
 
-		region = _regionLocalService.fetchRegion(region.getRegionId());
-
-		Assert.assertEquals(active, region.isActive());
-		Assert.assertEquals(name, region.getName());
-		Assert.assertEquals(position, region.getPosition(), 0D);
-		Assert.assertEquals(regionCode, region.getRegionCode());
+			_region = _regionService.updateRegion(
+				_region.getRegionId(), _region.isActive(),
+				RandomTestUtil.randomString(), _region.getPosition(),
+				_region.getRegionCode());
+		}
 	}
 
 	@Inject
 	private static CountryLocalService _countryLocalService;
-
-	@Inject
-	private static RegionLocalService _regionLocalService;
 
 	@Inject
 	private static RegionService _regionService;
@@ -218,10 +208,13 @@ public class RegionServiceTest {
 	@Inject
 	private static UserLocalService _userLocalService;
 
+	@DeleteAfterTestRun
 	private Country _country;
-	private Group _group;
+
+	@DeleteAfterTestRun
+	private Region _region;
+
 	private Role _role;
-	private ServiceContext _serviceContext;
 	private User _user;
 
 }

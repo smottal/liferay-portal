@@ -22,7 +22,6 @@ import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -71,8 +70,6 @@ public class CountryResourcePermissionUpgradeProcessTest {
 			true, true, true, _serviceContext);
 
 		_role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
-
-		_userLocalService.addRoleUser(_role.getRoleId(), _user);
 	}
 
 	@Test
@@ -99,6 +96,7 @@ public class CountryResourcePermissionUpgradeProcessTest {
 		_runUpgrade();
 
 		CacheRegistryUtil.clear();
+
 		_entityCache.clearCache();
 		_finderCache.clearCache(ResourceActionImpl.class);
 		_multiVMPool.clear();
@@ -169,9 +167,6 @@ public class CountryResourcePermissionUpgradeProcessTest {
 		filter = "(&(component.name=com.liferay.address.internal.upgrade.registry.AddressUpgradeStepRegistrator))"
 	)
 	private static UpgradeStepRegistrator _upgradeStepRegistrator;
-
-	@Inject
-	private static UserLocalService _userLocalService;
 
 	private Country _country;
 	private Group _group;
