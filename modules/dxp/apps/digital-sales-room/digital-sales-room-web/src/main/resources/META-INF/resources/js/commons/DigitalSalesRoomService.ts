@@ -42,7 +42,7 @@ export type TChannelsDTO = {
 export type TCommentDTO = {
 	category: string;
 	creator: {
-		id: string;
+		id: number;
 		image: string;
 		name: string;
 	};
@@ -188,6 +188,13 @@ async function deleteDigitalSalesRoom(groupId: number) {
 	return await ApiHelper.delete(`${PATH}/${groupId}`);
 }
 
+async function deleteDigitalSalesRoomComment(
+	groupId: number,
+	commentId: number
+) {
+	return await ApiHelper.delete(`${PATH}/${groupId}/comments/${commentId}`);
+}
+
 async function deleteDigitalSalesRoomTemplate(groupId: number) {
 	return await ApiHelper.delete(`${TEMPLATE_PATH}/${groupId}`);
 }
@@ -218,10 +225,20 @@ async function getChannels(channelName = ''): Promise<TChannelsDTO> {
 
 async function getDigitalSalesRoomComments(
 	digitalSalesRoomId: number,
-	page: number = 1
+	page: number = 1,
+	pageSize: number = 20,
+	parentCommentId?: number
 ): Promise<TCommentsDTO> {
+	const params = new URLSearchParams({
+		page: String(page),
+		pageSize: String(pageSize),
+		sort: 'dateCreated:desc',
+		...(parentCommentId !== undefined && {
+			parentCommentId: String(parentCommentId),
+		}),
+	});
 	const {data, error} = await ApiHelper.get(
-		`${PATH}/${digitalSalesRoomId}/comments?page=${page}&sort=dateCreated:desc`
+		`${PATH}/${digitalSalesRoomId}/comments?${params.toString()}`
 	);
 
 	if (data) {
@@ -266,6 +283,23 @@ async function getDigitalSalesRoomTemplates(): Promise<TDSRTemplatesDTO> {
 
 	if (data) {
 		return data as TDSRTemplatesDTO;
+	}
+
+	throw new Error(error);
+}
+
+async function patchDigitalSalesRoomComment(
+	commentId: number,
+	digitalSalesRoomId: number,
+	text: string
+): Promise<TCommentDTO> {
+	const {data, error} = await ApiHelper.patch(
+		`${PATH}/${digitalSalesRoomId}/comments/${commentId}`,
+		{text}
+	);
+
+	if (data) {
+		return data as TCommentDTO;
 	}
 
 	throw new Error(error);
@@ -347,12 +381,14 @@ async function patchDigitalSalesRoomTemplate(
 
 async function postDigitalSalesRoomComment(
 	digitalSalesRoomId: number,
-	text: string
+	text: string,
+	parentCommentId?: number
 ): Promise<TCommentDTO> {
 	const {data, error} = await ApiHelper.post(
 		`${PATH}/${digitalSalesRoomId}/comments`,
 		{
 			text,
+			parentCommentId,
 		}
 	);
 
@@ -564,6 +600,7 @@ async function deleteDigitalSalesRoomUserAccountBrief(
 export default {
 	addDigitalSalesRoomUserAccountBrief,
 	deleteDigitalSalesRoom,
+	deleteDigitalSalesRoomComment,
 	deleteDigitalSalesRoomTemplate,
 	deleteDigitalSalesRoomUserAccountBrief,
 	getAccounts,
@@ -574,6 +611,7 @@ export default {
 	getDigitalSalesRoomTemplates,
 	getDigitalSalesRoomUserAccountBriefs,
 	patchDigitalSalesRoom,
+	patchDigitalSalesRoomComment,
 	patchDigitalSalesRoomTemplate,
 	postDigitalSalesRoom,
 	postDigitalSalesRoomComment,

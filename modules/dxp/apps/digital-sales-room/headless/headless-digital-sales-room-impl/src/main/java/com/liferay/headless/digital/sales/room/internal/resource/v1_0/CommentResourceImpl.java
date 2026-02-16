@@ -17,6 +17,8 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.comment.CommentManager;
 import com.liferay.portal.kernel.comment.Discussion;
 import com.liferay.portal.kernel.comment.DiscussionComment;
+import com.liferay.portal.kernel.comment.DiscussionPermission;
+import com.liferay.portal.kernel.exception.NoSuchModelException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
@@ -25,8 +27,12 @@ import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
 import com.liferay.portal.kernel.search.filter.TermFilter;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.GroupService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.permission.GroupPermissionUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.odata.entity.EntityModel;
@@ -39,6 +45,7 @@ import com.liferay.portal.vulcan.util.SearchUtil;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 import org.osgi.service.component.annotations.Component;
@@ -55,9 +62,41 @@ import org.osgi.service.component.annotations.ServiceScope;
 public class CommentResourceImpl extends BaseCommentResourceImpl {
 
 	@Override
+	public void deleteDigitalSalesRoomComment(
+			Long digitalSalesRoomId, Long commentId)
+		throws Exception {
+
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-66359")) {
+
+			throw new UnsupportedOperationException();
+		}
+
+		PermissionChecker permissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		GroupPermissionUtil.check(
+			permissionChecker, digitalSalesRoomId, ActionKeys.VIEW);
+
+		com.liferay.portal.kernel.comment.Comment serviceBuilderComment =
+			_commentManager.fetchComment(commentId);
+
+		if ((serviceBuilderComment == null) ||
+			(serviceBuilderComment.getGroupId() != digitalSalesRoomId)) {
+
+			throw new NoSuchModelException();
+		}
+
+		_discussionPermission.checkDeletePermission(
+			permissionChecker, commentId);
+
+		_commentManager.deleteComment(commentId);
+	}
+
+	@Override
 	public Page<Comment> getDigitalSalesRoomCommentsPage(
-			Long digitalSalesRoomId, String search, Pagination pagination,
-			Sort[] sorts)
+			Long digitalSalesRoomId, Long parentCommentId, String search,
+			Pagination pagination, Sort[] sorts)
 		throws Exception {
 
 		if (!FeatureFlagManagerUtil.isEnabled(
@@ -91,7 +130,10 @@ public class CommentResourceImpl extends BaseCommentResourceImpl {
 				booleanFilter.add(
 					new TermFilter(
 						"parentMessageId",
-						String.valueOf(discussionComment.getCommentId())),
+						String.valueOf(
+							Objects.requireNonNullElseGet(
+								parentCommentId,
+								discussionComment::getCommentId))),
 					BooleanClauseOccur.MUST);
 			},
 			null, MBMessage.class.getName(), search, pagination,
@@ -116,6 +158,45 @@ public class CommentResourceImpl extends BaseCommentResourceImpl {
 	}
 
 	@Override
+	public Comment patchDigitalSalesRoomComment(
+			Long digitalSalesRoomId, Long commentId, Comment comment)
+		throws Exception {
+
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-66359")) {
+
+			throw new UnsupportedOperationException();
+		}
+
+		PermissionChecker permissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		GroupPermissionUtil.check(
+			permissionChecker, digitalSalesRoomId, ActionKeys.VIEW);
+
+		_discussionPermission.checkUpdatePermission(
+			permissionChecker, commentId);
+
+		com.liferay.portal.kernel.comment.Comment serviceBuilderComment =
+			_commentManager.fetchComment(commentId);
+
+		if ((serviceBuilderComment == null) ||
+			(serviceBuilderComment.getGroupId() != digitalSalesRoomId)) {
+
+			throw new NoSuchModelException();
+		}
+
+		return _toComment(
+			_commentManager.fetchComment(
+				_commentManager.updateComment(
+					contextUser.getUserId(),
+					serviceBuilderComment.getClassName(),
+					serviceBuilderComment.getClassPK(),
+					serviceBuilderComment.getCommentId(), StringPool.BLANK,
+					comment.getText(), _createServiceContextFunction())));
+	}
+
+	@Override
 	public Comment postDigitalSalesRoomComment(
 			Long digitalSalesRoomId, Comment comment)
 		throws Exception {
@@ -132,6 +213,17 @@ public class CommentResourceImpl extends BaseCommentResourceImpl {
 		ObjectEntry objectEntry = _objectEntryLocalService.getObjectEntry(
 			group.getExternalReferenceCode(), group.getGroupId(),
 			objectDefinition.getObjectDefinitionId());
+
+		if (comment.getParentCommentId() != null) {
+			return _toComment(
+				_commentManager.fetchComment(
+					_commentManager.addComment(
+						StringPool.BLANK, contextUser.getUserId(),
+						objectDefinition.getClassName(),
+						objectEntry.getObjectEntryId(), StringPool.BLANK,
+						comment.getParentCommentId(), StringPool.BLANK,
+						comment.getText(), _createServiceContextFunction())));
+		}
 
 		return _toComment(
 			_commentManager.fetchComment(
@@ -180,6 +272,9 @@ public class CommentResourceImpl extends BaseCommentResourceImpl {
 
 	@Reference
 	private CommentManager _commentManager;
+
+	@Reference
+	private DiscussionPermission _discussionPermission;
 
 	@Reference
 	private DTOConverterRegistry _dtoConverterRegistry;
