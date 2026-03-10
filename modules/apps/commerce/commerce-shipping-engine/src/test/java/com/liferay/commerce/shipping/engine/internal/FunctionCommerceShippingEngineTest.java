@@ -7,8 +7,6 @@ package com.liferay.commerce.shipping.engine.internal;
 
 import com.liferay.account.model.AccountEntry;
 import com.liferay.commerce.context.CommerceContext;
-import com.liferay.commerce.currency.model.CommerceCurrency;
-import com.liferay.commerce.currency.service.CommerceCurrencyLocalService;
 import com.liferay.commerce.model.CommerceOrder;
 import com.liferay.commerce.model.CommerceOrderItem;
 import com.liferay.commerce.model.CommerceShippingMethod;
@@ -25,7 +23,6 @@ import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.UserService;
-import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.BigDecimalUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -46,7 +43,10 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
 /**
  * @author Crescenzo Rega
@@ -60,79 +60,22 @@ public class FunctionCommerceShippingEngineTest {
 
 	@Before
 	public void setUp() throws Exception {
+		MockitoAnnotations.initMocks(this);
+
 		_setUpCommerceChannelLocalService();
-		_setUpCommerceCurrencyLocalService();
 		_setUpCommerceShippingMethodLocalService();
 		_setUpDtoConverterRegistry();
 		_setUpFunctionCommerceShippingEngineConfiguration();
 		_setUpJSONFactory();
 		_setUpPortalCatapult();
 		_setUpUserService();
-
-		_setUpFunctionCommerceShippingEngine();
 	}
 
 	@Test
 	public void testGetCommerceShippingOptions() throws Exception {
-		CommerceContext commerceContext = Mockito.mock(CommerceContext.class);
-		AccountEntry accountEntry = Mockito.mock(AccountEntry.class);
-
-		Mockito.when(
-			commerceContext.getAccountEntry()
-		).thenReturn(
-			accountEntry
-		);
-
-		Mockito.when(
-			commerceContext.getCommerceChannelId()
-		).thenReturn(
-			RandomTestUtil.randomLong()
-		);
-
-		CommerceOrder commerceOrder = Mockito.mock(CommerceOrder.class);
-
-		Mockito.when(
-			commerceOrder.getCommerceAccountId()
-		).thenReturn(
-			RandomTestUtil.randomLong()
-		);
-
-		Mockito.when(
-			commerceOrder.getCommerceCurrencyCode()
-		).thenReturn(
-			RandomTestUtil.randomString()
-		);
-
-		Mockito.when(
-			commerceOrder.getCommerceOrderId()
-		).thenReturn(
-			RandomTestUtil.randomLong()
-		);
-
-		Mockito.when(
-			commerceOrder.getCompanyId()
-		).thenReturn(
-			RandomTestUtil.randomLong()
-		);
-
-		CommerceOrderItem commerceOrderItem = Mockito.mock(
-			CommerceOrderItem.class);
-
-		Mockito.when(
-			commerceOrderItem.getCommerceOrderItemId()
-		).thenReturn(
-			RandomTestUtil.randomLong()
-		);
-
-		Mockito.when(
-			commerceOrder.getCommerceOrderItems()
-		).thenReturn(
-			Collections.singletonList(commerceOrderItem)
-		);
-
 		List<CommerceShippingOption> commerceShippingOptions =
 			_functionCommerceShippingEngine.getCommerceShippingOptions(
-				commerceContext, commerceOrder, null);
+				_setUpCommerceContext(), _setUpCommerceOrder(), null);
 
 		Assert.assertNotNull(commerceShippingOptions);
 
@@ -181,9 +124,6 @@ public class FunctionCommerceShippingEngineTest {
 			RandomTestUtil.randomLong()
 		);
 
-		_commerceChannelLocalService = Mockito.mock(
-			CommerceChannelLocalService.class);
-
 		Mockito.when(
 			_commerceChannelLocalService.getCommerceChannel(Mockito.anyLong())
 		).thenReturn(
@@ -191,31 +131,67 @@ public class FunctionCommerceShippingEngineTest {
 		);
 	}
 
-	private void _setUpCommerceCurrencyLocalService() throws Exception {
-		CommerceCurrency commerceCurrency = Mockito.mock(
-			CommerceCurrency.class);
+	private CommerceContext _setUpCommerceContext() throws Exception {
+		CommerceContext commerceContext = Mockito.mock(CommerceContext.class);
 
 		Mockito.when(
-			commerceCurrency.getCode()
+			commerceContext.getAccountEntry()
 		).thenReturn(
-			"USD"
+			Mockito.mock(AccountEntry.class)
 		);
 
 		Mockito.when(
-			commerceCurrency.getRate()
+			commerceContext.getCommerceChannelId()
 		).thenReturn(
-			BigDecimal.ONE
+			RandomTestUtil.randomLong()
 		);
 
-		_commerceCurrencyLocalService = Mockito.mock(
-			CommerceCurrencyLocalService.class);
+		return commerceContext;
+	}
+
+	private CommerceOrder _setUpCommerceOrder() {
+		CommerceOrder commerceOrder = Mockito.mock(CommerceOrder.class);
 
 		Mockito.when(
-			_commerceCurrencyLocalService.getCommerceCurrency(
-				Mockito.anyLong(), Mockito.anyString())
+			commerceOrder.getCommerceAccountId()
 		).thenReturn(
-			commerceCurrency
+			RandomTestUtil.randomLong()
 		);
+
+		Mockito.when(
+			commerceOrder.getCommerceCurrencyCode()
+		).thenReturn(
+			RandomTestUtil.randomString()
+		);
+
+		Mockito.when(
+			commerceOrder.getCommerceOrderId()
+		).thenReturn(
+			RandomTestUtil.randomLong()
+		);
+
+		Mockito.when(
+			commerceOrder.getCompanyId()
+		).thenReturn(
+			RandomTestUtil.randomLong()
+		);
+
+		CommerceOrderItem commerceOrderItem = Mockito.mock(
+			CommerceOrderItem.class);
+
+		Mockito.when(
+			commerceOrderItem.getCommerceOrderItemId()
+		).thenReturn(
+			RandomTestUtil.randomLong()
+		);
+
+		Mockito.when(
+			commerceOrder.getCommerceOrderItems()
+		).thenReturn(
+			Collections.singletonList(commerceOrderItem)
+		);
+
+		return commerceOrder;
 	}
 
 	private void _setUpCommerceShippingMethodLocalService() {
@@ -223,19 +199,10 @@ public class FunctionCommerceShippingEngineTest {
 			CommerceShippingMethod.class);
 
 		Mockito.when(
-			commerceShippingMethod.getEngineKey()
-		).thenReturn(
-			RandomTestUtil.randomString()
-		);
-
-		Mockito.when(
 			commerceShippingMethod.getTypeSettingsUnicodeProperties()
 		).thenReturn(
 			RandomTestUtil.randomUnicodeProperties(4, 3, 3)
 		);
-
-		_commerceShippingMethodLocalService = Mockito.mock(
-			CommerceShippingMethodLocalService.class);
 
 		Mockito.when(
 			_commerceShippingMethodLocalService.fetchCommerceShippingMethod(
@@ -243,19 +210,10 @@ public class FunctionCommerceShippingEngineTest {
 		).thenReturn(
 			commerceShippingMethod
 		);
-
-		Mockito.when(
-			_commerceShippingMethodLocalService.getCommerceShippingMethods(
-				Mockito.anyInt(), Mockito.anyInt())
-		).thenReturn(
-			Collections.singletonList(commerceShippingMethod)
-		);
 	}
 
 	private void _setUpDtoConverterRegistry() throws Exception {
 		DTOConverter<?, ?> dtoConverter = Mockito.mock(DTOConverter.class);
-
-		_dtoConverterRegistry = Mockito.mock(DTOConverterRegistry.class);
 
 		Mockito.doReturn(
 			dtoConverter
@@ -266,7 +224,7 @@ public class FunctionCommerceShippingEngineTest {
 		);
 
 		Mockito.doReturn(
-			Order.toDTO("{\"id\": " + RandomTestUtil.randomLong() + "}")
+			new Order()
 		).when(
 			dtoConverter
 		).toDTO(
@@ -274,47 +232,9 @@ public class FunctionCommerceShippingEngineTest {
 		);
 	}
 
-	private void _setUpFunctionCommerceShippingEngine() throws Exception {
-		_functionCommerceShippingEngine = new FunctionCommerceShippingEngine();
-
-		ReflectionTestUtil.setFieldValue(
-			_functionCommerceShippingEngine, "_commerceChannelLocalService",
-			_commerceChannelLocalService);
-		ReflectionTestUtil.setFieldValue(
-			_functionCommerceShippingEngine, "_commerceCurrencyLocalService",
-			_commerceCurrencyLocalService);
-		ReflectionTestUtil.setFieldValue(
-			_functionCommerceShippingEngine,
-			"_commerceShippingMethodLocalService",
-			_commerceShippingMethodLocalService);
-		ReflectionTestUtil.setFieldValue(
-			_functionCommerceShippingEngine, "_dtoConverterRegistry",
-			_dtoConverterRegistry);
-		ReflectionTestUtil.setFieldValue(
-			_functionCommerceShippingEngine,
-			"_functionCommerceShippingEngineConfiguration",
-			_functionCommerceShippingEngineConfiguration);
-		ReflectionTestUtil.setFieldValue(
-			_functionCommerceShippingEngine, "_jsonFactory", _jsonFactory);
-		ReflectionTestUtil.setFieldValue(
-			_functionCommerceShippingEngine, "_portalCatapult",
-			_portalCatapult);
-		ReflectionTestUtil.setFieldValue(
-			_functionCommerceShippingEngine, "_userService", _userService);
-	}
-
 	private void _setUpFunctionCommerceShippingEngineConfiguration() {
-		_functionCommerceShippingEngineConfiguration = Mockito.mock(
-			FunctionCommerceShippingEngineConfiguration.class);
-
 		Mockito.when(
 			_functionCommerceShippingEngineConfiguration.key()
-		).thenReturn(
-			RandomTestUtil.randomString()
-		);
-
-		Mockito.when(
-			_functionCommerceShippingEngineConfiguration.name()
 		).thenReturn(
 			RandomTestUtil.randomString()
 		);
@@ -325,18 +245,9 @@ public class FunctionCommerceShippingEngineTest {
 		).thenReturn(
 			RandomTestUtil.randomString()
 		);
-
-		Mockito.when(
-			_functionCommerceShippingEngineConfiguration.
-				shippingEngineTypeSettings()
-		).thenReturn(
-			RandomTestUtil.randomString()
-		);
 	}
 
 	private void _setUpJSONFactory() throws Exception {
-		_jsonFactory = Mockito.mock(JSONFactory.class);
-
 		Mockito.when(
 			_jsonFactory.createJSONObject(Mockito.anyString())
 		).thenReturn(
@@ -403,8 +314,6 @@ public class FunctionCommerceShippingEngineTest {
 			RandomTestUtil.randomBytes()
 		);
 
-		_portalCatapult = Mockito.mock(PortalCatapult.class);
-
 		Mockito.when(
 			_portalCatapult.launch(
 				Mockito.anyLong(), Mockito.any(), Mockito.anyString(),
@@ -423,8 +332,6 @@ public class FunctionCommerceShippingEngineTest {
 			RandomTestUtil.randomLong()
 		);
 
-		_userService = Mockito.mock(UserService.class);
-
 		Mockito.when(
 			_userService.getCurrentUser()
 		).thenReturn(
@@ -432,16 +339,30 @@ public class FunctionCommerceShippingEngineTest {
 		);
 	}
 
+	@Mock
 	private CommerceChannelLocalService _commerceChannelLocalService;
-	private CommerceCurrencyLocalService _commerceCurrencyLocalService;
+
+	@Mock
 	private CommerceShippingMethodLocalService
 		_commerceShippingMethodLocalService;
+
+	@Mock
 	private DTOConverterRegistry _dtoConverterRegistry;
+
+	@InjectMocks
 	private FunctionCommerceShippingEngine _functionCommerceShippingEngine;
+
+	@Mock
 	private FunctionCommerceShippingEngineConfiguration
 		_functionCommerceShippingEngineConfiguration;
+
+	@Mock
 	private JSONFactory _jsonFactory;
+
+	@Mock
 	private PortalCatapult _portalCatapult;
+
+	@Mock
 	private UserService _userService;
 
 }

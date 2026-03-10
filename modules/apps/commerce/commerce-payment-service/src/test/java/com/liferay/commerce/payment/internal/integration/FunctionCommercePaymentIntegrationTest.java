@@ -20,7 +20,6 @@ import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoader;
 import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoaderUtil;
-import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.BigDecimalUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -36,13 +35,18 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.concurrent.Future;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
 /**
  * @author Crescenzo Rega
@@ -56,23 +60,27 @@ public class FunctionCommercePaymentIntegrationTest {
 
 	@Before
 	public void setUp() throws Exception {
+		MockitoAnnotations.initMocks(this);
+
 		_setUpCommerceChannelLocalService();
 		_setUpCommercePaymentMethodGroupRelLocalService();
 		_setUpFunctionCommercePaymentIntegrationConfiguration();
 		_setUpLanguage();
 		_setUpPortal();
 		_setUpPortalCatapult();
+		_setUpResourceBundleLoader();
+	}
 
-		_setUpFunctionCommercePaymentIntegration();
+	@After
+	public void tearDown() {
+		_languageUtilMockedStatic.close();
 	}
 
 	@Test
 	public void testAuthorize() throws Exception {
 		double amount = 0.0;
 
-		ReflectionTestUtil.setFieldValue(
-			_functionCommercePaymentIntegration, "_jsonFactory",
-			_mockJSONFactory(amount));
+		_setUpJSONFactory(amount);
 
 		HttpServletRequest httpServletRequest = Mockito.mock(
 			HttpServletRequest.class);
@@ -88,7 +96,7 @@ public class FunctionCommercePaymentIntegrationTest {
 
 		CommercePaymentEntry commercePaymentEntry =
 			_functionCommercePaymentIntegration.authorize(
-				httpServletRequest, _createCommercePaymentEntry());
+				httpServletRequest, _getCommercePaymentEntry());
 
 		Assert.assertTrue(
 			BigDecimalUtil.eq(
@@ -99,9 +107,7 @@ public class FunctionCommercePaymentIntegrationTest {
 	public void testCapture() throws Exception {
 		double amount = 1.0;
 
-		ReflectionTestUtil.setFieldValue(
-			_functionCommercePaymentIntegration, "_jsonFactory",
-			_mockJSONFactory(amount));
+		_setUpJSONFactory(amount);
 
 		HttpServletRequest httpServletRequest = Mockito.mock(
 			HttpServletRequest.class);
@@ -117,7 +123,7 @@ public class FunctionCommercePaymentIntegrationTest {
 
 		CommercePaymentEntry commercePaymentEntry =
 			_functionCommercePaymentIntegration.capture(
-				httpServletRequest, _createCommercePaymentEntry());
+				httpServletRequest, _getCommercePaymentEntry());
 
 		Assert.assertTrue(
 			BigDecimalUtil.eq(
@@ -128,9 +134,7 @@ public class FunctionCommercePaymentIntegrationTest {
 	public void testSetUpPayment() throws Exception {
 		double amount = 25.60;
 
-		ReflectionTestUtil.setFieldValue(
-			_functionCommercePaymentIntegration, "_jsonFactory",
-			_mockJSONFactory(amount));
+		_setUpJSONFactory(amount);
 
 		HttpServletRequest httpServletRequest = Mockito.mock(
 			HttpServletRequest.class);
@@ -146,14 +150,14 @@ public class FunctionCommercePaymentIntegrationTest {
 
 		CommercePaymentEntry commercePaymentEntry =
 			_functionCommercePaymentIntegration.capture(
-				httpServletRequest, _createCommercePaymentEntry());
+				httpServletRequest, _getCommercePaymentEntry());
 
 		Assert.assertTrue(
 			BigDecimalUtil.eq(
 				commercePaymentEntry.getAmount(), BigDecimal.valueOf(amount)));
 	}
 
-	private CommercePaymentEntry _createCommercePaymentEntry() {
+	private CommercePaymentEntry _getCommercePaymentEntry() {
 		CommercePaymentEntry commercePaymentEntry =
 			new CommercePaymentEntryImpl();
 
@@ -166,36 +170,6 @@ public class FunctionCommercePaymentIntegrationTest {
 		return commercePaymentEntry;
 	}
 
-	private JSONFactory _mockJSONFactory(double amount) throws Exception {
-		JSONFactory jsonFactory = Mockito.mock(JSONFactory.class);
-
-		Mockito.when(
-			jsonFactory.createJSONObject(Mockito.anyString())
-		).thenReturn(
-			JSONUtil.put(
-				"amount", amount
-			).put(
-				"paymentStatus", 2
-			).put(
-				"transactionCode", RandomTestUtil.randomString()
-			)
-		);
-
-		Mockito.when(
-			jsonFactory.looseSerializeDeep(Mockito.any())
-		).thenReturn(
-			RandomTestUtil.randomString()
-		);
-
-		Mockito.when(
-			jsonFactory.createJSONObject()
-		).thenReturn(
-			new JSONObjectImpl()
-		);
-
-		return jsonFactory;
-	}
-
 	private void _setUpCommerceChannelLocalService() throws Exception {
 		CommerceChannel commerceChannel = Mockito.mock(CommerceChannel.class);
 
@@ -204,9 +178,6 @@ public class FunctionCommercePaymentIntegrationTest {
 		).thenReturn(
 			RandomTestUtil.randomLong()
 		);
-
-		_commerceChannelLocalService = Mockito.mock(
-			CommerceChannelLocalService.class);
 
 		Mockito.when(
 			_commerceChannelLocalService.getCommerceChannel(Mockito.anyLong())
@@ -225,9 +196,6 @@ public class FunctionCommercePaymentIntegrationTest {
 			RandomTestUtil.randomUnicodeProperties(4, 3, 3)
 		);
 
-		_commercePaymentMethodGroupRelLocalService = Mockito.mock(
-			CommercePaymentMethodGroupRelLocalService.class);
-
 		Mockito.when(
 			_commercePaymentMethodGroupRelLocalService.
 				fetchCommercePaymentMethodGroupRel(
@@ -237,34 +205,7 @@ public class FunctionCommercePaymentIntegrationTest {
 		);
 	}
 
-	private void _setUpFunctionCommercePaymentIntegration() {
-		_functionCommercePaymentIntegration =
-			new FunctionCommercePaymentIntegration();
-
-		ReflectionTestUtil.setFieldValue(
-			_functionCommercePaymentIntegration, "_commerceChannelLocalService",
-			_commerceChannelLocalService);
-		ReflectionTestUtil.setFieldValue(
-			_functionCommercePaymentIntegration,
-			"_commercePaymentMethodGroupRelLocalService",
-			_commercePaymentMethodGroupRelLocalService);
-		ReflectionTestUtil.setFieldValue(
-			_functionCommercePaymentIntegration,
-			"_functionCommercePaymentIntegrationConfiguration",
-			_functionCommercePaymentIntegrationConfiguration);
-		ReflectionTestUtil.setFieldValue(
-			_functionCommercePaymentIntegration, "_language", _language);
-		ReflectionTestUtil.setFieldValue(
-			_functionCommercePaymentIntegration, "_portal", _portal);
-		ReflectionTestUtil.setFieldValue(
-			_functionCommercePaymentIntegration, "_portalCatapult",
-			_portalCatapult);
-	}
-
 	private void _setUpFunctionCommercePaymentIntegrationConfiguration() {
-		_functionCommercePaymentIntegrationConfiguration = Mockito.mock(
-			FunctionCommercePaymentIntegrationConfiguration.class);
-
 		Mockito.when(
 			_functionCommercePaymentIntegrationConfiguration.key()
 		).thenReturn(
@@ -299,21 +240,33 @@ public class FunctionCommercePaymentIntegrationTest {
 		);
 	}
 
-	private void _setUpLanguage() throws Exception {
-		ResourceBundleLoader resourceBundleLoader = Mockito.mock(
-			ResourceBundleLoader.class);
-
-		ResourceBundleLoaderUtil.setPortalResourceBundleLoader(
-			resourceBundleLoader);
-
+	private void _setUpJSONFactory(double amount) throws Exception {
 		Mockito.when(
-			resourceBundleLoader.loadResourceBundle(Mockito.any())
+			_jsonFactory.createJSONObject(Mockito.anyString())
 		).thenReturn(
-			ResourceBundleUtil.EMPTY_RESOURCE_BUNDLE
+			JSONUtil.put(
+				"amount", amount
+			).put(
+				"paymentStatus", 2
+			).put(
+				"transactionCode", RandomTestUtil.randomString()
+			)
 		);
 
-		_language = Mockito.mock(Language.class);
+		Mockito.when(
+			_jsonFactory.looseSerializeDeep(Mockito.any())
+		).thenReturn(
+			RandomTestUtil.randomString()
+		);
 
+		Mockito.when(
+			_jsonFactory.createJSONObject()
+		).thenReturn(
+			new JSONObjectImpl()
+		);
+	}
+
+	private void _setUpLanguage() throws Exception {
 		Mockito.when(
 			_language.get(
 				Mockito.any(ResourceBundle.class), Mockito.anyString())
@@ -321,19 +274,14 @@ public class FunctionCommercePaymentIntegrationTest {
 			RandomTestUtil.randomString()
 		);
 
-		Mockito.when(
-			_language.isAvailableLocale(Mockito.any(Locale.class))
+		_languageUtilMockedStatic.when(
+			() -> LanguageUtil.isAvailableLocale(Mockito.any(Locale.class))
 		).thenReturn(
 			true
 		);
-
-		ReflectionTestUtil.setFieldValue(
-			LanguageUtil.class, "_language", _language);
 	}
 
 	private void _setUpPortal() {
-		_portal = Mockito.mock(Portal.class);
-
 		Mockito.when(
 			_portal.getClassName(Mockito.anyLong())
 		).thenReturn(
@@ -350,8 +298,6 @@ public class FunctionCommercePaymentIntegrationTest {
 			RandomTestUtil.randomBytes()
 		);
 
-		_portalCatapult = Mockito.mock(PortalCatapult.class);
-
 		Mockito.when(
 			_portalCatapult.launch(
 				Mockito.anyLong(), Mockito.any(), Mockito.anyString(),
@@ -361,15 +307,48 @@ public class FunctionCommercePaymentIntegrationTest {
 		);
 	}
 
+	private void _setUpResourceBundleLoader() throws Exception {
+		ResourceBundleLoader resourceBundleLoader = Mockito.mock(
+			ResourceBundleLoader.class);
+
+		ResourceBundleLoaderUtil.setPortalResourceBundleLoader(
+			resourceBundleLoader);
+
+		Mockito.when(
+			resourceBundleLoader.loadResourceBundle(Mockito.any())
+		).thenReturn(
+			ResourceBundleUtil.EMPTY_RESOURCE_BUNDLE
+		);
+	}
+
+	@Mock
 	private CommerceChannelLocalService _commerceChannelLocalService;
+
+	@Mock
 	private CommercePaymentMethodGroupRelLocalService
 		_commercePaymentMethodGroupRelLocalService;
+
+	@InjectMocks
 	private FunctionCommercePaymentIntegration
 		_functionCommercePaymentIntegration;
+
+	@Mock
 	private FunctionCommercePaymentIntegrationConfiguration
 		_functionCommercePaymentIntegrationConfiguration;
+
+	@Mock
+	private JSONFactory _jsonFactory;
+
+	@Mock
 	private Language _language;
+
+	private final MockedStatic<LanguageUtil> _languageUtilMockedStatic =
+		Mockito.mockStatic(LanguageUtil.class);
+
+	@Mock
 	private Portal _portal;
+
+	@Mock
 	private PortalCatapult _portalCatapult;
 
 }
