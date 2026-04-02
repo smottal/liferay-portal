@@ -189,16 +189,27 @@ public class UserFinderTest {
 	public void testCountByKeywordsWithInheritedGroupsThroughDepotEntry()
 		throws Exception {
 
+		LinkedHashMap<String, Object> params =
+			LinkedHashMapBuilder.<String, Object>put(
+				"inherit", Boolean.TRUE
+			).put(
+				"usersGroups",
+				new Long[] {
+					_depotEntry.getGroupId(), _group.getGroupId(),
+					_organization1.getGroupId()
+				}
+			).build();
+
 		int expectedCount = _userFinder.countByKeywords(
 			TestPropsValues.getCompanyId(), null,
-			WorkflowConstants.STATUS_APPROVED, _inheritedUserGroupsParams);
+			WorkflowConstants.STATUS_APPROVED, params);
 
 		_groupLocalService.addUserGroupGroup(
 			_userGroup.getUserGroupId(), _depotEntry.getGroupId());
 
 		int count = _userFinder.countByKeywords(
 			TestPropsValues.getCompanyId(), null,
-			WorkflowConstants.STATUS_APPROVED, _inheritedUserGroupsParams);
+			WorkflowConstants.STATUS_APPROVED, params);
 
 		Assert.assertEquals(expectedCount + 1, count);
 	}
@@ -353,13 +364,24 @@ public class UserFinderTest {
 	public void testFindByKeywordsWithInheritedGroupsThroughDepotEntry()
 		throws Exception {
 
+		LinkedHashMap<String, Object> params =
+			LinkedHashMapBuilder.<String, Object>put(
+				"inherit", Boolean.TRUE
+			).put(
+				"usersGroups",
+				new Long[] {
+					_depotEntry.getGroupId(), _group.getGroupId(),
+					_organization1.getGroupId()
+				}
+			).build();
+
 		_groupLocalService.addUserGroupGroup(
 			_userGroup.getUserGroupId(), _depotEntry.getGroupId());
 
 		List<User> users = _userFinder.findByKeywords(
 			TestPropsValues.getCompanyId(), null,
-			WorkflowConstants.STATUS_APPROVED, _inheritedUserGroupsParams,
-			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+			WorkflowConstants.STATUS_APPROVED, params, QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS, null);
 
 		Assert.assertTrue(users.contains(_userGroupUser));
 	}
