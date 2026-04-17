@@ -5,8 +5,10 @@
 
 package com.liferay.site.dsr.site.initializer.internal.model.listener;
 
-import com.liferay.analytics.settings.configuration.AnalyticsConfiguration;
+import com.liferay.analytics.settings.rest.dto.v1_0.Channel;
+import com.liferay.analytics.settings.rest.dto.v1_0.DataSource;
 import com.liferay.analytics.settings.rest.manager.AnalyticsSettingsManager;
+import com.liferay.analytics.settings.rest.resource.v1_0.ChannelResource;
 import com.liferay.fragment.entry.processor.constants.FragmentEntryProcessorConstants;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.service.FragmentEntryLinkLocalService;
@@ -20,7 +22,6 @@ import com.liferay.petra.executor.PortalExecutorManager;
 import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModelListener;
@@ -43,13 +44,10 @@ import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.liveusers.LiveUsers;
 import com.liferay.portal.security.permission.PermissionCacheUtil;
@@ -57,12 +55,10 @@ import com.liferay.sites.kernel.util.Sites;
 
 import java.io.Serializable;
 
-import java.net.HttpURLConnection;
-
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -96,25 +92,15 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 		}
 	}
 
-	private void _connectSiteToAnalyticsChannel(long companyId, long groupId)
+	private void _connectSiteToAnalyticsChannel(
+			long companyId, long groupId, long userId)
 		throws Exception {
 
-		AnalyticsConfiguration analyticsConfiguration =
-			_analyticsSettingsManager.getAnalyticsConfiguration(companyId);
-
-		if (Validator.isNull(
-				analyticsConfiguration.liferayAnalyticsDataSourceId()) ||
-			Validator.isNull(
-				analyticsConfiguration.
-					liferayAnalyticsFaroBackendSecuritySignature()) ||
-			Validator.isNull(
-				analyticsConfiguration.liferayAnalyticsFaroBackendURL())) {
-
+		if (!_analyticsSettingsManager.isAnalyticsEnabled(companyId)) {
 			return;
 		}
 
-		String analyticsChannelId = _getAnalyticsChannelId(
-			analyticsConfiguration);
+		String analyticsChannelId = _getAnalyticsChannelId(companyId);
 
 		if (Validator.isNull(analyticsChannelId)) {
 			if (_log.isDebugEnabled()) {
@@ -132,27 +118,35 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 			return;
 		}
 
-		Long[] newSiteIds = ArrayUtil.append(existingSiteIds, groupId);
+		DataSource dataSource = new DataSource();
 
-		_updateAnalyticsCloudChannel(
-			analyticsChannelId, analyticsConfiguration, newSiteIds);
+		dataSource.setSiteIds(
+			ArrayUtil.append(existingSiteIds, groupId));
 
-		String[] updatedSiteIds = _analyticsSettingsManager.updateSiteIds(
-			analyticsChannelId, companyId, newSiteIds);
+		Channel channel = new Channel();
 
-		_analyticsSettingsManager.updateCompanyConfiguration(
-			companyId,
-			HashMapBuilder.<String, Object>put(
-				"syncedGroupIds", updatedSiteIds
-			).build());
+		channel.setChannelId(analyticsChannelId);
+		channel.setDataSources(new DataSource[] {dataSource});
+
+		User user = _userLocalService.fetchUser(userId);
+
+		ChannelResource channelResource = _channelResourceFactory.create(
+		).checkPermissions(
+			false
+		).user(
+			user
+		).build();
+
+		channelResource.patchChannel(channel);
 	}
 
-	private String _getAnalyticsChannelId(
-		AnalyticsConfiguration analyticsConfiguration) {
+	private String _getAnalyticsChannelId(long companyId) throws Exception {
+		String[] syncedGroupIds =
+			_analyticsSettingsManager.getAnalyticsConfiguration(
+				companyId
+			).syncedGroupIds();
 
-		for (String syncedGroupId :
-				analyticsConfiguration.syncedGroupIds()) {
-
+		for (String syncedGroupId : syncedGroupIds) {
 			Group group = _groupLocalService.fetchGroup(
 				GetterUtil.getLong(syncedGroupId));
 
@@ -289,7 +283,8 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 					).submit(() -> {
 						try {
 							_connectSiteToAnalyticsChannel(
-								company.getCompanyId(), group.getGroupId());
+								company.getCompanyId(), group.getGroupId(),
+								objectEntry.getUserId());
 						}
 						catch (Exception exception) {
 							_log.error(
@@ -335,64 +330,6 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 
 		if (group != null) {
 			_groupLocalService.deleteGroup(group);
-		}
-	}
-
-	private void _updateAnalyticsCloudChannel(
-			String analyticsChannelId,
-			AnalyticsConfiguration analyticsConfiguration, Long[] siteIds)
-		throws Exception {
-
-		Locale locale = LocaleUtil.getDefault();
-
-		Http.Options options = new Http.Options();
-
-		options.addHeader("Content-Type", ContentTypes.APPLICATION_JSON);
-		options.addHeader(
-			"OSB-Asah-Faro-Backend-Security-Signature",
-			analyticsConfiguration.
-				liferayAnalyticsFaroBackendSecuritySignature());
-		options.addHeader(
-			"OSB-Asah-Project-ID",
-			analyticsConfiguration.liferayAnalyticsProjectId());
-		options.setBody(
-			JSONUtil.put(
-				"dataSourceId",
-				analyticsConfiguration.liferayAnalyticsDataSourceId()
-			).put(
-				"groups",
-				JSONUtil.toJSONArray(
-					siteIds,
-					siteId -> {
-						Group group = _groupLocalService.fetchGroup(siteId);
-
-						if (group == null) {
-							return null;
-						}
-
-						return JSONUtil.put(
-							"id", String.valueOf(group.getGroupId())
-						).put(
-							"name", group.getDescriptiveName(locale)
-						);
-					})
-			).toString(),
-			ContentTypes.APPLICATION_JSON, "UTF-8");
-		options.setLocation(
-			String.format(
-				"%s/api/1.0/channels/%s",
-				analyticsConfiguration.liferayAnalyticsFaroBackendURL(),
-				analyticsChannelId));
-		options.setPatch(true);
-
-		_http.URLtoString(options);
-
-		Http.Response response = options.getResponse();
-
-		if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
-			throw new PortalException(
-				"Unable to update analytics channel " + analyticsChannelId +
-					", response code: " + response.getResponseCode());
 		}
 	}
 
@@ -452,6 +389,9 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 	private AnalyticsSettingsManager _analyticsSettingsManager;
 
 	@Reference
+	private ChannelResource.Factory _channelResourceFactory;
+
+	@Reference
 	private ClassNameLocalService _classNameLocalService;
 
 	@Reference
@@ -462,9 +402,6 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 
 	@Reference
 	private GroupLocalService _groupLocalService;
-
-	@Reference
-	private Http _http;
 
 	@Reference
 	private LayoutPageTemplateEntryLocalService

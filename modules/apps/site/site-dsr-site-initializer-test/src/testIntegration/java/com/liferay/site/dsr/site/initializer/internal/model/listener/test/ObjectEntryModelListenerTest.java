@@ -8,7 +8,10 @@ package com.liferay.site.dsr.site.initializer.internal.model.listener.test;
 import com.liferay.account.model.AccountEntry;
 import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.analytics.settings.configuration.AnalyticsConfiguration;
+import com.liferay.analytics.settings.rest.dto.v1_0.Channel;
+import com.liferay.analytics.settings.rest.dto.v1_0.DataSource;
 import com.liferay.analytics.settings.rest.manager.AnalyticsSettingsManager;
+import com.liferay.analytics.settings.rest.resource.v1_0.ChannelResource;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
@@ -37,11 +40,15 @@ import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.context.ContextUserReplace;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.FeatureFlag;
@@ -53,14 +60,24 @@ import com.liferay.site.dsr.site.initializer.test.util.DSRTestUtil;
 
 import java.io.Serializable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Stefano Motta
@@ -88,6 +105,27 @@ public class ObjectEntryModelListenerTest {
 			_objectDefinitionLocalService.
 				getObjectDefinitionByExternalReferenceCode(
 					"L_DSR_ROOM", TestPropsValues.getCompanyId());
+
+		_setUpAnalyticsMocks();
+	}
+
+	@After
+	public void tearDown() {
+		for (ServiceRegistration<?> serviceRegistration :
+				_serviceRegistrations) {
+
+			serviceRegistration.unregister();
+		}
+
+		_serviceRegistrations.clear();
+
+		if (_syncedGroup != null) {
+			try {
+				_groupLocalService.deleteGroup(_syncedGroup);
+			}
+			catch (Exception exception) {
+			}
+		}
 	}
 
 	@Test
@@ -127,60 +165,6 @@ public class ObjectEntryModelListenerTest {
 				objectEntry.getObjectEntryId()));
 	}
 
-	private void _assertAnalyticsChannelConnection(Group group)
-		throws Exception {
-
-		long companyId = group.getCompanyId();
-
-		if (!_analyticsSettingsManager.isAnalyticsEnabled(companyId)) {
-			return;
-		}
-
-		AnalyticsConfiguration analyticsConfiguration =
-			_analyticsSettingsManager.getAnalyticsConfiguration(companyId);
-
-		String expectedChannelId = null;
-
-		for (String syncedGroupId :
-				analyticsConfiguration.syncedGroupIds()) {
-
-			Group syncedGroup = _groupLocalService.fetchGroup(
-				Long.parseLong(syncedGroupId));
-
-			if (syncedGroup == null) {
-				continue;
-			}
-
-			String channelId = syncedGroup.getTypeSettingsProperty(
-				"analyticsChannelId");
-
-			if (channelId != null) {
-				expectedChannelId = channelId;
-
-				break;
-			}
-		}
-
-		if (expectedChannelId == null) {
-			return;
-		}
-
-		// Wait for the async analytics connection to complete
-
-		Thread.sleep(5000);
-
-		Group updatedGroup = _groupLocalService.fetchGroup(
-			group.getGroupId());
-
-		Assert.assertEquals(
-			expectedChannelId,
-			updatedGroup.getTypeSettingsProperty("analyticsChannelId"));
-
-		Assert.assertTrue(
-			_analyticsSettingsManager.isSiteIdSynced(
-				companyId, group.getGroupId()));
-	}
-
 	private void _assertHasResourcePermission(
 			String actionId, ObjectEntry objectEntry, long roleId)
 		throws Exception {
@@ -191,6 +175,139 @@ public class ObjectEntryModelListenerTest {
 				ResourceConstants.SCOPE_INDIVIDUAL,
 				String.valueOf(objectEntry.getObjectEntryId()), roleId,
 				actionId));
+	}
+
+	private void _assertPatchChannelCalledWithSiteId(long siteGroupId)
+		throws Exception {
+
+		Thread.sleep(5000);
+
+		ArgumentCaptor<Channel> channelCaptor = ArgumentCaptor.forClass(
+			Channel.class);
+
+		Mockito.verify(
+			_mockChannelResource, Mockito.atLeastOnce()
+		).patchChannel(
+			channelCaptor.capture()
+		);
+
+		Channel capturedChannel = channelCaptor.getValue();
+
+		Assert.assertEquals(
+			_ANALYTICS_CHANNEL_ID, capturedChannel.getChannelId());
+
+		DataSource[] dataSources = capturedChannel.getDataSources();
+
+		Assert.assertEquals(1, dataSources.length);
+
+		Assert.assertTrue(
+			ArrayUtil.contains(dataSources[0].getSiteIds(), siteGroupId));
+	}
+
+	private void _setUpAnalyticsMocks() throws Exception {
+		BundleContext bundleContext = FrameworkUtil.getBundle(
+			ObjectEntryModelListenerTest.class
+		).getBundleContext();
+
+		// Create a real group with analyticsChannelId set
+
+		_syncedGroup = GroupTestUtil.addGroup();
+
+		UnicodeProperties typeSettingsUnicodeProperties =
+			_syncedGroup.getTypeSettingsProperties();
+
+		typeSettingsUnicodeProperties.setProperty(
+			"analyticsChannelId", _ANALYTICS_CHANNEL_ID);
+
+		_groupLocalService.updateGroup(_syncedGroup);
+
+		// Mock AnalyticsSettingsManager
+
+		AnalyticsConfiguration mockAnalyticsConfiguration = Mockito.mock(
+			AnalyticsConfiguration.class);
+
+		Mockito.when(
+			mockAnalyticsConfiguration.syncedGroupIds()
+		).thenReturn(
+			new String[] {String.valueOf(_syncedGroup.getGroupId())}
+		);
+
+		AnalyticsSettingsManager mockAnalyticsSettingsManager = Mockito.mock(
+			AnalyticsSettingsManager.class);
+
+		Mockito.when(
+			mockAnalyticsSettingsManager.isAnalyticsEnabled(Mockito.anyLong())
+		).thenReturn(
+			true
+		);
+
+		Mockito.when(
+			mockAnalyticsSettingsManager.getAnalyticsConfiguration(
+				Mockito.anyLong())
+		).thenReturn(
+			mockAnalyticsConfiguration
+		);
+
+		Mockito.when(
+			mockAnalyticsSettingsManager.getSiteIds(
+				Mockito.anyString(), Mockito.anyLong())
+		).thenReturn(
+			new Long[0]
+		);
+
+		_serviceRegistrations.add(
+			bundleContext.registerService(
+				AnalyticsSettingsManager.class, mockAnalyticsSettingsManager,
+				HashMapDictionaryBuilder.<String, Object>put(
+					"service.ranking", Integer.MAX_VALUE
+				).build()));
+
+		// Mock ChannelResource.Factory
+
+		_mockChannelResource = Mockito.mock(ChannelResource.class);
+
+		Mockito.when(
+			_mockChannelResource.patchChannel(Mockito.any(Channel.class))
+		).thenReturn(
+			new Channel()
+		);
+
+		ChannelResource.Builder mockBuilder = Mockito.mock(
+			ChannelResource.Builder.class);
+
+		Mockito.when(
+			mockBuilder.build()
+		).thenReturn(
+			_mockChannelResource
+		);
+
+		Mockito.when(
+			mockBuilder.checkPermissions(Mockito.anyBoolean())
+		).thenReturn(
+			mockBuilder
+		);
+
+		Mockito.when(
+			mockBuilder.user(Mockito.any(User.class))
+		).thenReturn(
+			mockBuilder
+		);
+
+		ChannelResource.Factory mockFactory = Mockito.mock(
+			ChannelResource.Factory.class);
+
+		Mockito.when(
+			mockFactory.create()
+		).thenReturn(
+			mockBuilder
+		);
+
+		_serviceRegistrations.add(
+			bundleContext.registerService(
+				ChannelResource.Factory.class, mockFactory,
+				HashMapDictionaryBuilder.<String, Object>put(
+					"service.ranking", Integer.MAX_VALUE
+				).build()));
 	}
 
 	private void _testOnAfterCreate() throws Exception {
@@ -279,7 +396,7 @@ public class ObjectEntryModelListenerTest {
 				actionId, objectEntry, role.getRoleId());
 		}
 
-		_assertAnalyticsChannelConnection(group);
+		_assertPatchChannelCalledWithSiteId(group.getGroupId());
 	}
 
 	private void _testOnAfterCreateWithDSRSellerRole() throws Exception {
@@ -346,13 +463,12 @@ public class ObjectEntryModelListenerTest {
 		}
 	}
 
+	private static final String _ANALYTICS_CHANNEL_ID = "test-channel-id";
+
 	private AccountEntry _accountEntry;
 
 	@Inject
 	private AccountEntryLocalService _accountEntryLocalService;
-
-	@Inject
-	private AnalyticsSettingsManager _analyticsSettingsManager;
 
 	@Inject
 	private ClassNameLocalService _classNameLocalService;
@@ -368,6 +484,7 @@ public class ObjectEntryModelListenerTest {
 	@Inject
 	private LayoutSetPrototypeLocalService _layoutSetPrototypeLocalService;
 
+	private ChannelResource _mockChannelResource;
 	private ObjectDefinition _objectDefinition;
 
 	@Inject
@@ -387,6 +504,11 @@ public class ObjectEntryModelListenerTest {
 
 	@Inject
 	private RoleLocalService _roleLocalService;
+
+	private final List<ServiceRegistration<?>> _serviceRegistrations =
+		new ArrayList<>();
+
+	private Group _syncedGroup;
 
 	@Inject
 	private UserGroupRoleLocalService _userGroupRoleLocalService;
