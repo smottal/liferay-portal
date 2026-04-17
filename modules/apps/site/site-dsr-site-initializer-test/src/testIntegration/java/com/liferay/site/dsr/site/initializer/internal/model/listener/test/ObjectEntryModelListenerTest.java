@@ -7,6 +7,8 @@ package com.liferay.site.dsr.site.initializer.internal.model.listener.test;
 
 import com.liferay.account.model.AccountEntry;
 import com.liferay.account.service.AccountEntryLocalService;
+import com.liferay.analytics.settings.configuration.AnalyticsConfiguration;
+import com.liferay.analytics.settings.rest.manager.AnalyticsSettingsManager;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
@@ -125,6 +127,60 @@ public class ObjectEntryModelListenerTest {
 				objectEntry.getObjectEntryId()));
 	}
 
+	private void _assertAnalyticsChannelConnection(Group group)
+		throws Exception {
+
+		long companyId = group.getCompanyId();
+
+		if (!_analyticsSettingsManager.isAnalyticsEnabled(companyId)) {
+			return;
+		}
+
+		AnalyticsConfiguration analyticsConfiguration =
+			_analyticsSettingsManager.getAnalyticsConfiguration(companyId);
+
+		String expectedChannelId = null;
+
+		for (String syncedGroupId :
+				analyticsConfiguration.syncedGroupIds()) {
+
+			Group syncedGroup = _groupLocalService.fetchGroup(
+				Long.parseLong(syncedGroupId));
+
+			if (syncedGroup == null) {
+				continue;
+			}
+
+			String channelId = syncedGroup.getTypeSettingsProperty(
+				"analyticsChannelId");
+
+			if (channelId != null) {
+				expectedChannelId = channelId;
+
+				break;
+			}
+		}
+
+		if (expectedChannelId == null) {
+			return;
+		}
+
+		// Wait for the async analytics connection to complete
+
+		Thread.sleep(5000);
+
+		Group updatedGroup = _groupLocalService.fetchGroup(
+			group.getGroupId());
+
+		Assert.assertEquals(
+			expectedChannelId,
+			updatedGroup.getTypeSettingsProperty("analyticsChannelId"));
+
+		Assert.assertTrue(
+			_analyticsSettingsManager.isSiteIdSynced(
+				companyId, group.getGroupId()));
+	}
+
 	private void _assertHasResourcePermission(
 			String actionId, ObjectEntry objectEntry, long roleId)
 		throws Exception {
@@ -222,6 +278,8 @@ public class ObjectEntryModelListenerTest {
 			_assertHasResourcePermission(
 				actionId, objectEntry, role.getRoleId());
 		}
+
+		_assertAnalyticsChannelConnection(group);
 	}
 
 	private void _testOnAfterCreateWithDSRSellerRole() throws Exception {
@@ -292,6 +350,9 @@ public class ObjectEntryModelListenerTest {
 
 	@Inject
 	private AccountEntryLocalService _accountEntryLocalService;
+
+	@Inject
+	private AnalyticsSettingsManager _analyticsSettingsManager;
 
 	@Inject
 	private ClassNameLocalService _classNameLocalService;
