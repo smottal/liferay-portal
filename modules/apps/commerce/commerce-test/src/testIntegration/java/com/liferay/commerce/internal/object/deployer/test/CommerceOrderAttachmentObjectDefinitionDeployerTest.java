@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -10,6 +10,7 @@ import com.liferay.commerce.currency.model.CommerceCurrency;
 import com.liferay.commerce.currency.test.util.CommerceCurrencyTestUtil;
 import com.liferay.commerce.model.CommerceOrder;
 import com.liferay.commerce.product.model.CommerceChannel;
+import com.liferay.commerce.service.CommerceOrderLocalService;
 import com.liferay.commerce.test.util.CommerceOrderAttachmentTestUtil;
 import com.liferay.commerce.test.util.CommerceTestUtil;
 import com.liferay.object.model.ObjectDefinition;
@@ -92,20 +93,7 @@ public class CommerceOrderAttachmentObjectDefinitionDeployerTest {
 			TestPropsValues.getUserId(), _commerceChannel.getGroupId(),
 			_commerceCurrency);
 
-		ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
-			0, TestPropsValues.getUserId(),
-			_objectDefinition.getObjectDefinitionId(), 0, null,
-			HashMapBuilder.<String, Serializable>put(
-				"r_accountToCommerceOrderAttachments_accountEntryId",
-				commerceOrder.getCommerceAccountId()
-			).put(
-				"r_commerceOrderToCommerceOrderAttachments_commerceOrderId",
-				commerceOrder.getCommerceOrderId()
-			).put(
-				"title", RandomTestUtil.randomString()
-			).build(),
-			ServiceContextTestUtil.getServiceContext(
-				TestPropsValues.getGroupId()));
+		ObjectEntry objectEntry = _addObjectEntry(commerceOrder);
 
 		Assert.assertTrue(
 			modelResourcePermission.contains(
@@ -122,7 +110,25 @@ public class CommerceOrderAttachmentObjectDefinitionDeployerTest {
 		commerceOrder = CommerceTestUtil.addB2CCommerceOrder(
 			user.getUserId(), _commerceChannel.getGroupId(), _commerceCurrency);
 
-		objectEntry = _objectEntryLocalService.addObjectEntry(
+		objectEntry = _addObjectEntry(commerceOrder);
+
+		Assert.assertTrue(
+			modelResourcePermission.contains(
+				PermissionCheckerFactoryUtil.create(user),
+				objectEntry, ActionKeys.VIEW));
+
+		_commerceOrderLocalService.deleteCommerceOrder(
+			commerceOrder.getCommerceOrderId());
+
+		Assert.assertNull(
+			_objectEntryLocalService.fetchObjectEntry(
+				objectEntry.getObjectEntryId()));
+	}
+
+	private ObjectEntry _addObjectEntry(CommerceOrder commerceOrder)
+		throws Exception {
+
+		return _objectEntryLocalService.addObjectEntry(
 			0, TestPropsValues.getUserId(),
 			_objectDefinition.getObjectDefinitionId(), 0, null,
 			HashMapBuilder.<String, Serializable>put(
@@ -136,15 +142,14 @@ public class CommerceOrderAttachmentObjectDefinitionDeployerTest {
 			).build(),
 			ServiceContextTestUtil.getServiceContext(
 				TestPropsValues.getGroupId()));
-
-		Assert.assertTrue(
-			modelResourcePermission.contains(
-				PermissionCheckerFactoryUtil.create(user), objectEntry,
-				ActionKeys.VIEW));
 	}
 
 	private CommerceChannel _commerceChannel;
 	private CommerceCurrency _commerceCurrency;
+
+	@Inject
+	private CommerceOrderLocalService _commerceOrderLocalService;
+
 	private ObjectDefinition _objectDefinition;
 
 	@Inject
