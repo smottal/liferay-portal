@@ -72,7 +72,7 @@
 			"externalReferenceCode": "L_COMMERCE_ORDER",
 			"objectRelationships": [
 				{
-					"deletionType": "prevent",
+					"deletionType": "cascade",
 					"edge": false,
 					"externalReferenceCode": "L_COMMERCE_ORDER_TO_L_COMMERCE_ORDER_ATTACHMENTS",
 					"label": {
