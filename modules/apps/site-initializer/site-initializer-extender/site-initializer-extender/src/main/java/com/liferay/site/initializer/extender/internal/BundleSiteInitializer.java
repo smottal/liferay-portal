@@ -708,6 +708,10 @@ public class BundleSiteInitializer implements SiteInitializer {
 			stringUtilReplaceValues.put(
 				"ACCOUNT_ENTRY_GROUP_ERC:" + account.getExternalReferenceCode(),
 				group.getExternalReferenceCode());
+
+			stringUtilReplaceValues.put(
+				"ACCOUNT_ENTRY_ID:" + account.getExternalReferenceCode(),
+				String.valueOf(accountEntry.getAccountEntryId()));
 		}
 	}
 
