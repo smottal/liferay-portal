@@ -45,6 +45,7 @@ import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFormVariationsProvider;
 import com.liferay.info.search.InfoSearchClassMapperRegistry;
 import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
+import com.liferay.layout.constants.LayoutTypeSettingsConstants;
 import com.liferay.layout.importer.LayoutsImportStrategy;
 import com.liferay.layout.importer.LayoutsImporter;
 import com.liferay.layout.importer.LayoutsImporterResultEntry;
@@ -2009,6 +2010,16 @@ public class LayoutsImporterImpl implements LayoutsImporter {
 		_updateLayoutPageTemplateStructure(draftLayout, layoutStructure);
 
 		_layoutLocalService.copyLayoutContent(draftLayout, layout);
+
+		draftLayout = _layoutLocalService.getLayout(draftLayout.getPlid());
+
+		UnicodeProperties draftTypeSettingsUnicodeProperties =
+			draftLayout.getTypeSettingsProperties();
+
+		draftTypeSettingsUnicodeProperties.put(
+			LayoutTypeSettingsConstants.KEY_PUBLISHED, Boolean.TRUE.toString());
+
+		_layoutLocalService.updateLayout(draftLayout);
 	}
 
 	private boolean _processPageElement(
