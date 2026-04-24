@@ -69,8 +69,10 @@ public class CommerceOrderObjectScopeProviderImpl
 		GroupLocalService groupLocalService, ObjectEntry objectEntry) {
 
 		long commerceOrderId = GetterUtil.getLong(
-			objectEntry.getValues().get(
-				"r_commerceOrderToCommerceOrderAttachments_commerceOrderId"));
+			objectEntry.getValues(
+			).get(
+				"r_commerceOrderToCommerceOrderAttachments_commerceOrderId"
+			));
 
 		if (commerceOrderId > 0) {
 			return String.valueOf(commerceOrderId);
