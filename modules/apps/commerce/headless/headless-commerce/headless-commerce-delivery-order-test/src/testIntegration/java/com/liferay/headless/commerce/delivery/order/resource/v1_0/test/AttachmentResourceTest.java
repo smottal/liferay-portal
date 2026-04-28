@@ -119,7 +119,7 @@ public class AttachmentResourceTest extends BaseAttachmentResourceTestCase {
 					RandomTestUtil.randomString());
 				priority = RandomTestUtil.nextDouble();
 				restricted = RandomTestUtil.randomBoolean();
-				title = RandomTestUtil.randomString() + ".jpg";
+				title = RandomTestUtil.randomString() + "A.jpg";
 				type = StringUtil.toLowerCase(RandomTestUtil.randomString());
 			}
 		};
