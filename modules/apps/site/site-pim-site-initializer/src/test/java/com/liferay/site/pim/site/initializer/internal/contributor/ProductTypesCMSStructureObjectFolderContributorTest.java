@@ -9,6 +9,7 @@ import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
+import com.liferay.object.service.ObjectLayoutLocalService;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -40,10 +41,62 @@ public class ProductTypesCMSStructureObjectFolderContributorTest {
 		LiferayUnitTestRule.INSTANCE;
 
 	@Test
+	public void testGetBaseObjectDefinitionExternalReferenceCode() {
+		try (MockedStatic<FeatureFlagManagerUtil>
+				featureFlagManagerUtilMockedStatic = Mockito.mockStatic(
+					FeatureFlagManagerUtil.class)) {
+
+			featureFlagManagerUtilMockedStatic.when(
+				() -> FeatureFlagManagerUtil.isEnabled(
+					Mockito.anyLong(), Mockito.eq("LPD-96666"))
+			).thenReturn(
+				false
+			);
+
+			Assert.assertNull(
+				_productTypesCMSStructureObjectFolderContributor.
+					getBaseObjectDefinitionExternalReferenceCode());
+
+			featureFlagManagerUtilMockedStatic.when(
+				() -> FeatureFlagManagerUtil.isEnabled(
+					Mockito.anyLong(), Mockito.eq("LPD-96666"))
+			).thenReturn(
+				true
+			);
+
+			Assert.assertEquals(
+				PIMObjectDefinitionConstants.EXTERNAL_REFERENCE_CODE_BASE_SKU,
+				_productTypesCMSStructureObjectFolderContributor.
+					getBaseObjectDefinitionExternalReferenceCode());
+		}
+	}
+
+	@Test
 	public void testGetLabel() {
 		Assert.assertEquals(
 			"product",
 			_productTypesCMSStructureObjectFolderContributor.getLabel());
+	}
+
+	@Test
+	public void testGetObjectEntryFormRenderer() {
+		ReflectionTestUtil.setFieldValue(
+			_productTypesCMSStructureObjectFolderContributor,
+			"_objectFieldLocalService",
+			Mockito.mock(ObjectFieldLocalService.class));
+		ReflectionTestUtil.setFieldValue(
+			_productTypesCMSStructureObjectFolderContributor,
+			"_objectLayoutLocalService",
+			Mockito.mock(ObjectLayoutLocalService.class));
+
+		ReflectionTestUtil.invoke(
+			_productTypesCMSStructureObjectFolderContributor, "activate",
+			new Class<?>[0]);
+
+		Assert.assertTrue(
+			_productTypesCMSStructureObjectFolderContributor.
+				getObjectEntryFormRenderer() instanceof
+					PIMObjectEntryFormRenderer);
 	}
 
 	@Test
