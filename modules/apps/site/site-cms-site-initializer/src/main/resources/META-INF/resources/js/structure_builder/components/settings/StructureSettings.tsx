@@ -23,7 +23,7 @@ import {LocalizedInput} from '../LocalizedInput';
 import SpacesSelector from '../SpacesSelector';
 import WorkflowTab from './WorkflowTab';
 
-const STRUCTURE_TYPES = {
+const STRUCTURE_TYPES: Record<string, string> = {
 	L_CMS_CONTENT_STRUCTURES: Liferay.Language.get('content'),
 	L_CMS_FILE_TYPES: Liferay.Language.get('file'),
 };
@@ -63,7 +63,8 @@ export default function StructureSettings() {
 			) : null}
 
 			<ClayLabel className="mb-3" displayType="info" inverse>
-				{STRUCTURE_TYPES[structureType]}
+				{STRUCTURE_TYPES[structureType] ??
+					Liferay.Language.get('structure')}
 			</ClayLabel>
 
 			<LocalizedInput

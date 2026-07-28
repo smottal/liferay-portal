@@ -207,6 +207,32 @@ export default function ContentEditorToolbar({
 		openToast({message, type: 'success'});
 	}, [getForm]);
 
+	useEffect(() => {
+		const preventButtonSubmit = (event: MouseEvent) => {
+			const target = event.target as HTMLElement | null;
+
+			const button = target?.closest?.(
+				'.cms-object-layout-form .component-tabs button'
+			) as HTMLButtonElement | null;
+
+			if (!button) {
+				return;
+			}
+
+			const type = button.getAttribute('type');
+
+			if (!type || type === 'submit') {
+				event.preventDefault();
+			}
+		};
+
+		document.addEventListener('click', preventButtonSubmit, true);
+
+		return () => {
+			document.removeEventListener('click', preventButtonSubmit, true);
+		};
+	}, []);
+
 	return (
 		<Toolbar
 			backURL={backURL}

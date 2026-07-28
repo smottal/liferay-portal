@@ -16,6 +16,7 @@ import {
 	RelatedContent,
 	RepeatableGroup,
 	Structure,
+	StructureChild,
 } from '../types/Structure';
 import {FIELD_TYPE_TO_DB_TYPE, Field, getFieldBusinessType} from './field';
 import isField from './isField';
@@ -114,14 +115,31 @@ export default function buildObjectDefinition({
 	return objectDefinition;
 }
 
+function flattenGroupingContainers(
+	children: Structure['children']
+): StructureChild[] {
+	const result: StructureChild[] = [];
+
+	for (const child of children.values()) {
+		if (child.type === 'grouping-container') {
+			result.push(...flattenGroupingContainers(child.children));
+		}
+		else {
+			result.push(child);
+		}
+	}
+
+	return result;
+}
+
 function getFields(children: Structure['children']): Field[] {
-	return Array.from(children.values()).filter((child) =>
+	return flattenGroupingContainers(children).filter((child) =>
 		isField(child)
 	) as Field[];
 }
 
 function getRelatedContents(children: Structure['children']): RelatedContent[] {
-	return Array.from(children.values()).filter(
+	return flattenGroupingContainers(children).filter(
 		(child) => child.type === 'related-content'
 	) as RelatedContent[];
 }
@@ -129,7 +147,7 @@ function getRelatedContents(children: Structure['children']): RelatedContent[] {
 function getReferencedStructures(
 	children: Structure['children']
 ): ReferencedStructure[] {
-	return Array.from(children.values()).filter(
+	return flattenGroupingContainers(children).filter(
 		(child) => child.type === 'referenced-structure'
 	) as ReferencedStructure[];
 }
@@ -137,7 +155,7 @@ function getReferencedStructures(
 function getRepeatableGroups(
 	children: Structure['children']
 ): RepeatableGroup[] {
-	return Array.from(children.values()).filter(
+	return flattenGroupingContainers(children).filter(
 		(child) => child.type === 'repeatable-group'
 	) as RepeatableGroup[];
 }
