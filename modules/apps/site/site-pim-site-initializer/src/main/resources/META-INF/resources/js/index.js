@@ -4,3 +4,5 @@
  */
 
 export {default as ProductsFDSPropsTransformer} from './ProductsFDSPropsTransformer';
+
+export {registerStructureBuilderContributor} from './structure_builder_contributor';
