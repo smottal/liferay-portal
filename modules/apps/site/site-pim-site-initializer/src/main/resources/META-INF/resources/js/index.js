@@ -6,3 +6,5 @@
 export {default as ConnectorsFDSPropsTransformer} from './ConnectorsFDSPropsTransformer';
 export {default as EditPIMConnector} from './EditPIMConnector';
 export {default as ProductsFDSPropsTransformer} from './ProductsFDSPropsTransformer';
+
+export {registerStructureBuilderContributor} from './structure_builder_contributor';
