@@ -9,19 +9,23 @@ import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
+import com.liferay.object.service.ObjectLayoutLocalService;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.site.cms.site.initializer.contributor.CMSStructureObjectFolderContributor;
+import com.liferay.site.cms.site.initializer.renderer.ObjectEntryFormRenderer;
 import com.liferay.site.pim.site.initializer.internal.constants.PIMObjectDefinitionConstants;
 import com.liferay.site.pim.site.initializer.internal.constants.PIMObjectFolderConstants;
+import com.liferay.site.pim.site.initializer.internal.renderer.PIMObjectEntryFormRenderer;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -34,12 +38,23 @@ public class ProductTypesCMSStructureObjectFolderContributor
 
 	@Override
 	public String getBaseObjectDefinitionExternalReferenceCode() {
+		if (!FeatureFlagManagerUtil.isEnabled(
+				CompanyThreadLocal.getCompanyId(), "LPD-96666")) {
+
+			return null;
+		}
+
 		return PIMObjectDefinitionConstants.EXTERNAL_REFERENCE_CODE_BASE_SKU;
 	}
 
 	@Override
 	public String getLabel() {
 		return "product";
+	}
+
+	@Override
+	public ObjectEntryFormRenderer getObjectEntryFormRenderer() {
+		return _objectEntryFormRenderer;
 	}
 
 	@Override
@@ -101,10 +116,21 @@ public class ProductTypesCMSStructureObjectFolderContributor
 		).build();
 	}
 
+	@Activate
+	protected void activate() {
+		_objectEntryFormRenderer = new PIMObjectEntryFormRenderer(
+			_objectFieldLocalService, _objectLayoutLocalService);
+	}
+
 	@Reference
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
+	private ObjectEntryFormRenderer _objectEntryFormRenderer;
+
 	@Reference
 	private ObjectFieldLocalService _objectFieldLocalService;
+
+	@Reference
+	private ObjectLayoutLocalService _objectLayoutLocalService;
 
 }
