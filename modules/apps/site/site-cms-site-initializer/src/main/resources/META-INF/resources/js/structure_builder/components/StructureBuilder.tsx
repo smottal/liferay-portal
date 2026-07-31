@@ -46,26 +46,18 @@ function useContributorsReady(type: StructureType | null): boolean {
 			return;
 		}
 
-		let settled = false;
-
-		const finish = () => {
-			if (!settled) {
-				settled = true;
-
+		const check = () => {
+			if (type && structureBuilderRegistry.supports(type)) {
 				setReady(true);
 			}
 		};
 
-		const unsubscribe = structureBuilderRegistry.subscribe(finish);
+		const unsubscribe = structureBuilderRegistry.subscribe(check);
 
-		const timeoutId = setTimeout(finish, 3000);
+		check();
 
-		return () => {
-			unsubscribe();
-
-			clearTimeout(timeoutId);
-		};
-	}, [ready]);
+		return unsubscribe;
+	}, [ready, type]);
 
 	return ready;
 }
@@ -88,10 +80,12 @@ export default function StructureBuilder({
 	};
 	systemObjectFieldNames: Record<string, string[]>;
 }) {
+	const objectDefinition =
+		state.mainObjectDefinition ?? state.baseObjectDefinition;
+
 	const contributorsReady = useContributorsReady(
-		hasStructureBuilderContributor
-			? (state.mainObjectDefinition
-					.objectFolderExternalReferenceCode as StructureType)
+		hasStructureBuilderContributor && objectDefinition
+			? (objectDefinition.objectFolderExternalReferenceCode as StructureType)
 			: null
 	);
 

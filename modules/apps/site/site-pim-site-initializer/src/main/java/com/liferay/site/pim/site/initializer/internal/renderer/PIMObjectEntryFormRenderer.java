@@ -44,22 +44,25 @@ import java.util.Map;
 public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 
 	public PIMObjectEntryFormRenderer(
+		FormManager formManager,
+		FragmentEntryLinkListenerRegistry fragmentEntryLinkListenerRegistry,
+		FragmentEntryLinkService fragmentEntryLinkService,
+		FragmentRendererRegistry fragmentRendererRegistry,
 		ObjectFieldLocalService objectFieldLocalService,
 		ObjectLayoutLocalService objectLayoutLocalService) {
 
+		_formManager = formManager;
+		_fragmentEntryLinkListenerRegistry = fragmentEntryLinkListenerRegistry;
+		_fragmentEntryLinkService = fragmentEntryLinkService;
+		_fragmentRendererRegistry = fragmentRendererRegistry;
 		_objectFieldLocalService = objectFieldLocalService;
 		_objectLayoutLocalService = objectLayoutLocalService;
 	}
 
 	@Override
 	public LayoutStructure render(
-			FormManager formManager,
-			FragmentEntryLinkListenerRegistry fragmentEntryLinkListenerRegistry,
-			List<FragmentEntryLink> fragmentEntryLinks,
-			FragmentEntryLinkService fragmentEntryLinkService,
-			FragmentRendererRegistry fragmentRendererRegistry,
-			InfoFieldSet infoFieldSet, Layout layout,
-			LayoutStructure layoutStructure,
+			List<FragmentEntryLink> fragmentEntryLinks, InfoFieldSet infoFieldSet,
+			Layout layout, LayoutStructure layoutStructure,
 			LayoutStructureItem layoutStructureItem,
 			ObjectDefinition objectDefinition, long segmentsExperienceId,
 			ServiceContext serviceContext)
@@ -71,27 +74,22 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 
 		if (objectLayout == null) {
 			return CMSObjectEntryFormLayoutUtil.addInputFragmentEntryLinks(
-				true, formManager, fragmentEntryLinkListenerRegistry,
-				fragmentEntryLinks, fragmentEntryLinkService,
-				fragmentRendererRegistry, infoFieldSet, layout, layoutStructure,
+				true, _formManager, _fragmentEntryLinkListenerRegistry,
+				fragmentEntryLinks, _fragmentEntryLinkService,
+				_fragmentRendererRegistry, infoFieldSet, layout, layoutStructure,
 				layoutStructureItem, objectDefinition.getName(), false, true,
 				segmentsExperienceId, JSONUtil.put("marginBottom", "16px"),
 				serviceContext);
 		}
 
 		return _addObjectLayoutFragmentEntryLinks(
-			formManager, fragmentEntryLinkListenerRegistry, fragmentEntryLinks,
-			fragmentEntryLinkService, fragmentRendererRegistry, infoFieldSet,
-			layout, layoutStructure, layoutStructureItem, objectLayout,
-			segmentsExperienceId, serviceContext);
+			fragmentEntryLinks, infoFieldSet, layout, layoutStructure,
+			layoutStructureItem, objectLayout, segmentsExperienceId,
+			serviceContext);
 	}
 
 	private LayoutStructure _addObjectLayoutBox(
-			FormManager formManager,
-			FragmentEntryLinkListenerRegistry fragmentEntryLinkListenerRegistry,
 			List<FragmentEntryLink> fragmentEntryLinks,
-			FragmentEntryLinkService fragmentEntryLinkService,
-			FragmentRendererRegistry fragmentRendererRegistry,
 			Map<String, InfoField<?>> infoFieldsByName,
 			Map<String, InfoFieldSet> infoFieldSetsByName, Layout layout,
 			LayoutStructure layoutStructure, String objectDefinitionName,
@@ -113,9 +111,9 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 			}
 
 			return CMSObjectEntryFormLayoutUtil.addInputFragmentEntryLinks(
-				true, formManager, fragmentEntryLinkListenerRegistry,
-				fragmentEntryLinks, fragmentEntryLinkService,
-				fragmentRendererRegistry, infoFieldSet, layout, layoutStructure,
+				true, _formManager, _fragmentEntryLinkListenerRegistry,
+				fragmentEntryLinks, _fragmentEntryLinkService,
+				_fragmentRendererRegistry, infoFieldSet, layout, layoutStructure,
 				layoutStructure.getLayoutStructureItem(parentItemId),
 				objectDefinitionName, false, true, segmentsExperienceId,
 				JSONUtil.put("marginBottom", "16px"), serviceContext);
@@ -135,8 +133,8 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 								CMSObjectEntryFormLayoutUtil.
 									getLocalizedNameJSONObject(
 										objectLayoutBox.getNameMap())))),
-					"BASIC_COMPONENT-accordion", fragmentEntryLinkService,
-					fragmentRendererRegistry, layout, segmentsExperienceId,
+					"BASIC_COMPONENT-accordion", _fragmentEntryLinkService,
+					_fragmentRendererRegistry, layout, segmentsExperienceId,
 					serviceContext);
 
 			if (fragmentEntryLink != null) {
@@ -157,7 +155,7 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 					CMSObjectEntryFormLayoutUtil.
 						persistAndRefetchLayoutStructure(
 							fragmentEntryLink,
-							fragmentEntryLinkListenerRegistry, layout,
+							_fragmentEntryLinkListenerRegistry, layout,
 							layoutStructure, segmentsExperienceId,
 							serviceContext);
 
@@ -198,7 +196,7 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 				}
 
 				CMSObjectEntryFormLayoutUtil.addInfoFieldFragmentEntryLink(
-					true, formManager, fragmentEntryLinks, infoField, layout,
+					true, _formManager, fragmentEntryLinks, infoField, layout,
 					layoutStructure, layoutStructureItem, false,
 					segmentsExperienceId, JSONUtil.put("marginBottom", "16px"),
 					serviceContext);
@@ -209,13 +207,8 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 	}
 
 	private LayoutStructure _addObjectLayoutFragmentEntryLinks(
-			FormManager formManager,
-			FragmentEntryLinkListenerRegistry fragmentEntryLinkListenerRegistry,
-			List<FragmentEntryLink> fragmentEntryLinks,
-			FragmentEntryLinkService fragmentEntryLinkService,
-			FragmentRendererRegistry fragmentRendererRegistry,
-			InfoFieldSet infoFieldSet, Layout layout,
-			LayoutStructure layoutStructure,
+			List<FragmentEntryLink> fragmentEntryLinks, InfoFieldSet infoFieldSet,
+			Layout layout, LayoutStructure layoutStructure,
 			LayoutStructureItem layoutStructureItem, ObjectLayout objectLayout,
 			long segmentsExperienceId, ServiceContext serviceContext)
 		throws Exception {
@@ -269,8 +262,8 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 							"numberOfTabs",
 							String.valueOf(objectLayoutTabs.size()))
 					)),
-				"BASIC_COMPONENT-tabs", fragmentEntryLinkService,
-				fragmentRendererRegistry, layout, segmentsExperienceId,
+				"BASIC_COMPONENT-tabs", _fragmentEntryLinkService,
+				_fragmentRendererRegistry, layout, segmentsExperienceId,
 				serviceContext);
 
 		if (fragmentEntryLink == null) {
@@ -288,7 +281,7 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 
 		layoutStructure =
 			CMSObjectEntryFormLayoutUtil.persistAndRefetchLayoutStructure(
-				fragmentEntryLink, fragmentEntryLinkListenerRegistry, layout,
+				fragmentEntryLink, _fragmentEntryLinkListenerRegistry, layout,
 				layoutStructure, segmentsExperienceId, serviceContext);
 
 		for (int i = 0; i < objectLayoutTabs.size(); i++) {
@@ -303,16 +296,62 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 				continue;
 			}
 
+			FragmentEntryLink accordionFragmentEntryLink =
+				CMSObjectEntryFormLayoutUtil.addFragmentEntryLink(
+					JSONUtil.toString(
+						JSONUtil.put(
+							FragmentEntryProcessorConstants.
+								KEY_EDITABLE_FRAGMENT_ENTRY_PROCESSOR,
+							JSONUtil.put(
+								"accordion-title",
+								CMSObjectEntryFormLayoutUtil.
+									getLocalizedNameJSONObject(
+										objectLayoutTab.getNameMap())))),
+					"BASIC_COMPONENT-accordion", _fragmentEntryLinkService,
+					_fragmentRendererRegistry, layout, segmentsExperienceId,
+					serviceContext);
+
+			if (accordionFragmentEntryLink != null) {
+				LayoutStructureItem accordionLayoutStructureItem =
+					layoutStructure.addFragmentStyledLayoutStructureItem(
+						accordionFragmentEntryLink.getFragmentEntryLinkId(),
+						childrenItemId, -1);
+
+				accordionLayoutStructureItem.updateItemConfig(
+					JSONUtil.put(
+						"styles", JSONUtil.put("marginBottom", "16px")));
+
+				String accordionItemId = accordionLayoutStructureItem.getItemId();
+
+				fragmentEntryLinks.add(accordionFragmentEntryLink);
+
+				layoutStructure =
+					CMSObjectEntryFormLayoutUtil.
+						persistAndRefetchLayoutStructure(
+							accordionFragmentEntryLink,
+							_fragmentEntryLinkListenerRegistry, layout,
+							layoutStructure, segmentsExperienceId,
+							serviceContext);
+
+				accordionLayoutStructureItem =
+					layoutStructure.getLayoutStructureItem(accordionItemId);
+
+				String accordionChildrenItemId =
+					accordionLayoutStructureItem.getChildrenItemId(0);
+
+				if (Validator.isNotNull(accordionChildrenItemId)) {
+					childrenItemId = accordionChildrenItemId;
+				}
+			}
+
 			for (ObjectLayoutBox objectLayoutBox :
 					objectLayoutTab.getObjectLayoutBoxes()) {
 
 				layoutStructure = _addObjectLayoutBox(
-					formManager, fragmentEntryLinkListenerRegistry,
-					fragmentEntryLinks, fragmentEntryLinkService,
-					fragmentRendererRegistry, infoFieldsByName,
-					infoFieldSetsByName, layout, layoutStructure,
-					infoFieldSet.getName(), objectLayoutBox, childrenItemId,
-					segmentsExperienceId, serviceContext);
+					fragmentEntryLinks, infoFieldsByName, infoFieldSetsByName,
+					layout, layoutStructure, infoFieldSet.getName(),
+					objectLayoutBox, childrenItemId, segmentsExperienceId,
+					serviceContext);
 			}
 		}
 
@@ -322,6 +361,11 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 	private static final String _REPEATABLE_GROUP_NAME_PREFIX =
 		"repeatable-group-";
 
+	private final FormManager _formManager;
+	private final FragmentEntryLinkListenerRegistry
+		_fragmentEntryLinkListenerRegistry;
+	private final FragmentEntryLinkService _fragmentEntryLinkService;
+	private final FragmentRendererRegistry _fragmentRendererRegistry;
 	private final ObjectFieldLocalService _objectFieldLocalService;
 	private final ObjectLayoutLocalService _objectLayoutLocalService;
 

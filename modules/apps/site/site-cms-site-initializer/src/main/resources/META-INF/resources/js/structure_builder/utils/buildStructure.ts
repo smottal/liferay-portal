@@ -21,7 +21,9 @@ import {
 import {Uuid} from '../types/Uuid';
 import {Field, FieldType, SelectFromListField} from './field';
 import getUuid from './getUuid';
-import isCustomObjectField from './isCustomObjectField';
+import isCustomObjectField, {
+	isSystemObjectFieldName,
+} from './isCustomObjectField';
 import sortChildren from './state/sortChildren';
 
 export default function buildStructure({
@@ -100,7 +102,12 @@ export function buildChildren({
 			continue;
 		}
 
-		const field = buildField({objectField, parent});
+		const field = buildField({
+			objectDefinitionExternalReferenceCode:
+				objectDefinition.externalReferenceCode,
+			objectField,
+			parent,
+		});
 
 		children.set(field.uuid, field);
 	}
@@ -179,9 +186,11 @@ export function buildChildren({
 }
 
 export function buildField({
+	objectDefinitionExternalReferenceCode,
 	objectField,
 	parent,
 }: {
+	objectDefinitionExternalReferenceCode: string;
 	objectField: ObjectField;
 	parent: Uuid;
 }) {
@@ -205,7 +214,11 @@ export function buildField({
 		indexableConfig,
 		label: objectField.label,
 		localized: objectField.localized,
-		locked: objectField.system,
+		locked:
+			objectField.system ||
+			isSystemObjectFieldName(
+				objectDefinitionExternalReferenceCode, objectField.name
+			),
 		name: objectField.name,
 		parent,
 		required: objectField.required,

@@ -5,6 +5,10 @@
 
 package com.liferay.site.pim.site.initializer.internal.contributor;
 
+import com.liferay.fragment.listener.FragmentEntryLinkListenerRegistry;
+import com.liferay.fragment.renderer.FragmentRendererRegistry;
+import com.liferay.fragment.service.FragmentEntryLinkService;
+import com.liferay.layout.manager.FormManager;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectDefinitionLocalService;
@@ -119,8 +123,23 @@ public class ProductTypesCMSStructureObjectFolderContributor
 	@Activate
 	protected void activate() {
 		_objectEntryFormRenderer = new PIMObjectEntryFormRenderer(
+			_formManager, _fragmentEntryLinkListenerRegistry,
+			_fragmentEntryLinkService, _fragmentRendererRegistry,
 			_objectFieldLocalService, _objectLayoutLocalService);
 	}
+
+	@Reference
+	private FormManager _formManager;
+
+	@Reference
+	private FragmentEntryLinkListenerRegistry
+		_fragmentEntryLinkListenerRegistry;
+
+	@Reference
+	private FragmentEntryLinkService _fragmentEntryLinkService;
+
+	@Reference
+	private FragmentRendererRegistry _fragmentRendererRegistry;
 
 	@Reference
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
