@@ -319,7 +319,12 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 
 				accordionLayoutStructureItem.updateItemConfig(
 					JSONUtil.put(
-						"styles", JSONUtil.put("marginBottom", "16px")));
+						"styles",
+						JSONUtil.put(
+							"marginBottom", "16px"
+						).put(
+							"marginTop", "24px"
+						)));
 
 				String accordionItemId = accordionLayoutStructureItem.getItemId();
 
