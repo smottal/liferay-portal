@@ -111,7 +111,7 @@ describe('buildObjectLayout', () => {
 		).toBeNull();
 	});
 
-	it('gathers loose fields into an implicit first General tab', () => {
+	it('gathers loose fields into an implicit first Details tab', () => {
 		expect(
 			buildObjectLayout(
 				structure([field('title'), tab('Details', [field('sku')])])
@@ -144,7 +144,7 @@ describe('buildObjectLayout', () => {
 		).toMatchSnapshot();
 	});
 
-	it('serializes a panel at the root into the General tab', () => {
+	it('serializes a panel at the root into the Details tab', () => {
 		expect(
 			buildObjectLayout(
 				structure([field('title'), panel('Pricing', [field('price')])])

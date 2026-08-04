@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.site.pim.site.initializer.internal.constants.PIMObjectDefinitionConstants;
+import com.liferay.site.pim.site.initializer.internal.constants.PIMObjectEntryFolderConstants;
 import com.liferay.site.pim.site.initializer.internal.constants.PIMObjectFolderConstants;
 import com.liferay.site.pim.site.initializer.internal.renderer.PIMObjectEntryFormRenderer;
 
@@ -73,10 +74,49 @@ public class ProductTypesCMSStructureObjectFolderContributorTest {
 	}
 
 	@Test
+	public void testGetCreationMenuIcon() {
+		Assert.assertEquals(
+			"shopping-cart",
+			_productTypesCMSStructureObjectFolderContributor.
+				getCreationMenuIcon());
+	}
+
+	@Test
 	public void testGetLabel() {
 		Assert.assertEquals(
 			"product",
 			_productTypesCMSStructureObjectFolderContributor.getLabel());
+	}
+
+	@Test
+	public void testGetObjectEntryFolderExternalReferenceCode() {
+		try (MockedStatic<FeatureFlagManagerUtil>
+				featureFlagManagerUtilMockedStatic = Mockito.mockStatic(
+					FeatureFlagManagerUtil.class)) {
+
+			featureFlagManagerUtilMockedStatic.when(
+				() -> FeatureFlagManagerUtil.isEnabled(
+					Mockito.anyLong(), Mockito.eq("LPD-96666"))
+			).thenReturn(
+				false
+			);
+
+			Assert.assertNull(
+				_productTypesCMSStructureObjectFolderContributor.
+					getObjectEntryFolderExternalReferenceCode());
+
+			featureFlagManagerUtilMockedStatic.when(
+				() -> FeatureFlagManagerUtil.isEnabled(
+					Mockito.anyLong(), Mockito.eq("LPD-96666"))
+			).thenReturn(
+				true
+			);
+
+			Assert.assertEquals(
+				PIMObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_PRODUCTS,
+				_productTypesCMSStructureObjectFolderContributor.
+					getObjectEntryFolderExternalReferenceCode());
+		}
 	}
 
 	@Test

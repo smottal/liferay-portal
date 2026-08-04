@@ -76,6 +76,7 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.segments.service.SegmentsExperienceLocalServiceUtil;
+import com.liferay.site.cms.site.initializer.contributor.CMSStructureObjectFolderContributor;
 import com.liferay.site.cms.site.initializer.internal.fragment.renderer.SpacesComponentSectionFragmentRenderer;
 import com.liferay.site.cms.site.initializer.provider.CMSObjectEntryFormRendererProvider;
 import com.liferay.site.cms.site.initializer.renderer.ObjectEntryFormRenderer;
@@ -533,6 +534,8 @@ public class ActionUtil {
 	}
 
 	public static List<DropdownItem> getAllSectionCreationMenuDropdownItems(
+		List<CMSStructureObjectFolderContributor>
+			cmsStructureObjectFolderContributors,
 		HttpServletRequest httpServletRequest) {
 
 		List<DropdownItem> dropdownItems = new ArrayList<>(
@@ -555,22 +558,25 @@ public class ActionUtil {
 					httpServletRequest,
 					ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_FILES)));
 
-		List<DropdownItem> contentsCustomDropdownItems =
-			getContentsCustomDropdownItems(
-				httpServletRequest,
-				ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_CONTENTS);
+		List<DropdownItem> customDropdownItems = getContentsCustomDropdownItems(
+			httpServletRequest,
+			ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_CONTENTS);
 
-		contentsCustomDropdownItems.addAll(
+		customDropdownItems.addAll(
 			getFilesCustomDropdownItems(
 				httpServletRequest,
 				ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_FILES));
 
-		contentsCustomDropdownItems.sort(
+		customDropdownItems.addAll(
+			getStructureObjectFolderCustomDropdownItems(
+				cmsStructureObjectFolderContributors, httpServletRequest));
+
+		customDropdownItems.sort(
 			Comparator.comparing(
 				dropdownItem -> (String)dropdownItem.get("label"),
 				String.CASE_INSENSITIVE_ORDER));
 
-		dropdownItems.addAll(contentsCustomDropdownItems);
+		dropdownItems.addAll(customDropdownItems);
 
 		return dropdownItems;
 	}
@@ -1123,6 +1129,53 @@ public class ActionUtil {
 		return getStructuredContentDropdownItem(
 			httpServletRequest, icon, labelKey, objectDefinition,
 			objectEntryFolderExternalReferenceCode);
+	}
+
+	public static List<DropdownItem>
+		getStructureObjectFolderCustomDropdownItems(
+			List<CMSStructureObjectFolderContributor>
+				cmsStructureObjectFolderContributors,
+			HttpServletRequest httpServletRequest) {
+
+		List<DropdownItem> dropdownItems = new ArrayList<>();
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		for (CMSStructureObjectFolderContributor
+				cmsStructureObjectFolderContributor :
+					cmsStructureObjectFolderContributors) {
+
+			String objectFolderExternalReferenceCode =
+				cmsStructureObjectFolderContributor.
+					getObjectFolderExternalReferenceCode();
+			String objectEntryFolderExternalReferenceCode =
+				cmsStructureObjectFolderContributor.
+					getObjectEntryFolderExternalReferenceCode();
+
+			if (Validator.isNull(objectFolderExternalReferenceCode) ||
+				Validator.isNull(objectEntryFolderExternalReferenceCode)) {
+
+				continue;
+			}
+
+			for (ObjectDefinition objectDefinition :
+					ObjectDefinitionServiceUtil.getCMSObjectDefinitions(
+						themeDisplay.getCompanyId(),
+						new String[] {objectFolderExternalReferenceCode})) {
+
+				dropdownItems.add(
+					getStructuredContentDropdownItem(
+						httpServletRequest,
+						cmsStructureObjectFolderContributor.
+							getCreationMenuIcon(),
+						null, objectDefinition,
+						objectEntryFolderExternalReferenceCode));
+			}
+		}
+
+		return dropdownItems;
 	}
 
 	public static String getTranslateURL(

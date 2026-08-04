@@ -1,0 +1,7 @@
+{
+	"cacheable": true,
+	"fragmentEntryKey": "panel",
+	"icon": "cards2",
+	"name": "panel",
+	"type": "component"
+}

@@ -33,7 +33,7 @@ export default function buildObjectLayout(
 
 	if (looseItems.length) {
 		objectLayoutTabs.push(
-			_buildTab(buildLocalizedValue('general'), looseItems)
+			_buildTab(buildLocalizedValue('details'), looseItems)
 		);
 	}
 

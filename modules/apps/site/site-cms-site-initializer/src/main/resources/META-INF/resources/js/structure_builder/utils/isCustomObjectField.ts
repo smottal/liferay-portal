@@ -27,7 +27,9 @@ export function isSystemObjectFieldName(
 	name: string
 ): boolean {
 	return Boolean(
-		CONTRIBUTED_SYSTEM_OBJECT_FIELD_NAMES[objectDefinitionERC]?.includes(name)
+		CONTRIBUTED_SYSTEM_OBJECT_FIELD_NAMES[objectDefinitionERC]?.includes(
+			name
+		)
 	);
 }
 

@@ -61,8 +61,9 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 
 	@Override
 	public LayoutStructure render(
-			List<FragmentEntryLink> fragmentEntryLinks, InfoFieldSet infoFieldSet,
-			Layout layout, LayoutStructure layoutStructure,
+			List<FragmentEntryLink> fragmentEntryLinks,
+			InfoFieldSet infoFieldSet, Layout layout,
+			LayoutStructure layoutStructure,
 			LayoutStructureItem layoutStructureItem,
 			ObjectDefinition objectDefinition, long segmentsExperienceId,
 			ServiceContext serviceContext)
@@ -76,10 +77,10 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 			return CMSObjectEntryFormLayoutUtil.addInputFragmentEntryLinks(
 				true, _formManager, _fragmentEntryLinkListenerRegistry,
 				fragmentEntryLinks, _fragmentEntryLinkService,
-				_fragmentRendererRegistry, infoFieldSet, layout, layoutStructure,
-				layoutStructureItem, objectDefinition.getName(), false, true,
-				segmentsExperienceId, JSONUtil.put("marginBottom", "16px"),
-				serviceContext);
+				_fragmentRendererRegistry, infoFieldSet, layout,
+				layoutStructure, layoutStructureItem,
+				objectDefinition.getName(), false, true, segmentsExperienceId,
+				JSONUtil.put("marginBottom", "16px"), serviceContext);
 		}
 
 		return _addObjectLayoutFragmentEntryLinks(
@@ -113,7 +114,8 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 			return CMSObjectEntryFormLayoutUtil.addInputFragmentEntryLinks(
 				true, _formManager, _fragmentEntryLinkListenerRegistry,
 				fragmentEntryLinks, _fragmentEntryLinkService,
-				_fragmentRendererRegistry, infoFieldSet, layout, layoutStructure,
+				_fragmentRendererRegistry, infoFieldSet, layout,
+				layoutStructure,
 				layoutStructure.getLayoutStructureItem(parentItemId),
 				objectDefinitionName, false, true, segmentsExperienceId,
 				JSONUtil.put("marginBottom", "16px"), serviceContext);
@@ -129,11 +131,11 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 							FragmentEntryProcessorConstants.
 								KEY_EDITABLE_FRAGMENT_ENTRY_PROCESSOR,
 							JSONUtil.put(
-								"accordion-title",
+								"panel-title",
 								CMSObjectEntryFormLayoutUtil.
 									getLocalizedNameJSONObject(
 										objectLayoutBox.getNameMap())))),
-					"BASIC_COMPONENT-accordion", _fragmentEntryLinkService,
+					"PIM-panel", _fragmentEntryLinkService,
 					_fragmentRendererRegistry, layout, segmentsExperienceId,
 					serviceContext);
 
@@ -142,10 +144,6 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 					layoutStructure.addFragmentStyledLayoutStructureItem(
 						fragmentEntryLink.getFragmentEntryLinkId(),
 						parentItemId, -1);
-
-				layoutStructureItem.updateItemConfig(
-					JSONUtil.put(
-						"styles", JSONUtil.put("marginBottom", "16px")));
 
 				String itemId = layoutStructureItem.getItemId();
 
@@ -207,8 +205,9 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 	}
 
 	private LayoutStructure _addObjectLayoutFragmentEntryLinks(
-			List<FragmentEntryLink> fragmentEntryLinks, InfoFieldSet infoFieldSet,
-			Layout layout, LayoutStructure layoutStructure,
+			List<FragmentEntryLink> fragmentEntryLinks,
+			InfoFieldSet infoFieldSet, Layout layout,
+			LayoutStructure layoutStructure,
 			LayoutStructureItem layoutStructureItem, ObjectLayout objectLayout,
 			long segmentsExperienceId, ServiceContext serviceContext)
 		throws Exception {
@@ -262,7 +261,7 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 							"numberOfTabs",
 							String.valueOf(objectLayoutTabs.size()))
 					)),
-				"BASIC_COMPONENT-tabs", _fragmentEntryLinkService,
+				"PIM-tabs", _fragmentEntryLinkService,
 				_fragmentRendererRegistry, layout, segmentsExperienceId,
 				serviceContext);
 
@@ -296,56 +295,46 @@ public class PIMObjectEntryFormRenderer implements ObjectEntryFormRenderer {
 				continue;
 			}
 
-			FragmentEntryLink accordionFragmentEntryLink =
+			FragmentEntryLink panelFragmentEntryLink =
 				CMSObjectEntryFormLayoutUtil.addFragmentEntryLink(
 					JSONUtil.toString(
 						JSONUtil.put(
 							FragmentEntryProcessorConstants.
 								KEY_EDITABLE_FRAGMENT_ENTRY_PROCESSOR,
 							JSONUtil.put(
-								"accordion-title",
+								"panel-title",
 								CMSObjectEntryFormLayoutUtil.
 									getLocalizedNameJSONObject(
 										objectLayoutTab.getNameMap())))),
-					"BASIC_COMPONENT-accordion", _fragmentEntryLinkService,
+					"PIM-panel", _fragmentEntryLinkService,
 					_fragmentRendererRegistry, layout, segmentsExperienceId,
 					serviceContext);
 
-			if (accordionFragmentEntryLink != null) {
-				LayoutStructureItem accordionLayoutStructureItem =
+			if (panelFragmentEntryLink != null) {
+				LayoutStructureItem panelLayoutStructureItem =
 					layoutStructure.addFragmentStyledLayoutStructureItem(
-						accordionFragmentEntryLink.getFragmentEntryLinkId(),
+						panelFragmentEntryLink.getFragmentEntryLinkId(),
 						childrenItemId, -1);
 
-				accordionLayoutStructureItem.updateItemConfig(
-					JSONUtil.put(
-						"styles",
-						JSONUtil.put(
-							"marginBottom", "16px"
-						).put(
-							"marginTop", "24px"
-						)));
-
-				String accordionItemId = accordionLayoutStructureItem.getItemId();
-
-				fragmentEntryLinks.add(accordionFragmentEntryLink);
+				fragmentEntryLinks.add(panelFragmentEntryLink);
 
 				layoutStructure =
 					CMSObjectEntryFormLayoutUtil.
 						persistAndRefetchLayoutStructure(
-							accordionFragmentEntryLink,
+							panelFragmentEntryLink,
 							_fragmentEntryLinkListenerRegistry, layout,
 							layoutStructure, segmentsExperienceId,
 							serviceContext);
 
-				accordionLayoutStructureItem =
-					layoutStructure.getLayoutStructureItem(accordionItemId);
+				panelLayoutStructureItem =
+					layoutStructure.getLayoutStructureItem(
+						panelLayoutStructureItem.getItemId());
 
-				String accordionChildrenItemId =
-					accordionLayoutStructureItem.getChildrenItemId(0);
+				String panelChildrenItemId =
+					panelLayoutStructureItem.getChildrenItemId(0);
 
-				if (Validator.isNotNull(accordionChildrenItemId)) {
-					childrenItemId = accordionChildrenItemId;
+				if (Validator.isNotNull(panelChildrenItemId)) {
+					childrenItemId = panelChildrenItemId;
 				}
 			}
 

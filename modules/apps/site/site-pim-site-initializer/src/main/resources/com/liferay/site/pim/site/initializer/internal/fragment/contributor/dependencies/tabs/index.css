@@ -1,0 +1,23 @@
+.pim-tabs .nav-tabs .nav-link {
+	background-color: #fff;
+	border-bottom: 1px solid #cdced9;
+}
+
+.pim-tabs .nav-tabs .nav-link.active,
+.pim-tabs .nav-tabs .nav-link.active.hover,
+.pim-tabs .nav-tabs .nav-link.active:hover {
+	border-bottom-color: transparent;
+}
+
+.pim-tabs .nav-tabs .nav-link.hover,
+.pim-tabs .nav-tabs .nav-link:hover {
+	border-bottom: 1px solid #cdced9;
+}
+
+.pim-tabs .tab-pane {
+	display: none;
+}
+
+.pim-tabs .tab-pane.active {
+	display: block;
+}

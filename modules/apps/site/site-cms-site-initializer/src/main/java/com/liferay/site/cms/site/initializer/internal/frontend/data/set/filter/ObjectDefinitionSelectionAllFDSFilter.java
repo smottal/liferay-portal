@@ -8,9 +8,17 @@ package com.liferay.site.cms.site.initializer.internal.frontend.data.set.filter;
 import com.liferay.frontend.data.set.filter.FDSFilter;
 import com.liferay.object.constants.ObjectEntryFolderConstants;
 import com.liferay.object.constants.ObjectFolderConstants;
+import com.liferay.portal.kernel.util.Validator;
+import com.liferay.site.cms.site.initializer.contributor.CMSStructureObjectFolderContributor;
 import com.liferay.site.cms.site.initializer.internal.constants.CMSSiteInitializerFDSNames;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Roberto Díaz
@@ -37,10 +45,34 @@ public class ObjectDefinitionSelectionAllFDSFilter
 
 	@Override
 	protected String[] getObjectFolderExternalReferenceCodes() {
-		return new String[] {
-			ObjectFolderConstants.EXTERNAL_REFERENCE_CODE_CONTENT_STRUCTURES,
-			ObjectFolderConstants.EXTERNAL_REFERENCE_CODE_FILE_TYPES
-		};
+		List<String> objectFolderExternalReferenceCodes = new ArrayList<>(
+			List.of(
+				ObjectFolderConstants.
+					EXTERNAL_REFERENCE_CODE_CONTENT_STRUCTURES,
+				ObjectFolderConstants.EXTERNAL_REFERENCE_CODE_FILE_TYPES));
+
+		for (CMSStructureObjectFolderContributor
+				cmsStructureObjectFolderContributor :
+					_cmsStructureObjectFolderContributors) {
+
+			String objectFolderExternalReferenceCode =
+				cmsStructureObjectFolderContributor.
+					getObjectFolderExternalReferenceCode();
+
+			if (Validator.isNotNull(objectFolderExternalReferenceCode)) {
+				objectFolderExternalReferenceCodes.add(
+					objectFolderExternalReferenceCode);
+			}
+		}
+
+		return objectFolderExternalReferenceCodes.toArray(new String[0]);
 	}
+
+	@Reference(
+		cardinality = ReferenceCardinality.MULTIPLE,
+		policyOption = ReferencePolicyOption.GREEDY
+	)
+	private volatile List<CMSStructureObjectFolderContributor>
+		_cmsStructureObjectFolderContributors;
 
 }

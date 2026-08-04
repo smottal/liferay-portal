@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`buildObjectLayout gathers loose fields into an implicit first General tab 1`] = `
+exports[`buildObjectLayout gathers loose fields into an implicit first Details tab 1`] = `
 Object {
   "defaultObjectLayout": true,
   "name": Object {
@@ -10,7 +10,7 @@ Object {
   "objectLayoutTabs": Array [
     Object {
       "name": Object {
-        "en_US": "general",
+        "en_US": "details",
       },
       "objectLayoutBoxes": Array [
         Object {
@@ -72,7 +72,7 @@ Object {
   "objectLayoutTabs": Array [
     Object {
       "name": Object {
-        "en_US": "general",
+        "en_US": "details",
       },
       "objectLayoutBoxes": Array [
         Object {
@@ -154,7 +154,7 @@ Object {
 }
 `;
 
-exports[`buildObjectLayout serializes a panel at the root into the General tab 1`] = `
+exports[`buildObjectLayout serializes a panel at the root into the Details tab 1`] = `
 Object {
   "defaultObjectLayout": true,
   "name": Object {
@@ -164,7 +164,7 @@ Object {
   "objectLayoutTabs": Array [
     Object {
       "name": Object {
-        "en_US": "general",
+        "en_US": "details",
       },
       "objectLayoutBoxes": Array [
         Object {
@@ -221,7 +221,7 @@ Object {
   "objectLayoutTabs": Array [
     Object {
       "name": Object {
-        "en_US": "general",
+        "en_US": "details",
       },
       "objectLayoutBoxes": Array [
         Object {

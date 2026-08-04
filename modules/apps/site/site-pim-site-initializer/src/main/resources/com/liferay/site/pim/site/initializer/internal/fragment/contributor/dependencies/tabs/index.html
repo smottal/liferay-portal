@@ -1,0 +1,21 @@
+<div class="pim-tabs">
+	<ul class="nav nav-tabs" role="tablist">
+		[#list 0..configuration.numberOfTabs-1 as i]
+		<li class="nav-item" role="presentation">
+			<button aria-controls="tabPanel${i+1}-${fragmentEntryLinkNamespace}" aria-selected="[#if i == 0]true[#else]false[/#if]" class="nav-link[#if i == 0] active[/#if]" data-fragment-namespace="${fragmentEntryLinkNamespace}" id="tab${i+1}-${fragmentEntryLinkNamespace}" role="tab" type="button">
+				<span data-lfr-editable-id="title${i+1}" data-lfr-editable-type="text">
+					Tab ${i+1}
+				</span>
+			</button>
+		</li>
+		[/#list]
+	</ul>
+
+	<div class="tab-content">
+		[#list 0..configuration.numberOfTabs-1 as i]
+		<div aria-labelledby="tab${i+1}-${fragmentEntryLinkNamespace}" class="tab-pane[#if i == 0] active[/#if]" data-fragment-namespace="${fragmentEntryLinkNamespace}" id="tabPanel${i+1}-${fragmentEntryLinkNamespace}" role="tabpanel">
+			<lfr-drop-zone data-lfr-drop-zone-id="${i+1}"></lfr-drop-zone>
+		</div>
+		[/#list]
+	</div>
+</div>

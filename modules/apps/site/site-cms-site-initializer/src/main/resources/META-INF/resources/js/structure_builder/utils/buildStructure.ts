@@ -217,7 +217,8 @@ export function buildField({
 		locked:
 			objectField.system ||
 			isSystemObjectFieldName(
-				objectDefinitionExternalReferenceCode, objectField.name
+				objectDefinitionExternalReferenceCode,
+				objectField.name
 			),
 		name: objectField.name,
 		parent,
