@@ -45,6 +45,36 @@ public class RoleModelDocumentContributor
 				"localized_description", role.getDescriptionMap());
 			document.addLocalizedText("localized_title", role.getTitleMap());
 			document.addKeyword("subtype", role.getSubtype());
+
+			String name = role.getName();
+
+
+			// Here we should retrieve the dynamic role configuration and store
+			// it in the role index so we can filter them by these values
+			if (name.equals("Role1")) {
+				document.addText(
+					"DYNAMIC_ATTRIBUTE_LASTNAME", new String[] {"last1"});
+				document.addText(
+					"DYNAMIC_ATTRIBUTE_FIRSTNAME",
+					new String[] {"first1", "first2"});
+			}
+			else if (name.equals("Role2")) {
+				document.addText(
+					"DYNAMIC_ATTRIBUTE_LASTNAME", new String[] {"last2"});
+				document.addText("DYNAMIC_ATTRIBUTE_FIRSTNAME", new String[0]);
+			}
+			else if (name.equals("Role3")) {
+				document.addText(
+					"DYNAMIC_ATTRIBUTE_LASTNAME", new String[] {"last1", "last2", "last3"});
+				document.addText("DYNAMIC_ATTRIBUTE_FIRSTNAME", new String[] {"first3"});
+			}
+			else if (name.equals("Role4")) {
+				document.addText("DYNAMIC_ATTRIBUTE_LASTNAME", new String[0]);
+				document.addText("DYNAMIC_ATTRIBUTE_FIRSTNAME", new String[0]);
+			} else {
+				document.addText("DYNAMIC_ATTRIBUTE_LASTNAME", new String[] {"--------"});
+				document.addText("DYNAMIC_ATTRIBUTE_FIRSTNAME", new String[] {"--------"});
+			}
 		}
 		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
