@@ -7,7 +7,10 @@ package com.liferay.site.pim.site.initializer.internal.connector;
 
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.site.pim.site.initializer.connector.PIMConnector;
+import com.liferay.site.pim.site.initializer.connector.PIMConnectorField;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 import org.osgi.service.component.annotations.Component;
@@ -28,6 +31,30 @@ public class LiferayCommercePIMConnector implements PIMConnector {
 	@Override
 	public String getName(Locale locale) {
 		return LanguageUtil.get(locale, KEY);
+	}
+
+	@Override
+	public List<PIMConnectorField> getPIMConnectorFields(Locale locale) {
+		return Arrays.asList(
+			new PIMConnectorField(
+				LanguageUtil.get(locale, "active"), "active", true,
+				LanguageUtil.get(locale, "boolean")),
+			new PIMConnectorField(
+				LanguageUtil.get(locale, "description"), "description", false,
+				LanguageUtil.get(locale, "localized-text")),
+			new PIMConnectorField(
+				LanguageUtil.get(locale, "external-reference-code"),
+				"externalReferenceCode", false,
+				LanguageUtil.get(locale, "text")),
+			new PIMConnectorField(
+				LanguageUtil.get(locale, "name"), "name", true,
+				LanguageUtil.get(locale, "localized-text")),
+			new PIMConnectorField(
+				LanguageUtil.get(locale, "product-type"), "productType", true,
+				LanguageUtil.get(locale, "text")),
+			new PIMConnectorField(
+				LanguageUtil.get(locale, "sku"), "skus[].sku", false,
+				LanguageUtil.get(locale, "text")));
 	}
 
 	@Override

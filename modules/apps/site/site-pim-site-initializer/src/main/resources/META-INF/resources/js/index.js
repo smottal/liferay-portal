@@ -5,5 +5,6 @@
 
 export {default as ConnectorsFDSPropsTransformer} from './ConnectorsFDSPropsTransformer';
 export {default as EditPIMConnector} from './EditPIMConnector';
+export {default as PIMConnectorFieldMapping} from './PIMConnectorFieldMapping';
 export {default as ProductRelationshipsFDSPropsTransformer} from './ProductRelationshipsFDSPropsTransformer';
 export {default as ProductsFDSPropsTransformer} from './ProductsFDSPropsTransformer';
