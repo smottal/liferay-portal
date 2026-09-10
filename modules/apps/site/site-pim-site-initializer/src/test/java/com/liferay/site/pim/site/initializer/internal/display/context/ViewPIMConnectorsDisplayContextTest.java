@@ -210,8 +210,7 @@ public class ViewPIMConnectorsDisplayContextTest {
 
 		href = String.valueOf(fieldMappingFDSActionDropdownItem.get("href"));
 
-		Assert.assertTrue(href, href.contains("/field-mapping"));
-		Assert.assertTrue(href, href.contains("&objectEntryId={id}"));
+		Assert.assertEquals("/web/cms/field-mapping?objectEntryId={id}", href);
 
 		Assert.assertEquals(
 			"sheets", fieldMappingFDSActionDropdownItem.get("icon"));
@@ -228,7 +227,7 @@ public class ViewPIMConnectorsDisplayContextTest {
 			fdsActionDropdownItems.get(2);
 
 		Assert.assertEquals(
-			"/o/pim/export-to-liferay-commerce",
+			"/o/pim/export?objectEntryId={id}",
 			exportFDSActionDropdownItem.get("href"));
 		Assert.assertEquals(
 			"download", exportFDSActionDropdownItem.get("icon"));

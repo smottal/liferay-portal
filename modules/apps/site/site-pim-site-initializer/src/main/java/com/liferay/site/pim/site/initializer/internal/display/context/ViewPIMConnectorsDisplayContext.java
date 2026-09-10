@@ -51,9 +51,12 @@ public class ViewPIMConnectorsDisplayContext {
 	public CreationMenu getCreationMenu() {
 		return CreationMenuBuilder.addPrimaryDropdownItem(
 			dropdownItem -> {
-				dropdownItem.setHref(_getURL("/edit-connector"));
+				dropdownItem.setHref(
+					StringBundler.concat(
+						_getURL("/edit-connector"), "?backURL=",
+						_themeDisplay.getURLCurrent()));
 				dropdownItem.setLabel(
-					LanguageUtil.get(_httpServletRequest, "new-connector"));
+					LanguageUtil.get(_httpServletRequest, "new"));
 			}
 		).build();
 	}
@@ -72,7 +75,9 @@ public class ViewPIMConnectorsDisplayContext {
 	public List<FDSActionDropdownItem> getFDSActionDropdownItems() {
 		return ListUtil.fromArray(
 			FDSActionDropdownItemBuilder.setHref(
-				_getURL("/edit-connector") + "&objectEntryId={id}"
+				StringBundler.concat(
+					_getURL("/edit-connector"), "?backURL=",
+					_themeDisplay.getURLCurrent(), "&objectEntryId={id}")
 			).setIcon(
 				"pencil"
 			).setLabel(
@@ -85,7 +90,7 @@ public class ViewPIMConnectorsDisplayContext {
 				"edit"
 			),
 			FDSActionDropdownItemBuilder.setHref(
-				_getURL("/field-mapping") + "&objectEntryId={id}"
+				_getURL("/field-mapping") + "?objectEntryId={id}"
 			).setIcon(
 				"sheets"
 			).setLabel(
@@ -98,7 +103,7 @@ public class ViewPIMConnectorsDisplayContext {
 				"fieldMapping"
 			),
 			FDSActionDropdownItemBuilder.setHref(
-				"/o/pim/export-to-liferay-commerce"
+				"/o/pim/export?objectEntryId={id}"
 			).setIcon(
 				"download"
 			).setLabel(
@@ -135,7 +140,7 @@ public class ViewPIMConnectorsDisplayContext {
 
 		return StringBundler.concat(
 			_themeDisplay.getPathFriendlyURLPublic(), group.getFriendlyURL(),
-			friendlyURL, "?backURL=", _themeDisplay.getURLCurrent());
+			friendlyURL);
 	}
 
 	private final HttpServletRequest _httpServletRequest;
