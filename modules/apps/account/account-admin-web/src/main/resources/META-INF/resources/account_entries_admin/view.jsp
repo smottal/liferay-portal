@@ -1,3 +1,6 @@
+<%@ page import="com.liferay.portal.kernel.model.Role" %><%@
+page import="com.liferay.portal.kernel.service.RoleLocalServiceUtil" %>
+
 <%--
 /**
  * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
@@ -17,6 +20,20 @@ ViewAccountEntriesManagementToolbarDisplayContext viewAccountEntriesManagementTo
 	managementToolbarDisplayContext="<%= viewAccountEntriesManagementToolbarDisplayContext %>"
 	propsTransformer="{AccountEntriesManagementToolbarPropsTransformer} from account-admin-web"
 />
+
+<div>
+
+	<%
+	for (Role role : RoleLocalServiceUtil.getUserRoles(themeDisplay.getUserId())) {
+	%>
+
+		<%= role.getName() %><br />
+
+	<%
+	}
+	%>
+
+</div>
 
 <clay:container-fluid>
 	<aui:form method="post" name="fm">
