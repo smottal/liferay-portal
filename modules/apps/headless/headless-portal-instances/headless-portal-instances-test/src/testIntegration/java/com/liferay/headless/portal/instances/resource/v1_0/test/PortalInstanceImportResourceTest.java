@@ -39,6 +39,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
+import com.liferay.portal.util.PortalInstances;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -104,6 +105,7 @@ public class PortalInstanceImportResourceTest
 		_testPostPortalInstanceImportBatch();
 		_testPostPortalInstanceImportExistingDBPartition();
 		_testPostPortalInstanceImportExportedValuesInUse();
+		_testPostPortalInstanceImportInProgress();
 		_testPostPortalInstanceImportInvalidSchemaName();
 		_testPostPortalInstanceImportNonexistentDBPartition();
 		_testPostPortalInstanceImportSuccess();
@@ -371,6 +373,23 @@ public class PortalInstanceImportResourceTest
 		_dropExportedSchema(companyId);
 	}
 
+	private void _testPostPortalInstanceImportInProgress() throws Exception {
+		PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
+
+		portalInstanceImport.setSchemaName(
+			DBPartitionUtil.getExportedPartitionName(
+				RandomTestUtil.randomLong()));
+
+		try (SafeCloseable safeCloseable =
+				PortalInstances.setImportInProcessCompanyIdWithSafeCloseable(
+					RandomTestUtil.randomLong())) {
+
+			_assertPostPortalInstanceImportProblemTitle(
+				portalInstanceImport,
+				"Importing an instance is already in progress");
+		}
+	}
+
 	private void _testPostPortalInstanceImportInvalidSchemaName()
 		throws Exception {
 
@@ -456,6 +475,13 @@ public class PortalInstanceImportResourceTest
 				portalInstanceImport);
 
 		try {
+			Company persistedCompany = _companyLocalService.getCompany(
+				companyId);
+
+			Assert.assertEquals(
+				Integer.valueOf(persistedCompany.getMaxUsers()),
+				portalInstance.getMaxUsers());
+
 			Assert.assertEquals(
 				Long.valueOf(companyId), portalInstance.getCompanyId());
 			Assert.assertEquals(randomId, portalInstance.getPortalInstanceId());
